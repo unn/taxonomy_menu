@@ -22,15 +22,12 @@ function taxonomy_menu_menu($may_cache) {
   if ($may_cache) {
     $access = user_access('access content');
 
-    $items[] = array('path' => 'taxonomy_menu', 'title' => t('Taxonomy'),
-      'callback' => 'taxonomy_menu_page', 'access' => $access,
-      'type' => MENU_CALLBACK);
-
     foreach (taxonomy_get_vocabularies() as $vocabulary) {
       if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
         $path = 'taxonomy_menu/'. $vocabulary->vid;
         $items[] = array('path' => $path, 'title' => t($vocabulary->name),
-            'weight' => $vocabulary->weight);
+          'callback' => 'taxonomy_menu_page', 'access' => $access,
+          'weight' => $vocabulary->weight);
 
         $tree = taxonomy_get_tree($vocabulary->vid);
         $old_depth = -1;
