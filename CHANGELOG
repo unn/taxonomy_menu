@@ -1,2 +1,7 @@
+12/8/03
+Added configuration option to optionally not display nodes belonging to
+descendants of the selected term.
+Updated for new theme and menu systems.
+
 10/20/03
 Initial version.
