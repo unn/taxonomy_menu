@@ -1,0 +1,10 @@
+Installation:
+
+1) Place taxonomy_menu.module into your Drupal modules directory.
+
+2) Enable the taxonomy_menu module in Drupal, at:
+   administration -> site configuration -> modules
+
+3) If you don't want all vocabularies to appear in the menu, you can
+   disable individual vocabularies at:
+   administration -> site configuration -> modules -> taxonomy_menu

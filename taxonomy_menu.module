@@ -1,0 +1,82 @@
+<?php
+// $Id$
+
+function taxonomy_menu_help($section) {
+  $output = "";
+
+  switch ($section) {
+    case "admin/system/modules#description":
+      $output = "Adds links to taxonomy terms to the global navigation menu.";
+      break;
+  }
+  
+  return t($output);
+} // taxonomy_menu_help
+
+
+function taxonomy_menu_link($type, $node = NULL) {
+  if ($type == "system") {
+    foreach (taxonomy_get_vocabularies() as $vocabulary) {
+      if (variable_get("taxonomy_menu_show_" . $vocabulary->vid, 1)) {
+        $path = "taxonomy_menu/" . $vocabulary->vid;
+        menu($path, t($vocabulary->name));
+  
+        $tree = taxonomy_get_tree($vocabulary->vid);
+        $old_depth = -1;
+        $old_path = $path;
+        
+        foreach ($tree as $term) {
+          if ($term->depth <= $old_depth) {
+            $slashes_to_remove = $old_depth - $term->depth + 1;
+            for ($i = 0; $i < $slashes_to_remove; $i++) {
+              $old_path = substr($old_path, 0, strrpos($old_path, "/"));
+            }
+          }
+          $path = $old_path . "/" . $term->tid;
+          $old_depth = $term->depth;
+          $old_path = $path;
+          menu($path, t($term->name), "taxonomy_menu_page", $term->weight);
+        }
+      }
+    }
+  }
+} // taxonomy_menu_link
+
+
+function taxonomy_menu_settings() {
+  foreach (taxonomy_get_vocabularies() as $vocabulary) {
+    $vocab_form = form_checkbox(t("show in menu"), "taxonomy_menu_show_" . $vocabulary->vid, 1, variable_get("taxonomy_menu_show_" . $vocabulary->vid, 1));
+    
+    $form .= form_item(t($vocabulary->name), $vocab_form);
+  }
+  
+  return $form;
+} // taxonomy_menu_settings
+
+
+function taxonomy_menu_page() {
+  if (arg(2)) {
+    $arguments = explode("/", $_GET["q"]);
+    $main_tid = check_query(array_pop($arguments));
+  }
+  else {
+    $main_tid = 0;
+  }
+  $tree = taxonomy_get_tree(arg(1), $main_tid);
+  $tids = array_map("_taxonomy_menu_get_tid_from_term", $tree);
+  $tids[] = $main_tid;
+  $taxonomy->operator = "or";
+  $taxonomy->tids = $tids;
+  $taxonomy->str_tids = implode(",", $tids);
+
+  theme("header");  
+  taxonomy_render_nodes(taxonomy_select_nodes($taxonomy));
+  theme("footer");  
+} // taxonomy_menu_page
+
+
+function _taxonomy_menu_get_tid_from_term($term) {
+  return $term->tid;
+} // _taxonomy_menu_get_tid_from_term
+
+?>
