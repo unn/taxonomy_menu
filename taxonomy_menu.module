@@ -17,6 +17,7 @@ function taxonomy_menu_help($section) {
 function taxonomy_menu_link($type, $node = NULL) {
   if ($type == "system") {
     if (user_access("access content")) {
+      menu('taxonomy_menu', t('Taxonomy'), 'taxonomy_menu_page', 0, MENU_HIDE, MENU_LOCKED);
       foreach (taxonomy_get_vocabularies() as $vocabulary) {
         if (variable_get("taxonomy_menu_show_" . $vocabulary->vid, 1)) {
           $path = "taxonomy_menu/" . $vocabulary->vid;
