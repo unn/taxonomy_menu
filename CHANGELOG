@@ -1,3 +1,6 @@
+6/20/04
+- Fixed hook_help() implementation for tabs patch.
+
 6/18/04
 - Updated for hook_menu().
 - Vocabularies are ordered by weight in the menu.

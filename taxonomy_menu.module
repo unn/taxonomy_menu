@@ -6,7 +6,7 @@
  */
 function taxonomy_menu_help($section) {
   switch ($section) {
-    case 'admin/system/modules#description':
+    case 'admin/modules#description':
       return t('Adds links to taxonomy terms to the global navigation menu.');
   }
 }
@@ -38,7 +38,7 @@ function taxonomy_menu_menu() {
         if ($term->depth <= $old_depth) {
           $slashes_to_remove = $old_depth - $term->depth + 1;
           for ($i = 0; $i < $slashes_to_remove; $i++) {
-            $old_path = substr($old_path, 0, strrpos($old_path, "/"));
+            $old_path = substr($old_path, 0, strrpos($old_path, '/'));
           }
         }
         $path = $old_path .'/'. $term->tid;
