@@ -75,7 +75,7 @@ function taxonomy_menu_settings() {
 function taxonomy_menu_page() {
   if (arg(2)) {
     $arguments = explode('/', $_GET['q']);
-    $main_tid = check_query(array_pop($arguments));
+    $main_tid = db_escape_string(array_pop($arguments));
   }
   else {
     $main_tid = 0;
