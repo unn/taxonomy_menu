@@ -6,11 +6,11 @@ function taxonomy_menu_help($section) {
 
   switch ($section) {
     case "admin/system/modules#description":
-      $output = "Adds links to taxonomy terms to the global navigation menu.";
+      $output = t("Adds links to taxonomy terms to the global navigation menu.");
       break;
   }
   
-  return t($output);
+  return $output;
 } // taxonomy_menu_help
 
 
