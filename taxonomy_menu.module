@@ -77,16 +77,9 @@ function taxonomy_menu_page() {
   else {
     $main_tid = 0;
   }
-  if (variable_get('taxonomy_menu_display_descendants', 1)) {
-    $tree = taxonomy_get_tree(arg(1), $main_tid);
-    $tids = array_map('_taxonomy_menu_get_tid_from_term', $tree);
-  }
-  $tids[] = $main_tid;
-  $taxonomy->operator = 'or';
-  $taxonomy->tids = $tids;
-  $taxonomy->str_tids = implode(',', $tids);
 
-  print theme('page', taxonomy_render_nodes(taxonomy_select_nodes($taxonomy)));
+  $result = taxonomy_select_nodes(array($main_tid), 'or', variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0);
+  print theme('page', taxonomy_render_nodes($result));
 }
 
 /**
@@ -128,13 +121,6 @@ function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
       }
       break;
   }
-}
-
-/**
- * Helper function for array_map purposes.
- */
-function _taxonomy_menu_get_tid_from_term($term) {
-  return $term->tid;
 }
 
 ?>
