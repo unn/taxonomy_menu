@@ -57,6 +57,15 @@ function taxonomy_menu_menu($may_cache) {
 }
 
 /**
+ * Implementation of hook_taxonomy().
+ *
+ * Invalidates the menu cache on taxonomy changes.
+ */
+function taxonomy_menu_taxonomy() {
+  menu_rebuild();
+}
+
+/**
  * Implementation of hook_settings().
  */
 function taxonomy_menu_settings() {
