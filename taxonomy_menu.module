@@ -1,88 +1,140 @@
 <?php
 // $Id$
 
+/**
+ * Implementation of hook_help().
+ */
 function taxonomy_menu_help($section) {
-  $output = "";
-
   switch ($section) {
-    case "admin/system/modules#description":
-      $output = t("Adds links to taxonomy terms to the global navigation menu.");
-      break;
+    case 'admin/system/modules#description':
+      return t('Adds links to taxonomy terms to the global navigation menu.');
   }
+}
+
+/**
+ * Implementation of hook_menu().
+ *
+ * Most of the heavy lifting of the module is done here.
+ */
+function taxonomy_menu_menu() {
+  $items = array();
+
+  $access = user_access('access content');
+  $items[] = array('path' => 'taxonomy_menu', 'title' => t('Taxonomy'),
+    'callback' => 'taxonomy_menu_page', 'access' => $access,
+    'type' => MENU_CALLBACK);
   
-  return $output;
-} // taxonomy_menu_help
+  foreach (taxonomy_get_vocabularies() as $vocabulary) {
+    if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
+      $path = 'taxonomy_menu/'. $vocabulary->vid;
+      $items[] = array('path' => $path, 'title' => t($vocabulary->name),
+          'weight' => $vocabulary->weight);
 
-
-function taxonomy_menu_link($type, $node = NULL) {
-  if ($type == "system") {
-    if (user_access("access content")) {
-      menu('taxonomy_menu', t('Taxonomy'), 'taxonomy_menu_page', 0, MENU_HIDE, MENU_LOCKED);
-      foreach (taxonomy_get_vocabularies() as $vocabulary) {
-        if (variable_get("taxonomy_menu_show_" . $vocabulary->vid, 1)) {
-          $path = "taxonomy_menu/" . $vocabulary->vid;
-          if (variable_get("taxonomy_menu_display_vocname", 1)) {
-            menu($path, t($vocabulary->name), "taxonomy_menu_page");
-          }
-    
-          $tree = taxonomy_get_tree($vocabulary->vid);
-          $old_depth = -1;
-          $old_path = $path;
-          
-          foreach ($tree as $term) {
-            if ($term->depth <= $old_depth) {
-              $slashes_to_remove = $old_depth - $term->depth + 1;
-              for ($i = 0; $i < $slashes_to_remove; $i++) {
-                $old_path = substr($old_path, 0, strrpos($old_path, "/"));
-              }
-            }
-            $path = $old_path . "/" . $term->tid;
-            $old_depth = $term->depth;
-            $old_path = $path;
-            menu($path, t($term->name), "taxonomy_menu_page", $term->weight);
+      $tree = taxonomy_get_tree($vocabulary->vid);
+      $old_depth = -1;
+      $old_path = $path;
+      
+      foreach ($tree as $term) {
+        if ($term->depth <= $old_depth) {
+          $slashes_to_remove = $old_depth - $term->depth + 1;
+          for ($i = 0; $i < $slashes_to_remove; $i++) {
+            $old_path = substr($old_path, 0, strrpos($old_path, "/"));
           }
         }
+        $path = $old_path .'/'. $term->tid;
+        $old_depth = $term->depth;
+        $old_path = $path;
+        $items[] = array('path' => $path, 'title' => t($term->name),
+          'weight' => $term->weight);
       }
     }
   }
-} // taxonomy_menu_link
 
+  return $items;
+}
 
+/**
+ * Implementation of hook_settings().
+ */
 function taxonomy_menu_settings() {
-  $form .= form_checkbox(t("Display descendants"), "taxonomy_menu_display_descendants", 1, variable_get("taxonomy_menu_display_descendants", 1), t("If checked, then when a term is selected all nodes belonging to subterms are also displayed."));
-  $form .= form_checkbox(t("Show vocabulary name"), "taxonomy_menu_display_vocname", 1, variable_get("taxonomy_menu_display_vocname", 1), t("If checked, terms are grouped in the menu under their respective vocabularies. You may want to disable this if you have only one navigation vocabulary."));
+  $form .= form_checkbox(t('Display descendants'), 'taxonomy_menu_display_descendants', 1, variable_get('taxonomy_menu_display_descendants', 1), t('If checked, then when a term is selected all nodes belonging to subterms are also displayed.'));
 
   foreach (taxonomy_get_vocabularies() as $vocabulary) {
-    $form .= form_checkbox(t("Show '%vocab' in menu", array("%vocab" => t($vocabulary->name))), "taxonomy_menu_show_" . $vocabulary->vid, 1, variable_get("taxonomy_menu_show_" . $vocabulary->vid, 1));
+    $form .= form_checkbox(t('Show "%vocab" in menu', array('%vocab' => t($vocabulary->name))), 'taxonomy_menu_show_' . $vocabulary->vid, 1, variable_get('taxonomy_menu_show_' . $vocabulary->vid, 1));
   }
   
   return $form;
-} // taxonomy_menu_settings
+}
 
-
+/**
+ * Page callback that renders a node listing for the selected term.
+ */
 function taxonomy_menu_page() {
   if (arg(2)) {
-    $arguments = explode("/", $_GET["q"]);
+    $arguments = explode('/', $_GET['q']);
     $main_tid = check_query(array_pop($arguments));
   }
   else {
     $main_tid = 0;
   }
-  if (variable_get("taxonomy_menu_display_descendants", 1)) {
+  if (variable_get('taxonomy_menu_display_descendants', 1)) {
     $tree = taxonomy_get_tree(arg(1), $main_tid);
-    $tids = array_map("_taxonomy_menu_get_tid_from_term", $tree);
+    $tids = array_map('_taxonomy_menu_get_tid_from_term', $tree);
   }
   $tids[] = $main_tid;
-  $taxonomy->operator = "or";
+  $taxonomy->operator = 'or';
   $taxonomy->tids = $tids;
-  $taxonomy->str_tids = implode(",", $tids);
+  $taxonomy->str_tids = implode(',', $tids);
 
-  print theme("page", taxonomy_render_nodes(taxonomy_select_nodes($taxonomy)));
-} // taxonomy_menu_page
+  print theme('page', taxonomy_render_nodes(taxonomy_select_nodes($taxonomy)));
+}
 
+/**
+ * Implementation of hook_nodeapi().
+ *
+ * This hook enables the menu to be displayed in context during node views.
+ */
+function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
+  switch ($op) {
+    case 'view':
+      if ($a4 == TRUE) {
+        // The node is being displayed on its own page.
+        foreach (taxonomy_get_vocabularies() as $vocabulary) {
+          if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
+            $path = 'taxonomy_menu/' . $vocabulary->vid;
+      
+            $tree = taxonomy_get_tree($vocabulary->vid);
+            $old_depth = -1;
+            $old_path = $path;
+            
+            foreach ($tree as $term) {
+              if ($term->depth <= $old_depth) {
+                $slashes_to_remove = $old_depth - $term->depth + 1;
+                for ($i = 0; $i < $slashes_to_remove; $i++) {
+                  $old_path = substr($old_path, 0, strrpos($old_path, "/"));
+                }
+              }
+              $path = $old_path .'/'. $term->tid;
+              $old_depth = $term->depth;
+              $old_path = $path;
+              if (in_array($term->tid, array_keys(taxonomy_node_get_terms($node->nid)))) {
+                menu_set_location(array(array('path' => $path, 'title' => t($term->name)), array('path' => 'node/'. $node->nid, 'title' => $node->title)));
+                // Quit after the first match.
+                return;
+              }
+            }
+          }
+        }
+      }
+      break;
+  }
+}
 
+/**
+ * Helper function for array_map purposes.
+ */
 function _taxonomy_menu_get_tid_from_term($term) {
   return $term->tid;
-} // _taxonomy_menu_get_tid_from_term
+}
 
 ?>

@@ -1,3 +1,8 @@
+6/18/04
+- Updated for hook_menu().
+- Vocabularies are ordered by weight in the menu.
+- When viewing a node, the menu expands appropriately.
+
 2/26/04
 Added configuration option to optionally not display vocabulary names in
 the menu.
