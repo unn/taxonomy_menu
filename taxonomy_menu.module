@@ -6,11 +6,11 @@ function taxonomy_menu_help($section) {
 
   switch ($section) {
     case "admin/system/modules#description":
-      $output = t("Adds links to taxonomy terms to the global navigation menu.");
+      $output = "Adds links to taxonomy terms to the global navigation menu.";
       break;
   }
   
-  return $output;
+  return t($output);
 } // taxonomy_menu_help
 
 
@@ -20,7 +20,9 @@ function taxonomy_menu_link($type, $node = NULL) {
       foreach (taxonomy_get_vocabularies() as $vocabulary) {
         if (variable_get("taxonomy_menu_show_" . $vocabulary->vid, 1)) {
           $path = "taxonomy_menu/" . $vocabulary->vid;
-          menu($path, t($vocabulary->name), "taxonomy_menu_page");
+          if (variable_get("taxonomy_menu_display_vocname", 1)) {
+            menu($path, t($vocabulary->name), "taxonomy_menu_page");
+          }
     
           $tree = taxonomy_get_tree($vocabulary->vid);
           $old_depth = -1;
@@ -47,6 +49,7 @@ function taxonomy_menu_link($type, $node = NULL) {
 
 function taxonomy_menu_settings() {
   $form .= form_checkbox(t("Display descendants"), "taxonomy_menu_display_descendants", 1, variable_get("taxonomy_menu_display_descendants", 1), t("If checked, then when a term is selected all nodes belonging to subterms are also displayed."));
+  $form .= form_checkbox(t("Show vocabulary name"), "taxonomy_menu_display_vocname", 1, variable_get("taxonomy_menu_display_vocname", 1), t("If checked, terms are grouped in the menu under their respective vocabularies. You may want to disable this if you have only one navigation vocabulary."));
 
   foreach (taxonomy_get_vocabularies() as $vocabulary) {
     $form .= form_checkbox(t("Show '%vocab' in menu", array("%vocab" => t($vocabulary->name))), "taxonomy_menu_show_" . $vocabulary->vid, 1, variable_get("taxonomy_menu_show_" . $vocabulary->vid, 1));
