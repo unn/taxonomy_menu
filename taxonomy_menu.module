@@ -69,9 +69,9 @@ function taxonomy_menu_page() {
   $taxonomy->tids = $tids;
   $taxonomy->str_tids = implode(",", $tids);
 
-  theme("header");  
+  print theme("header");  
   taxonomy_render_nodes(taxonomy_select_nodes($taxonomy));
-  theme("footer");  
+  print theme("footer");  
 } // taxonomy_menu_page
 
 
