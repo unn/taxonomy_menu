@@ -76,14 +76,27 @@ function taxonomy_menu_page() {
   if (arg(2)) {
     $arguments = explode('/', $_GET['q']);
     $main_tid = db_escape_string(array_pop($arguments));
+    
+    drupal_set_html_head('<link rel="alternate" type="application/rss+xml" title="RSS" href="'. url('taxonomy/term/'. $main_tid .'/'. (variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0) .'/feed') .'" />');
+    
+    $result = taxonomy_select_nodes(array($main_tid), 'or', variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0);
   }
   else {
-    $main_tid = 0;
+    // If no arg(2), we're looking at just the vid. If display_descendants
+    // is on, grab all terms regardless of depth. If off, grab depth 0 terms.
+    $tree = taxonomy_get_tree(arg(1));
+    $descendants = variable_get('taxonomy_menu_display_descendants', 1);
+    foreach ($tree as $term) {
+      if ($descendants || $term->depth == 0) {
+        $tids[] = $term->tid;
+      }
+    }
+    
+    // The requested terms have already been determined, so don't request
+    // descendants here.
+    $result = taxonomy_select_nodes($tids, 'or', 0);
   }
-
-  drupal_set_html_head('<link rel="alternate" type="application/rss+xml" title="RSS" href="'. url('taxonomy/term/'. $main_tid .'/'. (variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0) .'/feed') .'" />');
-
-  $result = taxonomy_select_nodes(array($main_tid), 'or', variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0);
+  
   print theme('page', taxonomy_render_nodes($result));
 }
 
