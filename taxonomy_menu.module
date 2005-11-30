@@ -6,6 +6,17 @@
  */
 function taxonomy_menu_help($section) {
   switch ($section) {
+    case 'admin/help#taxonomy_menu':
+      $output = '<p>'. t('Taxonomy terms allow classification of content into categories and subcategories.  The taxonomy menu module adds links to the navigation menu for taxonomy terms.  This is useful when the community is focused on creating content that is organized in a taxonomy.') .'</p>';
+      $output .= '<p>'. t('The taxonomy menu administration interface allows taxonomy terms to be enabled to show in the navigation menu.  You can also select whether a term\'s descendents subterms are displayed.') .'</p>';
+      $output .= t('<p>You can</p>
+<ul>
+<li>view a list of taxonomies in <a href="%admin-taxonomy">administer &gt;&gt; taxonomy</a>.</li>
+<li>create a new vocabulary at <a href="%admin-taxonomy-add-vocabulary">administer &gt;&gt; taxonomy &gt;&gt; add vocabulary</a>.</li>
+<li>administer taxonomy_menu settings by going to <a href="%admin-settings-taxonomy_menu">administer &gt;&gt; settings &gt;&gt; taxonomy menu</a>.</li>
+</ul>', array('%admin-taxonomy' => url('admin/taxonomy'), '%admin-taxonomy-add-vocabulary' => url('admin/taxonomy/add/vocabulary'), '%admin-settings-taxonomy_menu' => url('admin/settings/taxonomy_menu')));
+      $output .= '<p>'. t('For more information please read the configuration and customization handbook <a href="%taxonomy_menu">Taxonomy menu page</a>.', array('%taxonomy_menu' => 'http://www.drupal.org/handbook/modules/taxonomy_menu/')) .'</p>';
+      return $output;
     case 'admin/modules#description':
       return t('Adds links to taxonomy terms to the global navigation menu.');
   }
