@@ -77,10 +77,21 @@ function taxonomy_menu_taxonomy() {
  * Implementation of hook_settings().
  */
 function taxonomy_menu_settings() {
-  $form .= form_checkbox(t('Display descendants'), 'taxonomy_menu_display_descendants', 1, variable_get('taxonomy_menu_display_descendants', 1), t('If checked, then when a term is selected all nodes belonging to subterms are also displayed.'));
+  $form['taxonomy_menu_display_descendants'] = array(
+  	'#type' => 'checkbox',
+  	'#title' => t('Display descendants'),
+  	'#return_value' => 1,
+  	'#default_value' => variable_get('taxonomy_menu_display_descendants', 1),
+  	'#description' => t('If checked, then when a term is selected all nodes belonging to subterms are also displayed.'),
+   );
 
   foreach (taxonomy_get_vocabularies() as $vocabulary) {
-    $form .= form_checkbox(t('Show "%vocab" in menu', array('%vocab' => t($vocabulary->name))), 'taxonomy_menu_show_' . $vocabulary->vid, 1, variable_get('taxonomy_menu_show_' . $vocabulary->vid, 1));
+    $form['taxonomy_menu_show_' . $vocabulary->vid] = array(
+  		'#type' => 'checkbox',
+  		'#title' => t('Show "%vocab" in menu', array('%vocab' => t($vocabulary->name))),
+  		'#return_value' => 1,
+  		'#default_value' => variable_get('taxonomy_menu_show_' . $vocabulary->vid, 1),
+	);
   }
 
   return $form;
