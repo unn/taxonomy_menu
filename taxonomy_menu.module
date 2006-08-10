@@ -78,20 +78,20 @@ function taxonomy_menu_taxonomy() {
  */
 function taxonomy_menu_settings() {
   $form['taxonomy_menu_display_descendants'] = array(
-  	'#type' => 'checkbox',
-  	'#title' => t('Display descendants'),
-  	'#return_value' => 1,
-  	'#default_value' => variable_get('taxonomy_menu_display_descendants', 1),
-  	'#description' => t('If checked, then when a term is selected all nodes belonging to subterms are also displayed.'),
+    '#type' => 'checkbox',
+    '#title' => t('Display descendants'),
+    '#return_value' => 1,
+    '#default_value' => variable_get('taxonomy_menu_display_descendants', 1),
+    '#description' => t('If checked, then when a term is selected all nodes belonging to subterms are also displayed.'),
    );
 
   foreach (taxonomy_get_vocabularies() as $vocabulary) {
     $form['taxonomy_menu_show_' . $vocabulary->vid] = array(
-  		'#type' => 'checkbox',
-  		'#title' => t('Show "%vocab" in menu', array('%vocab' => t($vocabulary->name))),
-  		'#return_value' => 1,
-  		'#default_value' => variable_get('taxonomy_menu_show_' . $vocabulary->vid, 1),
-	);
+      '#type' => 'checkbox',
+      '#title' => t('Show "%vocab" in menu', array('%vocab' => t($vocabulary->name))),
+      '#return_value' => 1,
+      '#default_value' => variable_get('taxonomy_menu_show_' . $vocabulary->vid, 1),
+  );
   }
 
   return $form;
@@ -104,9 +104,11 @@ function taxonomy_menu_page() {
   if (arg(2)) {
     $arguments = explode('/', $_GET['q']);
     $main_tid = db_escape_string(array_pop($arguments));
-    
-    drupal_set_html_head('<link rel="alternate" type="application/rss+xml" title="RSS" href="'. url('taxonomy/term/'. $main_tid .'/'. (variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0) .'/feed') .'" />');
-    
+
+    $feed = url('taxonomy/term/'. $main_tid .'/'. (variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0) .'/feed');
+
+    drupal_set_html_head('<link rel="alternate" type="application/rss+xml" title="RSS" href="'. $feed .'" />');
+
     $result = taxonomy_select_nodes(array($main_tid), 'or', variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0);
   }
   else {
@@ -119,13 +121,16 @@ function taxonomy_menu_page() {
         $tids[] = $term->tid;
       }
     }
-    
+
     // The requested terms have already been determined, so don't request
     // descendants here.
     $result = taxonomy_select_nodes($tids, 'or', 0);
   }
-  
-  print theme('page', taxonomy_render_nodes($result));
+
+  $output = taxonomy_render_nodes($result);
+  $output .= theme('feed_icon', $feed);
+
+  return $output;
 }
 
 /**
