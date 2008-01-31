@@ -1,67 +1,66 @@
 <?php
-// $Id$
-
 /**
- * Implementation of hook_help().
+ * $Id$
+ * @author Jonathan Chaffer   <jchaffer@structureinteractive.com>
+ * @author Bruno Massa        <http://drupal.org/user/67164>
+ * @file taxonomy_menu.module
+ * It Generates menu links for all taxonomy terms
  */
-function taxonomy_menu_help($section) {
-  switch ($section) {
-    case 'admin/help#taxonomy_menu':
-      $output = '<p>'. t('Taxonomy terms allow classification of content into categories and subcategories.  The taxonomy menu module adds links to the navigation menu for taxonomy terms.  This is useful when the community is focused on creating content that is organized in a taxonomy.') .'</p>';
-      $output .= '<p>'. t('The taxonomy menu administration interface allows taxonomy terms to be enabled to show in the navigation menu.  You can also select whether a term\'s descendents subterms are displayed.') .'</p>';
-      $output .= t('<p>You can</p>
-<ul>
-<li>view a list of taxonomies in <a href="%admin-taxonomy">administer &gt;&gt; taxonomy</a>.</li>
-<li>create a new vocabulary at <a href="%admin-taxonomy-add-vocabulary">administer &gt;&gt; taxonomy &gt;&gt; add vocabulary</a>.</li>
-<li>administer taxonomy_menu settings by going to <a href="%admin-settings-taxonomy_menu">administer &gt;&gt; settings &gt;&gt; taxonomy menu</a>.</li>
-</ul>', array('%admin-taxonomy' => url('admin/taxonomy'), '%admin-taxonomy-add-vocabulary' => url('admin/taxonomy/add/vocabulary'), '%admin-settings-taxonomy_menu' => url('admin/settings/taxonomy_menu')));
-      $output .= '<p>'. t('For more information please read the configuration and customization handbook <a href="%taxonomy_menu">Taxonomy menu page</a>.', array('%taxonomy_menu' => 'http://www.drupal.org/handbook/modules/taxonomy_menu/')) .'</p>';
-      return $output;
-    case 'admin/modules#description':
-      return t('Adds links to taxonomy terms to the global navigation menu.');
-  }
-}
+
+// Some "magic numbers" revealed
+define('TAXONOMY_MENU_NONE',        0);
+define('TAXONOMY_MENU_NORMAL',      1);
+define('TAXONOMY_MENU_VIEW',        2);
+define('TAXONOMY_MENU_DEFAULT_TAX', 3);
 
 /**
  * Implementation of hook_menu().
  *
- * Most of the heavy lifting of the module is done here.
+ * Its the main function for this module.
  */
-function taxonomy_menu_menu($may_cache) {
-  $items = array();
+function taxonomy_menu_menu() {
+  require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.inc');
+  return _taxonomy_menu_menu();
+}
 
-  if ($may_cache) {
-    $access = user_access('access content');
+/**
+ * Implementation of hook_nodeapi().
+ *
+ * This hook enables the menu to be displayed in context during node views.
+ */
+function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
+  static $vocabs = array();
+  // First check if the node has a relevant category.s
+  if (empty($vocabs) and is_array($vocabs)) {
 
-    foreach (taxonomy_get_vocabularies() as $vocabulary) {
-      if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
-        $path = 'taxonomy_menu/'. $vocabulary->vid;
-        $items[] = array('path' => $path, 'title' => t($vocabulary->name),
-          'callback' => 'taxonomy_menu_page', 'access' => $access,
-          'weight' => $vocabulary->weight);
+    // The node should have taxonomy terms
+    if (!$terms = taxonomy_node_get_terms($node)) {
+      return;
+    }
 
-        $tree = taxonomy_get_tree($vocabulary->vid);
-        $old_depth = -1;
-        $old_path = $path;
-
-        foreach ($tree as $term) {
-          if ($term->depth <= $old_depth) {
-            $slashes_to_remove = $old_depth - $term->depth + 1;
-            for ($i = 0; $i < $slashes_to_remove; $i++) {
-              $old_path = substr($old_path, 0, strrpos($old_path, '/'));
-            }
-          }
-          $path = $old_path .'/'. $term->tid;
-          $old_depth = $term->depth;
-          $old_path = $path;
-          $items[] = array('path' => $path, 'title' => t($term->name),
-            'weight' => $term->weight);
-        }
+    // Check if at least one vocabulary is revelevant
+    // for us, being a menu
+    foreach ($terms as $term) {
+      if (variable_get('taxonomy_menu_show_'. $term->vid, TAXONOMY_MENU_NONE)) {
+        $vocabs[$term->vid][] = $term->tid;
       }
+    }
+
+    // If none of the terms are tracked by this module,
+    // forget it
+    if (empty($vocabs)) {
+      $vocabs = FALSE;
+      return;
     }
   }
 
-  return $items;
+  if ($op == 'view' and $a4 == TRUE and !empty($vocabs)) {
+    require_once(drupal_get_path('module', 'taxonomy_menu') .'/taxonomy_menu.inc');
+    _taxonomy_menu_node_view($node, $vocabs);
+  }
+  elseif ($op == 'update' or $op == 'insert') {
+      menu_rebuild();
+  }
 }
 
 /**
@@ -72,106 +71,3 @@ function taxonomy_menu_menu($may_cache) {
 function taxonomy_menu_taxonomy() {
   menu_rebuild();
 }
-
-/**
- * Implementation of hook_settings().
- */
-function taxonomy_menu_settings() {
-  $form['taxonomy_menu_display_descendants'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Display descendants'),
-    '#return_value' => 1,
-    '#default_value' => variable_get('taxonomy_menu_display_descendants', 1),
-    '#description' => t('If checked, then when a term is selected all nodes belonging to subterms are also displayed.'),
-   );
-
-  foreach (taxonomy_get_vocabularies() as $vocabulary) {
-    $form['taxonomy_menu_show_' . $vocabulary->vid] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Show "%vocab" in menu', array('%vocab' => t($vocabulary->name))),
-      '#return_value' => 1,
-      '#default_value' => variable_get('taxonomy_menu_show_' . $vocabulary->vid, 1),
-  );
-  }
-
-  return $form;
-}
-
-/**
- * Page callback that renders a node listing for the selected term.
- */
-function taxonomy_menu_page() {
-  if (arg(2)) {
-    $arguments = explode('/', $_GET['q']);
-    $main_tid = db_escape_string(array_pop($arguments));
-
-    $feed = url('taxonomy/term/'. $main_tid .'/'. (variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0) .'/feed');
-
-    drupal_set_html_head('<link rel="alternate" type="application/rss+xml" title="RSS" href="'. $feed .'" />');
-
-    $result = taxonomy_select_nodes(array($main_tid), 'or', variable_get('taxonomy_menu_display_descendants', 1) ? 'all' : 0);
-  }
-  else {
-    // If no arg(2), we're looking at just the vid. If display_descendants
-    // is on, grab all terms regardless of depth. If off, grab depth 0 terms.
-    $tree = taxonomy_get_tree(arg(1));
-    $descendants = variable_get('taxonomy_menu_display_descendants', 1);
-    foreach ($tree as $term) {
-      if ($descendants || $term->depth == 0) {
-        $tids[] = $term->tid;
-      }
-    }
-
-    // The requested terms have already been determined, so don't request
-    // descendants here.
-    $result = taxonomy_select_nodes($tids, 'or', 0);
-  }
-
-  $output = taxonomy_render_nodes($result);
-  $output .= theme('feed_icon', $feed);
-
-  return $output;
-}
-
-/**
- * Implementation of hook_nodeapi().
- *
- * This hook enables the menu to be displayed in context during node views.
- */
-function taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
-  switch ($op) {
-    case 'view':
-      if ($a4 == TRUE) {
-        // The node is being displayed on its own page.
-        foreach (taxonomy_get_vocabularies() as $vocabulary) {
-          if (variable_get('taxonomy_menu_show_'. $vocabulary->vid, 1)) {
-            $path = 'taxonomy_menu/' . $vocabulary->vid;
-
-            $tree = taxonomy_get_tree($vocabulary->vid);
-            $old_depth = -1;
-            $old_path = $path;
-
-            foreach ($tree as $term) {
-              if ($term->depth <= $old_depth) {
-                $slashes_to_remove = $old_depth - $term->depth + 1;
-                for ($i = 0; $i < $slashes_to_remove; $i++) {
-                  $old_path = substr($old_path, 0, strrpos($old_path, "/"));
-                }
-              }
-              $path = $old_path .'/'. $term->tid;
-              $old_depth = $term->depth;
-              $old_path = $path;
-              if (in_array($term->tid, array_keys(taxonomy_node_get_terms($node->nid)))) {
-                menu_set_location(array(array('path' => $path, 'title' => t($term->name)), array('path' => 'node/'. $node->nid, 'title' => $node->title)));
-                // Quit after the first match.
-                return;
-              }
-            }
-          }
-        }
-      }
-      break;
-  }
-}
-
-?>

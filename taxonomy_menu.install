@@ -1,0 +1,24 @@
+<?php
+/**
+ * $Id$
+ * @file taxonomy_menu.install
+ * Install and uninstall all required databases.
+ * Also do incremental database updates.
+ */
+
+/**
+ * Delete all SQL tables and global variables
+ * used by this module in other to let no garbage
+ * behind
+ */
+function taxonomy_menu_uninstall() {
+  // Delete variables
+  foreach (taxonomy_get_vocabularies() as $vocabulary) {
+    variable_del('taxonomy_menu_show_'. $vocabulary->vid);
+    variable_del('taxonomy_menu_show_view_'. $vocabulary->vid);
+  }
+  variable_del('taxonomy_menu_display_num');
+  variable_del('taxonomy_menu_hide_empty');
+  variable_del('taxonomy_menu_display_page');
+  variable_del('taxonomy_menu_display_descendants');
+}
