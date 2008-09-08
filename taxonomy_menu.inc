@@ -1,6 +1,7 @@
 <?php
+// $Id$
+
 /**
- * $Id$
  * @author Jonathan Chaffer   <jchaffer@structureinteractive.com>
  * @author Bruno Massa        <http://drupal.org/user/67164>
  * @file taxonomy_menu.inc
@@ -187,9 +188,12 @@ function _taxonomy_menu_menu() {
             $name .= ' ('. $num .')';
           }
           $items[$path] = array(
+            'access arguments' => array('access content'),
+            'file'            => 'taxonomy_menu.inc',
+            'page callback'   => '_taxonomy_menu_page',
             'description'     => t($term->description),
             'title'           => $name,
-            'weight'          => $term->weight
+            'weight'          => $term->weight,
           );
         }
       }
