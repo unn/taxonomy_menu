@@ -234,13 +234,23 @@ function _taxonomy_menu_node_view(&$node, &$vocabs) {
       $old_depth  = $term->depth;
       $old_path   = $path;
 
-      // When we reach the term that this node uses,
-      // set the breadcumb
-      if ($term->tid == $vocab[0]) {
-        drupal_set_breadcrumb(array(
-          array('path' => $path, 'title' => t($term->name)),
-          array('path' => 'node/'. $node->nid, 'title' => $node->title)
-        ));
+       if ($term->tid == $vocab[0]) { //create all the breadcrumb items
+         $breadcrumb=array();
+         $tmpterm=$term;
+         $patharray=explode('/', $path);
+
+         while($tmpterm) { //create items for all the ancestors
+           $breadcrumb[] = l($tmpterm->name, implode('/', $patharray));
+           array_pop($patharray);
+           if(isset($tmpterm->parents[0])) $tmpterm = taxonomy_get_term($tmpterm->parents[0]); 
+           else unset($tmpterm); //we're done with ancestors
+         }
+ 
+        $vocabulary = taxonomy_vocabulary_load($term->vid);
+        $breadcrumb[] = l($vocabulary->name, implode('/', $patharray)); //add the vocabulary item
+        $breadcrumb[] = l(t('Home'), '<front>');
+ 
+        drupal_set_breadcrumb(array_reverse($breadcrumb));
 
         // Quit after the first match.
         return;
