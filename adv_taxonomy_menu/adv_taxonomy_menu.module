@@ -1,0 +1,446 @@
+<?php   
+/**
+ * $Id$
+ * @file adv_taxonomy_menu.module
+ * @author Jonathan Chaffer   <jchaffer@structureinteractive.com> original taxonomy_menu.module
+ * @author Bruno Massa        <http://drupal.org/user/67164> original taxonomy_menu.module
+ * @author Kent Parker <kent@webdev.passingphase.co.nz>  adv_taxonomy_menu.module
+ * It Generates menu links for all taxonomy terms using one single level vocabulary for each level
+ *  TODO validate that at least two levels have been selected
+ */
+
+// Some "magic numbers" mastered
+define('ADV_TAXONOMY_MENU_NONE',        0);
+define('ADV_TAXONOMY_MENU_NORMAL',      1);
+define('ADV_TAXONOMY_MENU_VIEW',        2);
+define('ADV_TAXONOMY_MENU_DEFAULT_TAX', 3);
+
+/**
+ * Admin area. Configure the module, setting which
+ * vocabularies will be converted into menus items
+ *
+ * @return
+ *   Array. The form fields.
+ */
+function __adv_taxonomy_menu_admin($op) {
+  require_once(drupal_get_path('module', 'adv_taxonomy_menu') .'/adv_taxonomy_menu.inc');
+  return _adv_taxonomy_menu_admin($op);
+}
+
+/**
+ * Admin area. validate form
+ * 
+ */
+function __adv_taxonomy_menu_admin_validate(&$form_id, &$form_values) {
+  if($form_values['op']!= 'Delete') {
+    if ($form_values['adv_taxonomy_menu_name'] == '') {
+      form_set_error('', t('You must select a name for this menu system.'));
+    }
+    if ($form_values['adv_taxonomy_menu_display_page'] == '') {
+      form_set_error('', t('You must select a label for the url.'));
+    }
+  }
+}
+/**
+ * Admin area. Configure the module, setting which
+ * vocabularies will be converted into menu items
+ */
+function __adv_taxonomy_menu_admin_submit(&$form_id, &$form) {
+  $order = array();
+  $show = array();
+  $show_views = array();
+  foreach (taxonomy_get_vocabularies() as $vocab) {
+    $order[$vocab->vid] = $form['adv_taxonomy_menu_vocab_order_'. $vocab->vid];
+  }
+  $order = serialize($order);
+  // either update or add depending on whether a tmid is supplied
+  if($form['adv_taxonomy_menu_tmid']>0) {
+	$mid = db_result(db_query("SELECT mid FROM {menu} WHERE pid=0 AND path='' AND title = '%s'", $form['adv_taxonomy_menu_name']));
+    db_query("UPDATE {adv_taxonomy_menu} SET mid=%d, name='%s', display_page='%s', display_num=%d, hide_empty=%d, display_descendants=%d,  vocab_order='%s', show_normal='%s', show_views='%s' WHERE tmid=%d", $mid, $form['adv_taxonomy_menu_name'], $form['adv_taxonomy_menu_display_page'], $form['adv_taxonomy_menu_display_num'], $form['adv_taxonomy_menu_hide_empty'], $form['adv_taxonomy_menu_display_descendants'], $order, $form['adv_taxonomy_menu_show'], $form['adv_taxonomy_menu_show_view'], $form['adv_taxonomy_menu_tmid']);
+    drupal_set_message('Menu system updated successfully');
+  }
+  elseif(arg(3) == 'delete') {
+     $tmid = arg(4);
+     if($tmid>0) {
+      db_query("DELETE FROM {adv_taxonomy_menu} WHERE tmid=%d", $tmid);
+      drupal_set_message('Menu system deleted');
+      drupal_goto('admin/settings/adv_taxonomy_menu');
+    }
+  }
+  else {
+    // Create menu system and link to menu system
+    $item = array('mid' => 0, 'pid' => 0, 'path' => '', 'weight' => 0, 'type' => MENU_CUSTOM_MENU, 'title' => $form['adv_taxonomy_menu_name']);
+    menu_edit_item_save($item);
+	$mid = db_result(db_query("SELECT mid FROM {menu} WHERE pid=0 AND path='' AND title = '%s'", $form['adv_taxonomy_menu_name']));
+    $tmid = db_next_id('{adv_taxonomy_menu}_tmid');
+    db_query("INSERT INTO {adv_taxonomy_menu} SET tmid=%d, mid=%d, name='%s', display_page='%s', display_num=%d, hide_empty=%d, display_descendants=%d, vocab_order='%s', show_normal='%s', show_views='%s' ", $tmid, $mid, $form['adv_taxonomy_menu_name'], $form['adv_taxonomy_menu_display_page'], $form['adv_taxonomy_menu_display_num'], $form['adv_taxonomy_menu_hide_empty'], $form['adv_taxonomy_menu_display_descendants'], $order, $show, $show_views);
+    drupal_set_message('New menu system created');
+  }
+  // Rebuild the menu to include these features - Now done manually
+ // menu_rebuild();
+  drupal_goto('admin/settings/adv_taxonomy_menu');
+}
+
+function adv_taxonomy_menu_get_settings($tmid = '') {
+  static $result;
+  if($tmid) {
+ 	return db_query('SELECT * FROM {adv_taxonomy_menu} WHERE tmid = %d', $tmid);
+  }
+  else $result = db_query('SELECT * FROM {adv_taxonomy_menu}');
+  return $result;
+}
+
+
+/**
+ * Implementation of hook_help().
+ */
+function adv_taxonomy_menu_help($section) {
+  switch ($section) {
+    case 'admin/help#adv_taxonomy_menu':
+      $output = '<p>'. t('The advanced taxonomy menu module is similar to the taxonomy_menu module exept that it creates a heirarchy from a set of single level vocabularies rather than from a standard taxonomy heirarchy.  This is useful for heirarchies in which subcategories share the same terms, for instance clothing might consist of first level items such as shirts, trousers, shoes, second level items such as male, female, third level items such as size and fourth level items such as colour.  Such heirarchies can get complex and unwieldy if created using the taxonomy sub-level system.') .'</p>'.
+       '<p>'. t('To configure go to admin/settings/adv_taxonomy_menu and create a menu system.  You can create any number of menus and each is generated as a block which you can place where you like. A breadcrumb is generated showing your position in the heirarchy.') .'</p>'.
+        t('<p>You can</p>
+<ul>
+<li>view a list of taxonomies in <a href="@admin-taxonomy">Administer &gt;&gt; Content management &gt;&gt; Categories</a>.</li>
+<li>create a new vocabulary at <a href="@admin-taxonomy-add-vocabulary">Administer &gt;&gt; Content management &gt;&gt; Categories &gt;&gt; Add vocabulary</a>.</li>
+</ul>', array('@admin-taxonomy' => url('admin/content/taxonomy'), '@admin-taxonomy-add-vocabulary' => url('admin/content/taxonomy/add/vocabulary'))).
+        '<p>'. t('For more information please read the configuration and customization handbook <a href="@adv_taxonomy_menu">Taxonomy menu page</a>.', array('@adv_taxonomy_menu' => 'http://www.drupal.org/handbook/modules/adv_taxonomy_menu/')) .'</p>';
+      return $output;
+  }
+}
+
+
+/**
+ * Implementation of hook_menu().
+ * (moved from the .inc file to make main engine accessible to other modules)
+ * Its the main function for this module.
+ */
+function adv_taxonomy_menu_menu($may_cache) {
+  if ($may_cache) {
+    $items['admin/settings/adv_taxonomy_menu'] = array(
+	  'access'              => user_access('administer site configuration'),
+      'callback'            => '__adv_taxonomy_menu_admin',
+      'callback arguments'  => array('main'),
+      'file'                => 'adv_taxonomy_menu.inc',
+      'description'         => t('Global configuration of advanced taxonomy menu functionality.'),
+      'path'                => 'admin/settings/adv_taxonomy_menu',
+      'title'               => t('Advanced Taxonomy Menu'),
+      'type'                => MENU_NORMAL_ITEM
+    );
+    $items['admin/settings/adv_taxonomy_menu/list'] = array(
+      'access'              => user_access('administer site configuration'),
+      'callback'            => '__adv_taxonomy_menu_admin',
+      'callback arguments'  => array('main'),
+      'file'                => 'adv_taxonomy_menu.inc',
+      'description'         => t('Global configuration of advanced taxonomy menu functionality.'),
+      'path'                => 'admin/settings/adv_taxonomy_menu/list',
+      'title'               => t('List'),
+      'type'                => MENU_DEFAULT_LOCAL_TASK,
+	  'weight'			  => 0,
+    );
+  $items['admin/settings/adv_taxonomy_menu/edit'] = array(
+    'access'              => user_access('administer site configuration'),
+    'callback'            => 'drupal_get_form',
+    'callback arguments'  => array('__adv_taxonomy_menu_admin', 'edit'),
+    'file'                => 'adv_taxonomy_menu.inc',
+    'description'         => t('Edit a taxonomy menu.'),
+    'path'                => 'admin/settings/adv_taxonomy_menu/edit',
+    'title'               => t('Edit'),
+    'type'                => MENU_CALLBACK,
+  );
+    $items['admin/settings/adv_taxonomy_menu/delete'] = array(
+    'access'              => user_access('administer site configuration'),
+    'callback'            => 'drupal_get_form',
+    'callback arguments'  => array('__adv_taxonomy_menu_admin', 'delete'),
+    'file'                => 'adv_taxonomy_menu.inc',
+    'description'         => t('Edit a taxonomy menu.'),
+    'path'                => 'admin/settings/adv_taxonomy_menu/delete',
+    'title'               => t('Delete'),
+    'type'                => MENU_CALLBACK,
+  );
+  $items['admin/settings/adv_taxonomy_menu/add'] = array(
+    'access'              => user_access('administer site configuration'),
+    'callback'            => 'drupal_get_form',
+    'callback arguments'  => array('__adv_taxonomy_menu_admin', 'add'),
+    'file'                => 'adv_taxonomy_menu.inc',
+    'description'         => t('Add a taxonomy menu.'),
+    'path'                => 'admin/settings/adv_taxonomy_menu/add',
+    'title'               => t('Add'),
+    'type'                => MENU_LOCAL_TASK,
+	'weight'			  => 1,
+    );
+    // This user access function will be used for
+    // all menu items
+    $access = user_access('access content');
+    if($result = adv_taxonomy_menu_get_settings()) {
+      while ($settings = db_fetch_object($result)) {
+        $name[$settings->tmid] = $settings->name;
+		$display_page[$settings->tmid] = $settings->display_page;
+		$display_num[$settings->tmid] = $settings->display_num;
+		$hide_empty[$settings->tmid] = $settings->hide_empty;
+		$display_descendants[$settings->tmid] = $settings->display_descendants;
+		$order[$settings->tmid] = unserialize($settings->vocab_order);
+ 		$pid[$settings->tmid] = $settings->mid;
+      }
+      if(is_array($name)) {
+        foreach($name as $k => $tmenu) {
+	      $items = array_merge($items, adv_taxonomy_menu_process_menu($k, $display_page[$k], $display_num[$k], $hide_empty[$k], $display_descendants[$k], $order[$k], $pid[$k]));
+        }
+	  }
+    }
+  }
+ else {
+   if($bc = adv_taxonomy_menu_breadcrumb()) drupal_set_breadcrumb($bc);
+  }
+ 
+  return $items;
+}
+
+function adv_taxonomy_menu_process_menu($k, $display_page, $display_num, $hide_empty, $display_descendants, $order, $pid, $on_the_fly=FALSE) {
+        $vocabs = array();
+        foreach(taxonomy_get_vocabularies() as $vocab) {
+	      if($order[$vocab->vid] >0 ) {
+	        $key = $order[$vocab->vid];
+	        $vocabs[$key] = $vocab->vid;
+	      }
+	    }
+        // sort vocabs and create ordered keys starting at 1 which will be used to define the current $level later on
+        ksort($vocabs);
+        $vlist = array();
+        $c = 1;
+        foreach($vocabs as $value) {
+          $vlist[$c] = $value;
+	      $c++;
+        }
+        $vocabulary = taxonomy_get_vocabulary($vlist[1]);
+        $root_path =  $display_page .'/'. $vocabulary->vid;
+        $level = 1;
+        $items = adv_taxonomy_menu_recurse_levels($k, $level, $vlist, $root_path, $display_num, $access, $tids=array(), $display_descendants, $pid, $on_the_fly);
+		return $items;
+
+}
+
+/**
+ *   Recurse through the list of vocabularies, creating a menu tree from sub-vacabularies
+ *   
+ *   The main engine for this module.
+ */
+function adv_taxonomy_menu_recurse_levels($k, $level, $vlist, $root_path, $display_num, $access, $tids, $display_desc, $pid, $on_the_fly=FALSE) {
+  $items = array();
+  $v_id = "vid_".$level;
+  $tree = "tree_".$level;
+  $term = "term_".$level;
+  $$v_id = $vlist[$level];
+  $$tree = taxonomy_get_tree($$v_id,0,-1,1);  // get terms  of top level only, ignore any subterms that exist
+  foreach($$tree as $$term) {
+    // go through each item of each vocab and generate a tree from the other vocabs below it
+	$t = array_pop($tids);
+    $tids[] = $$term->tid;
+    // Calculate the numbers of children nodes
+	// If this menu is being created on the fly, invoke any existing hooks
+	if($on_the_fly) {
+	  foreach (module_implements('adv_taxonomy_menu_sql_alter') AS $module) {
+        $function = $module .'_adv_taxonomy_menu_sql_alter';
+	    $result = $function($settings, $tids, 'and', variable_get('adv_taxonomy_menu_display_descendants', TRUE) ? 'all' : 0, FALSE);
+	    break;
+	  }
+	  if(isset($result)) $num = db_num_rows($result);
+	}
+	else $num = db_num_rows(adv_taxonomy_menu_select_nodes($tids, 'and', $display_desc ? 'all' : 0, FALSE)); // get nodes with this first level term
+    if($num) {
+      $path = $root_path;
+	  foreach($tids as $tid) {
+         $path .= "/".$tid;
+      }
+	  $items[$path] = adv_taxonomy_menu_item($k, $path, $$term, $tids, $num, $display_num, $access, $level, $pid);
+ 	  // if we haven't  reached the full number of levels go to next level
+	  if(count($vlist) > $level) {
+		$keep_level = $level;
+		$keep_tids = $tids;
+	    $level++;
+		$tids[] = 0;  // add a dummy item to end of tids array which gets popped off
+	    $items = array_merge($items, adv_taxonomy_menu_recurse_levels($k, $level, $vlist, $root_path, $display_num, $access, $tids, $display_desc, $pid)); 
+		$level = $keep_level;
+	    $tids = $keep_tids;
+      }
+  	}
+  }
+  return $items;
+}
+
+
+function adv_taxonomy_menu_item($k, $path, $term, $tids, $num, $display_num, $access, $level, $pid) {
+       // Calculate the numbers of children nodes
+        // If the number of children nodes of this term is
+        // zero and the Hide Empty Terms option is enabled,
+        // dont create the menu item
+		
+          $name = t($term->name);
+          if ($display_num == TRUE) {
+            $name .= ' ('. $num .')';
+          }
+          $items['path'] = array(
+            'access'          => user_access('access content'),
+            'callback'        => '__adv_taxonomy_menu_page',
+            'callback arguments' => array($term->description),
+            'description'     => t($term->description),
+            'file'            => 'adv_taxonomy_menu.inc',
+            'page callback'   => '__adv_taxonomy_menu_page',
+            'path'            => $path,
+            'title'           => $name,
+            'weight'          => $term->weight
+          );
+		  // Top level items are added directly to the menu that was created when this system was first added
+		  if($level==1) $items['path']['pid'] = $pid;
+ 		  return $items['path'];
+}
+
+
+/**
+ * Implementation of hook_nodeapi().
+ *
+ * This hook enables the menu to be displayed in context during node views.
+ */
+function adv_taxonomy_menu_nodeapi(&$node, $op, $a3, $a4) {
+  static $vocabs = array();
+  if (empty($vocabs) and is_array($vocabs)) {
+ 	  if($terms = taxonomy_node_get_terms($node->nid)) {
+		$bc = adv_taxonomy_menu_node_breadcrumb($terms);
+		// if the node carries terms currently part of the taxonomy menu
+ 	    if($bc['bc']) { 
+		  if($op=='view') {
+		    drupal_set_breadcrumb($bc['bc']); 
+		  }
+		  elseif ($op == 'update' || $op == 'insert' || $op == 'delete') {
+			menu_rebuild();
+		  }
+		}
+	  }
+  }
+}
+// helper function for breadcrumb that can be used by other modules
+function adv_taxonomy_menu_node_breadcrumb($terms) {
+  static $output = array();
+  if(empty($bc) && is_array($terms)) {
+     if($result = adv_taxonomy_menu_get_settings()) {
+        while ($settings = db_fetch_object($result)) {
+	      $vids = array_flip(unserialize($settings->vocab_order));
+		  unset($vids[0]);  //  this is not needed, keys are now the levels, level 0 is not included
+		  //drupal_set_message('vids '.print_r($vids,1));
+		  $found = FALSE;
+		  // loop in the order of the heirarchy
+		  $found = FALSE;
+		  foreach($vids as $vid) {
+		    $params = '/'.$vid;
+ 		    $display_page = $settings->display_page;
+		    foreach ($terms as $term) {
+		      if ($term->vid == $vid) {
+			    //drupal_set_message(print_r($term,1).' '.$settings->display_page);
+		        $params .= '/'.$term->tid;
+				if(!$found) {
+				  $q = $settings->display_page.$params;
+				  $found = TRUE;
+				}
+			    $bc[] = l($term->name, $settings->display_page.$params);
+			  }
+		    }
+		  }
+		  //break;  // we've got what we want so let's go
+	    }
+      $output['bc'] = $bc;
+      $output['q'] = $q;
+ 	}
+  }
+  //drupal_set_message(' d '.$display_page.$params);
+  return $output;
+}
+//  Can be used by other modules to generate a breadcrumb for taxonomy menu pages
+function adv_taxonomy_menu_breadcrumb() {
+  static $bc = array();
+  if(empty($bc)) {
+    if($result = adv_taxonomy_menu_get_settings()) {
+      while ($settings = db_fetch_object($result)) {
+	    $len = strlen($settings->display_page);
+		if(substr($_GET['q'], 0, $len) == $settings->display_page) {
+		  $args = substr($_GET['q'],$len+1);
+		  $parts = explode("/", $args);
+	      // need to get page name
+		  $vid = array_shift($parts);
+		  $params = '/'.$vid;
+		  foreach($parts as $part) {
+		    $params .= '/'.$part;
+			$term = taxonomy_get_term($part);
+			$bc[] = l($term->name, $settings->display_page.$params);
+		  }
+		}
+	  }
+	}
+  }
+  return $bc;
+ }
+ // taxonomy_select_nodes() only returns 10 items which is no good for counting above 10
+function adv_taxonomy_menu_select_nodes($tids = array(), $operator = 'or', $depth = 0, $pager = TRUE, $order = 'n.sticky DESC, n.created DESC') {
+  if (count($tids) > 0) {
+    // For each term ID, generate an array of descendant term IDs to the right depth.
+    $descendant_tids = array();
+    if ($depth === 'all') {
+      $depth = NULL;
+    }
+    foreach ($tids as $index => $tid) {
+      $term = taxonomy_get_term($tid);
+      $tree = taxonomy_get_tree($term->vid, $tid, -1, $depth);
+      $descendant_tids[] = array_merge(array($tid), array_map('_taxonomy_get_tid_from_term', $tree));
+    }
+
+    if ($operator == 'or') {
+      $args = call_user_func_array('array_merge', $descendant_tids);
+      $placeholders = implode(',', array_fill(0, count($args), '%d'));
+      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1 ORDER BY '. $order;
+      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid IN ('. $placeholders .') AND n.status = 1';
+    }
+    else {
+      $joins = '';
+      $wheres = '';
+      $args = array();
+      foreach ($descendant_tids as $index => $tids) {
+        $joins .= ' INNER JOIN {term_node} tn'. $index .' ON n.nid = tn'. $index .'.nid';
+        $placeholders = implode(',', array_fill(0, count($tids), '%d'));
+        $wheres .= ' AND tn'. $index .'.tid IN ('. $placeholders .')';
+        $args = array_merge($args, $tids);
+      }
+      $sql = 'SELECT DISTINCT(n.nid), n.sticky, n.title, n.created FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres .' ORDER BY '. $order;
+      $sql_count = 'SELECT COUNT(DISTINCT(n.nid)) FROM {node} n '. $joins .' WHERE n.status = 1 '. $wheres;
+    }
+    $sql = db_rewrite_sql($sql);
+    $sql_count = db_rewrite_sql($sql_count);
+    if ($pager) {
+      $result = pager_query($sql, variable_get('default_nodes_main', 10), 0, $sql_count, $args);
+    }
+    else {
+      $result = db_query($sql, $args);
+    }
+  }
+
+  return $result;
+}
+
+/**
+ * Page callback that renders a node listing for the selected term.
+ */
+function __adv_taxonomy_menu_page() {
+  require_once(drupal_get_path('module', 'adv_taxonomy_menu') .'/adv_taxonomy_menu.inc');
+  return _adv_taxonomy_menu_page();
+}
+
+/**
+ * Implementation of hook_taxonomy().
+ *
+ * Invalidates the menu cache on taxonomy changes.
+ */
+function adv_taxonomy_menu_taxonomy() {
+  menu_rebuild();
+}
+
+function adv_taxonomy_menu_term_path(&$term) {
+  return 'asdf';
+}

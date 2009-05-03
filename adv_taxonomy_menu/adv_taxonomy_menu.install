@@ -1,0 +1,90 @@
+<?php
+/**
+ * $Id$
+ * @file adv_taxonomy_menu.install
+ * Install and uninstall all required databases.
+ * Also do incremental database updates.
+ */
+ //need to add modification: add mid to table
+function adv_taxonomy_menu_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("CREATE TABLE {adv_taxonomy_menu} (
+        tmid int(11) NOT NULL,
+        mid int(11) NOT NULL,
+		name varchar(55) NOT NULL default '',
+        display_page varchar(55) NOT NULL default '',
+        display_num int(1) NOT NULL default 0,
+        hide_empty int(1) NOT NULL default 0,
+        display_descendants int(1) NOT NULL default 0,
+        vocab_order longtext NULL default '',
+        show_normal longtext NULL default '',
+        show_views longtext NULL default '',
+        PRIMARY KEY  (tmid)
+      ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+  
+    break;
+    case 'pgsql':
+      db_query("CREATE TABLE {adv_taxonomy_menu} (
+        tmid numeric(11) NOT NULL,
+        mid numeric(11) NOT NULL,
+		name varchar(55) NULL,
+        display_page varchar(55) NULL,
+        display_num numeric(1) NOT NULL default 0,
+        hide_empty numeric(1) NOT NULL default 0,
+        display_descendants numeric(1) NOT NULL default 0,
+        vocab_order longtext NULL,
+        show_normal longtext NULL,
+        show_views longtext NULL,
+        PRIMARY KEY  (tmid)
+      );");
+
+      break;
+  }
+  
+ 
+  // Need og_readme() function.
+//  drupal_load('module', 'adv_taxonomy_menu');
+  drupal_set_message(t('Advanced taxonomy module enabled. Please see the included README file for further installation instructions.'));
+  
+}
+
+/**
+ * Delete all SQL tables and global variables
+ * used by this module in other to let no garbage
+ * behind
+ */
+function adv_taxonomy_menu_uninstall() {
+   db_query('DROP TABLE {adv_taxonomy_menu}');
+
+  // Delete variables
+  foreach (taxonomy_get_vocabularies() as $vocabulary) {
+    variable_del('adv_taxonomy_menu_show_'. $vocabulary->vid);
+    variable_del('adv_taxonomy_menu_show_view_'. $vocabulary->vid);
+  }
+  variable_del('adv_taxonomy_menu_display_num');
+  variable_del('adv_taxonomy_menu_hide_empty');
+  variable_del('adv_taxonomy_menu_display_page');
+  variable_del('adv_taxonomy_menu_display_descendants');
+}
+
+/**
+ *   Add parent ID field for menu system
+ */
+function adv_taxonomy_menu_update_1() {
+  $ret = array();
+
+  switch ($GLOBALS['db_type']) {
+    case 'pgsql':
+      db_add_column($ret, 'adv_taxonomy_menu', 'mid', 'int', array('not null' => TRUE, 'default' => ''));
+      break;
+
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {adv_taxonomy_menu} ADD COLUMN mid int(11) NOT NULL");
+      break;
+  }
+
+  return $ret;
+}
