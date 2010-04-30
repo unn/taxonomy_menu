@@ -42,28 +42,28 @@ function taxonomy_menu_install() {
 function taxonomy_menu_schema() {
 
   $schema['taxonomy_menu'] = array(
-    'description' => t('Links a taxonomy term to a menu item'),
+    'description' => 'Links a taxonomy term to a menu item.',
     'fields' => array(
       'mlid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
-        'description' => t('The taxonomy terms {menu_link}.mlid'),
+        'description' => 'The taxonomy terms {menu_link}.mlid.',
       ),
       'tid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
-        'description' => t('tid that is linked to the mlid'),
+        'description' => 'Tid that is linked to the mlid.',
       ),
       'vid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
-        'description' => t('vid for the tid'),
+        'description' => 'Vid for the tid.',
       ),
     ),
     'primary key' => array('mlid', 'tid'),
@@ -76,28 +76,28 @@ function taxonomy_menu_schema() {
 
 function taxonomy_menu_update_6200() {
   $schema['taxonomy_menu'] = array(
-    'description' => t('Links a taxonomy term to a menu item'),
+    'description' => 'Links a taxonomy term to a menu item.',
     'fields' => array(
       'mlid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
-        'description' => t('The taxonomy terms {menu_link}.mlid'),
+        'description' => 'The taxonomy terms {menu_link}.mlid.',
       ),
       'tid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
-        'description' => t('tid that is linked to the mlid'),
+        'description' => 'Tid that is linked to the mlid.',
       ),
       'vid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
         'default' => 0,
-        'description' => t('vid for the tid'),
+        'description' => 'Vid for the tid.',
       ),
     ),
     'primary key' => array('mlid', 'tid'),
