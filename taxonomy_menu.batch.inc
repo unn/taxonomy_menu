@@ -1,5 +1,10 @@
 <?php
+// $Id$
 
+/**
+ * @file
+ * Batch API Code
+ */
 
 /**
 * The $batch can include the following values. Only 'operations'
@@ -37,19 +42,19 @@
 */
 function _taxonomy_menu_insert_link_items_batch($vid) {
   $terms = taxonomy_get_tree($vid);
-  $menu_name = variable_get('taxonomy_menu_vocab_menu_'. $vid, FALSE);
+  $menu_name = variable_get('taxonomy_menu_vocab_menu_' . $vid, FALSE);
 
-  $batch = array( 
-    'operations' => array( 
+  $batch = array(
+    'operations' => array(
       array('_taxonomy_menu_insert_link_items_process', array($terms, $menu_name)),
-    ), 
-    'finished' => '_taxonomy_menu_insert_link_items_success', 
-    'title' => t('Rebuilding Taxonomy Menu'), 
-    'init_message' => t('The menu items have been deleted, and are about to be regenerated.'), 
+    ),
+    'finished' => '_taxonomy_menu_insert_link_items_success',
+    'title' => t('Rebuilding Taxonomy Menu'),
+    'init_message' => t('The menu items have been deleted, and are about to be regenerated.'),
     'progress_message' => t('Import progress: Completed @current of @total stages.'),
-    'redirect' => 'admin/content/taxonomy/edit/vocabulary/'. $vid,
-    'error_message' => t('The Taxonomy Menu rebuild process encountered an error.'), 
-  ); 
+    'redirect' => 'admin/structure/taxonomy',
+    'error_message' => t('The Taxonomy Menu rebuild process encountered an error.'),
+  );
   batch_set($batch);
   batch_process();
 }
@@ -60,7 +65,7 @@ function _taxonomy_menu_insert_link_items_batch($vid) {
  */
 function _taxonomy_menu_insert_link_items_process($terms, $menu_name, &$context) {
   _taxonomy_menu_batch_init_context($context, $start, $end, 10);
-  
+
   //Loop through $terms to process each term
   for ($i=$start; $i<count($terms) && $i<$end; $i++) {
     $args = array(
@@ -69,18 +74,18 @@ function _taxonomy_menu_insert_link_items_process($terms, $menu_name, &$context)
     );
     $mlid = taxonomy_menu_handler('insert', $args);
   }
-  
+
   _taxonomy_menu_batch_update_context($context, $end, count($terms), 'Creating Menu Items');
 }
 
 
 
 /*
- * Set a message stating the menu has been updated 
+ * Set a message stating the menu has been updated
  */
 function _taxonomy_menu_insert_link_items_success() {
   //TODO state menu name here
-  drupal_set_message('The Taxonomy Menu has been updated.');
+  drupal_set_message(t('The Taxonomy Menu has been updated.'));
 }
 
 /*
@@ -91,13 +96,13 @@ function _taxonomy_menu_insert_link_items_success() {
  * @param int $items The number of items to process in this pass
  */
 function _taxonomy_menu_batch_init_context(&$context, &$start, &$end, $items) {
-  //Initialize sandbox the first time through. 
-  if(!isset($context['sandbox']['progress'])) { 
-    $context['sandbox']['progress'] = 0; 
+  //Initialize sandbox the first time through.
+  if(!isset($context['sandbox']['progress'])) {
+    $context['sandbox']['progress'] = 0;
   }
-  
+
   $start = $context['sandbox']['progress'];
-  $end = $start + $items; 
+  $end = $start + $items;
 }
 
 

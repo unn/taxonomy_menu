@@ -5,10 +5,6 @@
 /**
  * @file
  * Database functions
- *
- * @author Neil Hastings      <http://drupal.org/user/245817>
- * @author Mark Theunissen    <http://drupal.org/user/108606>
- * @author Afief Halumi       <http://drupal.org/user/237472>
  */
 
  /**
@@ -19,7 +15,12 @@
  * @param $vid
  */
 function _taxonomy_menu_insert_menu_item($mlid, $tid, $vid) {
-  db_query('INSERT INTO {taxonomy_menu} (mlid, tid, vid) VALUES (%d, %d, %d)', $mlid, $tid, $vid);
+  $fields = array(
+    'mlid' => $mlid,
+    'tid' => $tid,
+    'vid' => $vid,
+  );
+  db_insert('taxonomy_menu')->fields($fields)->execute();
 }
 
 /**
@@ -29,7 +30,11 @@ function _taxonomy_menu_insert_menu_item($mlid, $tid, $vid) {
  *   the term's id
  */
 function _taxonomy_menu_get_mlid($tid, $vid) {
-  return db_result(db_query('SELECT mlid FROM {taxonomy_menu} WHERE tid = %d AND vid = %d', $tid, $vid));
+  $where = array(
+    ':tid' => $tid,
+    ':vid' => $vid,
+  );
+  return db_query('SELECT mlid FROM {taxonomy_menu} WHERE tid = :tid AND vid = :vid', $where)->fetchField();
 }
 
 /**
@@ -42,11 +47,9 @@ function _taxonomy_menu_get_mlid($tid, $vid) {
  */
 function _taxonomy_menu_get_menu_items($vid) {
 
-  $result = db_query('SELECT mlid, tid FROM {taxonomy_menu} WHERE vid = %d', $vid);
+  $result = db_query('SELECT tid, mlid FROM {taxonomy_menu} WHERE vid = :vid', array(':vid' => $vid));
   $menu_items = array();
-  while ($data = db_fetch_object($result)) {
-    $menu_items[$data->tid] = $data->mlid;
-  }
+  $menu_items = $result->fetchAllKeyed();
   return $menu_items;
 }
 
@@ -60,10 +63,15 @@ function _taxonomy_menu_get_menu_items($vid) {
 function _taxonomy_menu_delete_all($vid) {
   $menu_terms = _taxonomy_menu_get_menu_items($vid);
   if (!empty($menu_terms)) {
+    $txn - db_transaction();
     foreach ($menu_terms as $tid => $mlid) {
-      db_query('DELETE FROM {menu_links} WHERE mlid = %d', $mlid);
+      db_delete('menu_links')
+        ->condition('mlid', $mlid)
+        ->execute();
     }
-    db_query('DELETE FROM {taxonomy_menu} WHERE vid = %d', $vid);
+    db_delete('taxonomy_menu')
+      ->condition('vid', $vid)
+      ->execute();
   }
 }
 
@@ -75,11 +83,12 @@ function _taxonomy_menu_delete_all($vid) {
  */
 function _taxonomy_menu_get_node_terms($nid) {
   $output = array();
-  $result = db_query(db_rewrite_sql('SELECT t.tid FROM {term_node} t WHERE t.nid = %d', 't', 'tid'), $nid);
-  while ($data = db_fetch_object($result)) {
-    $output[] = $data->tid;
-  }
-  return $output;
+  $result = db_select('taxonomy_term_node', 'ttn');
+  $result->condition('ttn.nid', $nid);
+  $result->addField('ttn', 'tid');
+  $result->execute();
+
+  return $result->fetchAll();
 }
 
 /**
@@ -104,7 +113,8 @@ function _taxonomy_menu_get_parents($tid) {
   * @param $tid
   */
 function _taxonomy_menu_delete_item($vid, $tid) {
-  db_query('DELETE FROM {taxonomy_menu} WHERE vid = %d AND tid = %d', $vid, $tid);
+  $and = db_and()->condition('vid', $vid)->condition('tid', $tid);
+  db_delete('taxonomy_menu')->condition($and)->execute();
 }
 
 /**
@@ -114,22 +124,28 @@ function _taxonomy_menu_delete_item($vid, $tid) {
  * @return array of $tid
  */
 function _taxonomy_menu_get_terms($vid) {
-  $output = array();
-  $result = db_query(db_rewrite_sql('SELECT t.tid FROM {term_data} t WHERE t.vid = %d','t', 'tid'), $vid);
-  while ($data = db_fetch_object($result)) {
-    $output[] = $data->tid;
-  }
-  return $output;
+  $result = db_select('taxonomy_term_data', 'td')
+    ->condition('vid', $vid)
+    ->addField('td', 'tid')
+    ->execute();
+  return $result->fetchAll();
 }
 
 /**
+ * @TODO Needs Updating since terms are related via node fields
+ *
  * used to get the count without children
  *
  * @param $tid
- */
+ *
 function _taxonomy_menu_term_count($tid) {
-  return db_result(db_query(db_rewrite_sql('SELECT COUNT(n.nid) AS c FROM {term_node} t INNER JOIN {node} n ON t.vid = n.vid WHERE n.status = 1 AND t.tid = %d'), $tid));
-}
+  $result = db_select('term_node', 'tn');
+  $result->condition('tid', $tid);
+  $result->join('node', 'n', 'n.nid = tn.nid AND n.status = 1');
+  $result->addExpression('COUNT(n.nid)', 'term_count');
+  $result->execute();
+  return $result->fetchField();
+}*/
 
 /**
  * Get tid for a given mlid
@@ -138,7 +154,10 @@ function _taxonomy_menu_term_count($tid) {
  * @return $tid
  */
 function _taxonomy_menu_get_tid($mlid) {
-  return db_result(db_query('SELECT tid FROM {taxonomy_menu} WHERE mlid = %d', $mlid));
+  $where = array(
+    ':mlid' => $mlid,
+  );
+  return db_query('SELECT tid FROM {taxonomy_menu} WHERE mlid = :mlid', $where)->fetchField();
 }
 
 /**
@@ -148,7 +167,11 @@ function _taxonomy_menu_get_tid($mlid) {
  * @return array of vid, tid
  */
 function _taxonomy_menu_get_item($mlid) {
-  return db_fetch_array(db_query('SELECT tid, vid FROM {taxonomy_menu} WHERE mlid = %d', $mlid));
+  $result = db_select('taxonomy_menu', 'tm')
+    ->condition('mlid', $mlid, '=')
+    ->fields('tm', array('tid', 'vid'))
+    ->execute();
+  return $result->fetch();
 }
 
 /**
@@ -156,14 +179,18 @@ function _taxonomy_menu_get_item($mlid) {
  * @param $tid array of tids
  * @return $vid
  */
-function _taxonomy_menu_get_vid_by_tid($tid) {
-  if ($tid) {
-    $tids = implode(',', $tid);
-    $result = db_query("SELECT vid FROM {term_data} WHERE tid in (%s)", $tids);
+function _taxonomy_menu_get_vid_by_tid($tids) {
+  if ($tids) {
+    $result = db_select('term_data')
+      ->condition('tid', $tids, 'IN')
+      ->addField('vid')
+      ->distinct()
+      ->execute();
     $vids = array();
-    while ($data = db_fetch_object($result)) {
-      $vids[$data->vid] = $data->vid;
-    }
-    return $vids;
+    return $result->fetchAllAssoc('vid');
   }
 }
+
+/**
+ * Options functions
+ */

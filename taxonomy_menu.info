@@ -1,6 +1,11 @@
 ; $Id$
-core          = "6.x"
+core          = "7.x"
 dependencies[] = taxonomy
+dependencies[] = menu
 description   = "Adds links to taxonomy terms to a menu."
 name          = "Taxonomy Menu"
 package       = Taxonomy Menu
+files[] = taxonomy_menu.batch.inc
+files[] = taxonomy_menu.database.inc
+files[] = taxonomy_menu.module
+files[] = taxonomy_menu.installs
