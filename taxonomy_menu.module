@@ -19,7 +19,7 @@ require_once(drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.batch.
  * our taxonomy_menu options in here on a per-vocab basis.
  */
 function taxonomy_menu_form_alter(&$form, &$form_state, $form_id) {
-  if ($form_id == 'taxonomy_form_vocabulary') {
+  if ($form_id == 'taxonomy_form_vocabulary' && !empty($form['vid'])) {
     // choose a menu to add link items to.
     $menus = menu_get_menus();
     array_unshift($menus, t('- Disabled -'));
@@ -36,7 +36,9 @@ function taxonomy_menu_form_alter(&$form, &$form_state, $form_id) {
     );
     //this turns the vocab terms into menu items
     $item['mlid'] = 0;
+
     $menu_items = menu_parent_options(menu_get_menus(), $item);
+
     array_unshift($menu_items, '= DISABLED =');
 
     $default = variable_get('taxonomy_menu_vocab_menu_' . $form['vid']['#value'], NULL) . ':' .
@@ -61,9 +63,9 @@ function taxonomy_menu_form_alter(&$form, &$form_state, $form_id) {
       '#description' => t('The path will be taxonomy/term/tid if <em>Default</em> has been selected.<br />The menu path will be passed through drupal_get_path_alias() function so all aliases will be applied.'),
     );
 
-    /*get taxonomy menu form options
-    $form['taxonomy_menu']['options'] = _taxonomy_menu_create_options($form['vid']['#value']);
-    */
+    //get taxonomy menu form options
+    //$form['taxonomy_menu']['options'] = _taxonomy_menu_create_options($form['vid']['#value']);
+    //
     //rebuild the menu
     $form['taxonomy_menu']['options']['rebuild'] = array(
       '#type' => 'checkbox',
@@ -91,6 +93,11 @@ function taxonomy_menu_form_alter(&$form, &$form_state, $form_id) {
 function taxonomy_menu_vocab_submit($form, &$form_state) {
   $vid = $form_state['values']['vid'];
   $changed = FALSE;
+
+  if (is_numeric($form_state['values']['taxonomy_menu']['vocab_parent'])) {
+    // Menu location has been set to disabled, don't want to throw notices
+    $form_state['values']['taxonomy_menu']['vocab_parent'] = '0:0';
+  }
 
   // Split the menu location into menu name and menu item id.
   list($vocab_parent['vocab_menu'], $vocab_parent['vocab_parent']) = explode(':', $form_state['values']['taxonomy_menu']['vocab_parent']);
@@ -347,7 +354,7 @@ function taxonomy_menu_taxonomy_term_delete($term) {
 /**
  * Implementation of hook_node_insert().
  */
-function taxonomy_menu_insert($node) {
+function taxonomy_menu_node_insert($node) {
   $terms_old = &drupal_static('taxonomy_menu_terms_old');
   //we use this direct table pull to avoid the cache and because
   //free tags are not formated in a matter where extrating the
@@ -362,7 +369,7 @@ function taxonomy_menu_insert($node) {
 /**
  * Implementation of hook_node_update().
  */
-function taxonomy_menu_update($node) {
+function taxonomy_menu_node_update($node) {
   $terms_old = &drupal_static('taxonomy_menu_terms_old');
   //we use this direct table pull to avoid the cache and because
   //free tags are not formated in a matter where extrating the
@@ -377,7 +384,7 @@ function taxonomy_menu_update($node) {
 /**
  * Implementation of hook_node_presave().
  */
-function taxonomy_menu_presave($node) {
+function taxonomy_menu_node_presave($node) {
   $terms_old = &drupal_static('taxonomy_menu_terms_old');
   //get the terms from the database before the changes are made.
   //these will be used to update the menu item's name if needed
@@ -388,7 +395,7 @@ function taxonomy_menu_presave($node) {
 /**
  * Implementation of hook_node_delete().
  */
-function taxonomy_menu_delete($node) {
+function taxonomy_menu_node_delete($node) {
   //since the delete operation is run after the data is deleted
   //pull the terms from the node object
   $terms = array_keys($node->taxonomy);
@@ -708,7 +715,7 @@ function taxonomy_menu_taxonomy_menu_delete(&$item) {
 }
 
 /**
- * Create the inital $item array
+ * Create the initial $item array
  *
  * @param $args
  *  array with the following key/value pairs:
@@ -726,7 +733,7 @@ function taxonomy_menu_taxonomy_menu_delete(&$item) {
  *   'vid' => the new vocabulary's id
  *   'ptid' => the new parent tid
  *   'mlid' => mlid that needs to be edited
- *   'path_type' => either term, tid or vid.  This is what will be pased to the path function  This must be a key of the array also.
+ *   'path_type' => either term, tid or vid.  This is what will be passed to the path function  This must be a key of the array also.
  */
 function _taxonomy_menu_create_item($args = array()) {
 
@@ -789,7 +796,7 @@ function _taxonomy_menu_create_item($args = array()) {
 /**
  * Helper function to see if any of the children have any nodes
  *
- * @TODO Needs updating since terms are assocated to nodes via fields
+ * @TODO Needs updating since terms are associated to nodes via fields
  *
  * @param $tid
  * @param $vid
