@@ -66,7 +66,7 @@ function _taxonomy_menu_insert_link_items_batch($vid) {
 function _taxonomy_menu_insert_link_items_process($terms, $menu_name, &$context) {
   _taxonomy_menu_batch_init_context($context, $start, $end, 10);
 
-  //Loop through $terms to process each term
+  // Loop through $terms to process each term.
   for ($i=$start; $i<count($terms) && $i<$end; $i++) {
     $args = array(
       'term' => $terms[$i],
@@ -84,7 +84,7 @@ function _taxonomy_menu_insert_link_items_process($terms, $menu_name, &$context)
  * Set a message stating the menu has been updated
  */
 function _taxonomy_menu_insert_link_items_success() {
-  //TODO state menu name here
+  // TODO state menu name here.
   drupal_set_message(t('The Taxonomy Menu has been updated.'));
 }
 
@@ -96,7 +96,7 @@ function _taxonomy_menu_insert_link_items_success() {
  * @param int $items The number of items to process in this pass
  */
 function _taxonomy_menu_batch_init_context(&$context, &$start, &$end, $items) {
-  //Initialize sandbox the first time through.
+  // Initialize sandbox the first time through.
   if(!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
   }

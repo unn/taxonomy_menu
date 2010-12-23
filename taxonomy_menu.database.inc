@@ -77,17 +77,30 @@ function _taxonomy_menu_delete_all($vid) {
 /**
  * Get an array of the tid's related to the node
  *
- * @param $nid
+ * @param $node
  * @return array of tids
  */
-function _taxonomy_menu_get_node_terms($nid) {
-  $output = array();
-  $result = db_select('taxonomy_term_node', 'ttn');
-  $result->condition('ttn.nid', $nid);
-  $result->addField('ttn', 'tid');
-  $result->execute();
-
-  return $result->fetchAll();
+function _taxonomy_menu_get_node_terms($node) {
+  // Get the taxonomy fields.
+  $tids = array();
+  $result = db_query("SELECT field_name FROM {field_config} WHERE type = 'taxonomy_term_reference'");
+  foreach ($result as $field) {
+    $field_name = $field->field_name;
+    
+    if (isset($node->$field_name)) {
+      $tid_field = $node->$field_name;
+      // Loop through all the languages.
+      
+      foreach ($tid_field as $tid_field_languages) {
+        // Loop through all the tids
+        
+        foreach ($tid_field_languages as $tid) {
+          $tids[] = $tid['tid'];
+        }
+      }
+    }
+  }
+  return $tids;
 }
 
 /**
@@ -136,8 +149,8 @@ function _taxonomy_menu_get_terms($vid) {
  * used to get the count without children
  *
  * @param $tid
- *
-function _taxonomy_menu_term_count($tid) {
+ */
+/*function _taxonomy_menu_term_count($tid) {
   $result = db_select('term_node', 'tn');
   $result->condition('tid', $tid);
   $result->join('node', 'n', 'n.nid = tn.nid AND n.status = 1');
