@@ -1,4 +1,4 @@
-  <?php
+<?php
 // $Id$
 
 /**
@@ -109,7 +109,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
   // Split the menu location into menu name and menu item id.
   list($vocab_parent['vocab_menu'], $vocab_parent['vocab_parent']) = explode(':', $form_state['values']['taxonomy_menu']['vocab_parent']);
 
-  //Init flag variables to avoid notices if changes haven't happened
+  // Init flag variables to avoid notices if changes haven't happened
   $changed_menu = FALSE;
   $change_vocab_item = FALSE;
   $changed_path = FALSE;
