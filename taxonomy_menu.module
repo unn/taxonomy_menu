@@ -545,9 +545,7 @@ function taxonomy_menu_handler($op, $args = array(), $node = NULL, $item = array
 function _taxonomy_menu_save($item) {
   $insert = TRUE;
   //create the path.
-  //use url to create he inital path
-  //we need to remove the first '/' so menu_link_save will work correctly
-  $path = ltrim(taxonomy_menu_create_path($item['vid'], $item['tid']), '/');
+  $path = taxonomy_menu_create_path($item['vid'], $item['tid']);
   // get the parent mlid: this is either:
   // - the parent tid's mlid
   // - the vocab menu item's mlid
@@ -684,9 +682,7 @@ function taxonomy_menu_path_default($vid, $tid) {
     $path = "taxonomy/term/$end";
   }
   else {
-    $path = url('taxonomy/term/' . $tid);
-    // Url adds a '/' to the beginning so remove it now.
-    $path = substr($path, 1);
+    $path = 'taxonomy/term/' . $tid;
     if (variable_get('taxonomy_menu_display_descendants_' . $vid, FALSE)) {
       // Use 'all' at the end of the path
       if (variable_get('taxonomy_menu_end_all_' . $vid, FALSE)) {
