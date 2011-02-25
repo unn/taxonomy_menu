@@ -1,4 +1,3 @@
-; $Id$
 core          = "7.x"
 dependencies[] = taxonomy
 dependencies[] = menu
