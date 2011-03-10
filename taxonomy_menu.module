@@ -409,7 +409,7 @@ function taxonomy_menu_node_presave($node) {
 function taxonomy_menu_node_delete($node) {
   //since the delete operation is run after the data is deleted
   //pull the terms from the node object
-  $terms = array_keys($node->taxonomy);
+  $terms =  _taxonomy_menu_get_node_terms($node);
   _taxonomy_menu_nodeapi_helper('delete', $terms, $node);
 }
 
@@ -478,6 +478,7 @@ function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
     }
   }
 }
+
 /**
  * HANDLING
  *
