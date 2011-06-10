@@ -7,4 +7,5 @@ package       = Taxonomy Menu
 files[] = taxonomy_menu.batch.inc
 files[] = taxonomy_menu.database.inc
 files[] = taxonomy_menu.module
-files[] = taxonomy_menu.installs
+files[] = taxonomy_menu.test
+files[] = taxonomy_menu.install

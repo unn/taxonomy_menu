@@ -48,14 +48,14 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => 'Taxonomy Menu',
-      'description' => 'Test loading, saving and deleting items.',
+      'name' => 'CRUD',
+      'description' => 'Test CRUD functions',
       'group' => 'Taxonomy Menu',
     );
   }
 
   function setUp() {
-    parent::setUp('taxonomy', 'field_test');
+    parent::setUp('taxonomy_menu');
     $admin_user = $this->drupalCreateUser(array('create article content', 'administer taxonomy'));
     $this->drupalLogin($admin_user);
     $this->vocabulary = $this->createVocabulary();
@@ -91,7 +91,12 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
     );
     field_create_instance($this->instance);
   }
+
   function testTaxonomyMenuCRUD() {
+    $edit = array();
+    $edit['taxonomy_menu[vocab_parent]'] = 'main-menu:0';
+    $this->drupalPost('admin/structure/taxonomy/' .  $this->vocabulary->machine_name . '/edit', $edit, 'Save');
+    $this->assertResponse(200);
     
   }
 }
