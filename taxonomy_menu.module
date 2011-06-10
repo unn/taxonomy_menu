@@ -740,8 +740,8 @@ function taxonomy_menu_taxonomy_menu_delete(&$item) {
 function _taxonomy_menu_create_item($args = array(), $node) {
 
   //if tid = 0 then we are creating a vocab item
-  if ($args['tid'] == 0 && variable_get('taxonomy_menu_voc_item_'. $args['vid'], 0)) {
 
+  if (@$args['tid'] == 0 && variable_get('taxonomy_menu_voc_item_'. @$args['vid'], 0)) {
     $vocab = taxonomy_vocabulary_load($args['vid']);
     $item = array(
       'tid' => 0,
@@ -788,7 +788,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
     'language' => $node ? $node->language : $GLOBALS['language']->language,
   );
 
-  if ($args['mlid']) {
+  if (isset($args['mlid'])) {
     $item['mlid'] = $args['mlid'];
   }
 
