@@ -50,7 +50,7 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
     return array(
       'name' => 'CRUD',
       'description' => 'Test CRUD functions',
-      'group' => 'Taxonomy Menu',
+      'group' => 'Taxonomy menu',
     );
   }
 
@@ -97,7 +97,6 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
     $edit['taxonomy_menu[vocab_parent]'] = 'main-menu:0';
     $this->drupalPost('admin/structure/taxonomy/' .  $this->vocabulary->machine_name . '/edit', $edit, 'Save');
     $this->assertResponse(200);
-    
   }
 }
 
