@@ -593,7 +593,7 @@ function _taxonomy_menu_save($item) {
   }
 
   // FIXME: i18nmenu need to be cleaned up to allow translation from other menu module
-  if (module_exists('i18nmenu')) {
+  if (module_exists('i18n_menu')) {
     $link['options']['alter'] = TRUE;
     $link['language'] = $item['language'];
     $link['customized'] = 1;
@@ -785,7 +785,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
     'vid' => $term->vid,
     'ptid' => $ptid,
     'menu_name' => $args['menu_name'],
-    'language' => $node ? $node->language : $GLOBALS['language']->language,
+    'language' => isset($term->language) ? $term->language : ($node ? $node->language : $GLOBALS['language']->language),
   );
 
   if (isset($args['mlid'])) {
@@ -1009,43 +1009,45 @@ function taxonomy_menu_taxonomy_menu_options() {
  *
  */
 function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
-  if (module_exists('i18ntaxonomy')) {
+  if (module_exists('i18n_taxonomy')) {
     // In case of localized terms, use term translation for menu title.
     if ($item['module'] == 'taxonomy_menu') {
-      // TODO: check vocabulary translation mode before tryring to translate: but is this really usefull?
-      //  if (i18ntaxonomy_vocabulary($vid) == I18N_TAXONOMY_LOCALIZE) {
       $t = _taxonomy_menu_get_item($item['mlid']);
-      if ($t['tid'] > 0) {  // this is a term
-        $term = taxonomy_term_load($t['tid']);
+      // Only translate when translation mode is set to localize.
+      if (i18n_taxonomy_vocabulary_mode($t->vid, I18N_MODE_LOCALIZE)) {
+        // this is a term
+        if ($t->tid > 0) {
+          $term = taxonomy_term_load($t->tid);
 
-        $display_num = '';
-        $num = _taxonomy_menu_term_count($t['tid']);
-
-        // If hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
-        if ($num == 0 &&
-          variable_get('taxonomy_menu_hide_empty_terms_'. $t['vid'], FALSE) &&
-          _taxonomy_menu_children_has_nodes($t['tid'], $t['vid'])) {
           $display_num = '';
-        }
-        // if display number is selected and $num > 0 then change the title
-        else if (variable_get('taxonomy_menu_display_num_'. $t['vid'], FALSE)) {
-          // if number > 0 and display decendants, then count all of the children
-          if (variable_get('taxonomy_menu_display_descendants_'. $t['vid'], FALSE)) {
-            $num = taxonomy_term_count_nodes($t['tid']);
-          }
-          $display_num = " ($num)";
-        }
 
-        if ($item['title'] != ($term->name . $display_num)) {
-          // Should not happen
-          watchdog('error', t('Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)));
+          /* TODO: Needs to be updated, see _taxonomy_menu_item().
+          $num = _taxonomy_menu_term_count($t->tid);
+
+          // If hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
+          if ($num == 0 && variable_get('taxonomy_menu_hide_empty_terms_'. $t->vid, FALSE) && _taxonomy_menu_children_has_nodes($t->tid, $t->vid)) {
+            $display_num = '';
+          }
+          // if display number is selected and $num > 0 then change the title
+          else if (variable_get('taxonomy_menu_display_num_'. $t->vid, FALSE)) {
+            // if number > 0 and display decendants, then count all of the children
+            if (variable_get('taxonomy_menu_display_descendants_'. $t->vid, FALSE)) {
+              $num = taxonomy_term_count_nodes($t->tid);
+            }
+            $display_num = " ($num)";
+          }*/
+
+          if ($item['title'] != ($term->name . $display_num)) {
+            // Should not happen
+            watchdog('error', t('Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)));
+          }
+          $item['title'] = $item['link_title'] = i18n_taxonomy_term_name($term) . $display_num;
         }
-        $item['link_title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
-        $item['title'] = tt('taxonomy:term:'. $term->tid .':name', $term->name) . $display_num;
-      }
-      else {  // is a vocabulary
-        $vocab = taxonomy_vocabulary_load($t['vid']);
-        $item['title'] = tt('taxonomy:vocabulary:'. $vocab->vid .':name', $vocab->name);
+        // is a vocabulary
+        else {
+          $vocab = taxonomy_vocabulary_load($t->vid);
+          $item['title'] = i18n_string('taxonomy:vocabulary:'. $vocab->vid .':name', $vocab->name);
+        }
       }
     }
   }
