@@ -108,5 +108,17 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
 
     $this->assertNoLink($term->name);
   }
+  
+  function testTaxonomyMenuCustomMenu()
+    // Create a custom menu.
+    $edit = array();
+    $edit['edit-title'] = $this->randomName();
+    $this->drupalPost('admin/structure/menu/add', $edit, 'Save');
+
+    // Move the menu block to a region.
+    $edit = array();
+    $this->drupalGet('admin/build/block');
+    $this->assertResponse(200);
+  }
 }
 
