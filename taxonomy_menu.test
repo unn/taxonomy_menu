@@ -61,42 +61,52 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
     $this->vocabulary = $this->createVocabulary();
     $this->term = $this->createTerm($this->vocabulary);
     
-    $field = array(
-      'field_name' => 'taxonomy_' . $this->vocabulary->machine_name,
-      'type' => 'taxonomy_term_reference',
-      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
-      'settings' => array(
-        'allowed_values' => array(
-          array(
-            'vocabulary' => $this->vocabulary->machine_name,
-            'parent' => 0,
-          ),
-        ),
-      ),
-    );
-    field_create_field($field);
-
-    $this->instance = array(
-      'field_name' => 'taxonomy_' . $this->vocabulary->machine_name,
-      'bundle' => 'article',
-      'entity_type' => 'node',
-      'widget' => array(
-        'type' => 'options_select',
-      ),
-      'display' => array(
-        'default' => array(
-          'type' => 'taxonomy_term_reference_link',
-        ),
-      ),
-    );
-    field_create_instance($this->instance);
+//    $field = array(
+//      'field_name' => 'taxonomy_' . $this->vocabulary->machine_name,
+//      'type' => 'taxonomy_term_reference',
+//      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+//      'settings' => array(
+//        'allowed_values' => array(
+//          array(
+//            'vocabulary' => $this->vocabulary->machine_name,
+//            'parent' => 0,
+//          ),
+//        ),
+//      ),
+//    );
+//    field_create_field($field);
+//
+//    $this->instance = array(
+//      'field_name' => 'taxonomy_' . $this->vocabulary->machine_name,
+//      'bundle' => 'article',
+//      'entity_type' => 'node',
+//      'widget' => array(
+//        'type' => 'options_select',
+//      ),
+//      'display' => array(
+//        'default' => array(
+//          'type' => 'taxonomy_term_reference_link',
+//        ),
+//      ),
+//    );
+//    field_create_instance($this->instance);
   }
 
   function testTaxonomyMenuCRUD() {
     $edit = array();
     $edit['taxonomy_menu[vocab_parent]'] = 'main-menu:0';
     $this->drupalPost('admin/structure/taxonomy/' .  $this->vocabulary->machine_name . '/edit', $edit, 'Save');
+
     $this->assertResponse(200);
+
+    $term = $this->term;
+    $this->assertLink($term->name);
+
+    $term = $this->term;
+    taxonomy_term_delete($term->tid);
+    $this->drupalGet('<front>');
+
+    $this->assertNoLink($term->name);
   }
 }
 
