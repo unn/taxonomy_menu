@@ -109,7 +109,7 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
     $this->assertNoLink($term->name);
   }
   
-  function testTaxonomyMenuCustomMenu()
+  function testTaxonomyMenuCustomMenu() {
     // Create a custom menu.
     $edit = array();
     $edit['edit-title'] = $this->randomName();
