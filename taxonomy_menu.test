@@ -56,7 +56,7 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
 
   function setUp() {
     parent::setUp('taxonomy_menu');
-    $admin_user = $this->drupalCreateUser(array('create article content', 'administer taxonomy'));
+    $admin_user = $this->drupalCreateUser(array('access administration pages', 'create article content', 'administer blocks', 'administer taxonomy', 'administer menu'));
     $this->drupalLogin($admin_user);
     $this->vocabulary = $this->createVocabulary();
     $this->term = $this->createTerm($this->vocabulary);
@@ -112,12 +112,14 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
   function testTaxonomyMenuCustomMenu() {
     // Create a custom menu.
     $edit = array();
-    $edit['edit-title'] = $this->randomName();
+    $custom_name = $this->randomName(16);
+    $edit['title'] = $custom_name;
+    $edit['menu_name'] = substr(hash('sha256', $custom_name), 0, MENU_MAX_MENU_NAME_LENGTH_UI);
     $this->drupalPost('admin/structure/menu/add', $edit, 'Save');
 
     // Move the menu block to a region.
     $edit = array();
-    $this->drupalGet('admin/build/block');
+    $this->drupalGet('admin/structure/block');
     $this->assertResponse(200);
   }
 }
