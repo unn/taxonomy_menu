@@ -70,3 +70,35 @@ function taxonomy_menu_schema() {
 
   return $schema;
 }
+
+/**
+ * Convert vocabulary ids into vocabulary machine names.
+ */
+function taxonomy_menu_update_7000() {
+  $variable_prefixes = array(
+    'vocab_menu',
+    'vocab_parent',
+    'voc_item',
+    'display_num',
+    'hide_empty_terms',
+    'expanded',
+    'rebuild',
+    'path',
+    'menu_end_all',
+    'display_descendants',
+    'voc_name',
+    'sync',
+  );
+
+  $vocabularies = taxonomy_get_vocabularies();
+  foreach ($vocabularies as $vocabulary) {
+    foreach ($variable_prefixes as $prefix) {
+      $old_name = 'taxonomy_menu_' . $prefix . '_' . $vocabulary->vid;
+      $new_name = 'taxonomy_menu_' . $prefix . '_' . $vocabulary->machine_name;
+      if (($value = variable_get($old_name)) !== NULL) {
+        variable_set($new_name, $value);
+        variable_del($old_name);
+      }
+    }
+  }
+}
