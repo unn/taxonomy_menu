@@ -137,7 +137,7 @@ function _taxonomy_menu_delete_item($vid, $tid) {
 function _taxonomy_menu_get_terms($vid) {
   $result = db_select('taxonomy_term_data', 'td')
     ->condition('vid', $vid)
-    ->addField('td', 'tid')
+    ->fields('td', array('tid'))
     ->execute();
   return $result->fetchAll();
 }
@@ -194,7 +194,7 @@ function _taxonomy_menu_get_vid_by_tid($tids) {
   if ($tids) {
     $result = db_select('term_data')
       ->condition('tid', $tids, 'IN')
-      ->addField('vid')
+      ->fields('term_data', array('vid'))
       ->distinct()
       ->execute();
     $vids = array();
