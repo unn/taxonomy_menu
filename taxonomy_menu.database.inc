@@ -149,14 +149,14 @@ function _taxonomy_menu_get_terms($vid) {
  *
  * @param $tid
  */
-/*function _taxonomy_menu_term_count($tid) {
+function _taxonomy_menu_term_count($tid) {
   $result = db_select('term_node', 'tn');
   $result->condition('tid', $tid);
   $result->join('node', 'n', 'n.nid = tn.nid AND n.status = 1');
   $result->addExpression('COUNT(n.nid)', 'term_count');
   $result->execute();
   return $result->fetchField();
-}*/
+}
 
 /**
  * Get tid for a given mlid
