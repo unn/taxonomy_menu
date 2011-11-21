@@ -609,16 +609,15 @@ function _taxonomy_menu_save($item) {
 
   // Add setup the query paramater in the URL correctly
   if (strpos($path, '?') !== FALSE) {
-   $split = explode('?', $path);
-   if (strpos($split[1], '?') !== FALSE) {
-     // the query split didn't work, too many question marks
-     // error?
-   } else {
-     $link['options']['query'] = $split[1];
-     $link['link_path'] = $split[0];
-   }
- }
-
+    $split = explode('?', $path);
+    if (strpos($split[1], '?') !== FALSE) {
+      // the query split didn't work, too many question marks
+      // error?
+    } else {
+      parse_str($split[1], $link['options']['query']);
+      $link['link_path'] = $split[0];
+    }
+  }
 
   // If passed a mlid then add it
   if (isset($item['mlid']) && $item['mlid']) {
