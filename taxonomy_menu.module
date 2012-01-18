@@ -1073,9 +1073,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
         // this is a term
         if ($t->tid > 0) {
           $term = taxonomy_term_load($t->tid);
-
           $display_num = '';
-
           $num = _taxonomy_menu_term_count($t->tid);
 
           // If hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
@@ -1095,7 +1093,12 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
             // Should not happen
             watchdog('error', t('Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)));
           }
-          $item['title'] = $item['link_title'] = i18n_taxonomy_term_name($term) . $display_num;
+
+          $term = i18n_taxonomy_localize_terms($term);
+          $item['title'] = $item['link_title'] = $term->name . $display_num;
+          if ($term->description) {
+            $item['options']['attributes']['title'] = $term->description;
+          }
         }
         // is a vocabulary
         else {
