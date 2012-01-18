@@ -313,7 +313,7 @@ function taxonomy_menu_taxonomy_term_insert($term) {
 /**
  * Implementation of hook_taxonomy_term_update().
  */
-function taxonomy_menu_taxonomy_menu_term_update($term) {
+function taxonomy_menu_taxonomy_term_update($term) {
   // Only sync if taxonomy_menu is enabled for this vocab and the 'sync'
   // option has been checked.
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $term->vid), 0);
