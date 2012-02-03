@@ -326,7 +326,6 @@ function taxonomy_menu_taxonomy_term_update($term) {
       'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
     );
     $message = t('Term %term has been updated in taxonomy menu %menu_name.', array('%term' => $term->name, '%menu_name' => $menu_name));
-    break;
 
     // run function
     taxonomy_menu_handler('update', $item);
