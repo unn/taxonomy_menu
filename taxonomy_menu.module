@@ -577,6 +577,15 @@ function taxonomy_menu_handler($op, $args = array(), $node = NULL, $item = array
  */
 function _taxonomy_menu_save($item) {
   $insert = TRUE;
+
+  $flatten_menu = variable_get(_taxonomy_menu_build_variable('flat',
+$item['vid']));
+  // Child items should appear around the parent/root, so set their weight
+  // equal to the root term's
+  if ($flatten_menu) {
+    $item['weight'] = $item['root_term_weight'];
+  }
+
   //create the path.
   $path = taxonomy_menu_create_path($item['vid'], $item['tid']);
   // get the parent mlid: this is either:
@@ -584,7 +593,7 @@ function _taxonomy_menu_save($item) {
   // - the vocab menu item's mlid
   // - the menu parent setting for this vocab
   $plid = _taxonomy_menu_get_mlid($item['ptid'], $item['vid']);
-  if (!$plid) {
+  if (!$plid || $flatten_menu) {
     $plid = variable_get(_taxonomy_menu_build_variable('vocab_parent', $item['vid']), NULL);
   }
 
@@ -781,6 +790,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
       'weight' => $vocab->weight,
       'vid' => $args['vid'],
       'ptid' => 0,
+      'root_term_weight' => $vocab_weight,
       'menu_name' => $args['menu_name'],
       'language' => $vocab->language,
     );
@@ -809,6 +819,16 @@ function _taxonomy_menu_create_item($args = array(), $node) {
     $ptid = 0;
   }
 
+  // Find the weight of the root taxonomy term; we'll need it in case we want
+  // a flat taxonomy menu.
+  if (is_object($term)) {
+    $term_parents = taxonomy_get_parents_all($term->tid);
+    $root_term_weight = $term_parents[count($term_parents) - 1]->weight;
+  }
+  else {
+    $root_term_weight = 0;
+  }
+
   // turn the term into the correct $item array form
   $item = array(
     'tid' => $term->tid,
@@ -817,6 +837,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
     'weight' => $term->weight,
     'vid' => $term->vid,
     'ptid' => $ptid,
+    'root_term_weight' => $root_term_weight,
     'menu_name' => $args['menu_name'],
     'language' => isset($term->language) ? $term->language : ($node ? $node->language : $GLOBALS['language']->language),
   );
@@ -1029,6 +1050,13 @@ function taxonomy_menu_taxonomy_menu_options() {
     '#title' => t('Auto expand menu items'),
     '#description' => t('Automatically show all menu items as expanded.'),
     'default' => TRUE,
+  );
+
+  $options['flat'] = array(
+    '#title' => t('Flatten the taxonomy\'s hierarchy in the menu'),
+    '#description' => t('Add all menu items to the same level rather than
+ hierarchically.'),
+    'default' => FALSE,
   );
 
   $options['voc_name'] = array(
