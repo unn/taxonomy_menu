@@ -12,7 +12,7 @@ require_once(drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.databa
 require_once(drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.batch.inc');
 
 /**
- * Implementation of hook_form_alter().
+ * Implements hook_form_alter().
  *
  * Modify the form at admin/content/taxonomy/edit/vocabulary/xx. We add
  * our taxonomy_menu options in here on a per-vocab basis.
@@ -70,7 +70,7 @@ function taxonomy_menu_form_alter(&$form, &$form_state, $form_id) {
     );
 
     //get taxonomy menu form options
-    if(isset($form['vid']) && $form['vid']['#value']) {
+    if (isset($form['vid']) && $form['vid']['#value']) {
       $vid = $form['vid']['#value'];
     }
     else {
@@ -179,6 +179,8 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
     variable_set('menu_rebuild_needed', TRUE);
     // Only send a message if one has been created.
     if (isset($message) && $message) {
+      // $message is sanitized coming out of its source function,
+      // no need to reclean it here
       drupal_set_message($message, 'status');
     }
   }
@@ -274,7 +276,7 @@ function _taxonomy_menu_insert_link_items($vid) {
 }
 
 /**
- * Implementation of hook_taxonomy_vocabulary_delete().
+ * Implements hook_taxonomy_vocabulary_delete().
  */
 function taxonomy_menu_taxonomy_vocabulary_delete($vocabulary) {
   //delete the menu items
@@ -284,7 +286,7 @@ function taxonomy_menu_taxonomy_vocabulary_delete($vocabulary) {
 }
 
 /**
- * Implementation of hook_taxonomy_term_insert($term).
+ * Implements hook_taxonomy_term_insert($term).
  */
 function taxonomy_menu_taxonomy_term_insert($term) {
   // only sync if taxonomy_menu is enabled for this vocab and the 'sync'
@@ -311,7 +313,7 @@ function taxonomy_menu_taxonomy_term_insert($term) {
 }
 
 /**
- * Implementation of hook_taxonomy_term_update().
+ * Implements hook_taxonomy_term_update().
  */
 function taxonomy_menu_taxonomy_term_update($term) {
   // Only sync if taxonomy_menu is enabled for this vocab and the 'sync'
@@ -338,7 +340,7 @@ function taxonomy_menu_taxonomy_term_update($term) {
 }
 
 /**
- * Implementation of hook_taxonomy_term_delete()
+ * Implements hook_taxonomy_term_delete().
  */
 function taxonomy_menu_taxonomy_term_delete($term) {
       // only sync if taxonomy_menu is enabled for this vocab and the 'sync'
@@ -367,7 +369,7 @@ function taxonomy_menu_taxonomy_term_delete($term) {
 }
 
 /**
- * Implementation of hook_node_insert().
+ * Implements hook_node_insert().
  */
 function taxonomy_menu_node_insert($node) {
   $terms_old = &drupal_static('taxonomy_menu_terms_old');
@@ -382,7 +384,7 @@ function taxonomy_menu_node_insert($node) {
 }
 
 /**
- * Implementation of hook_node_update().
+ * Implements hook_node_update().
  */
 function taxonomy_menu_node_update($node) {
   $terms_old = &drupal_static('taxonomy_menu_terms_old');
@@ -397,7 +399,7 @@ function taxonomy_menu_node_update($node) {
 }
 
 /**
- * Implementation of hook_node_presave().
+ * Implements hook_node_presave().
  */
 function taxonomy_menu_node_presave($node) {
   $terms_old = &drupal_static('taxonomy_menu_terms_old');
@@ -408,7 +410,7 @@ function taxonomy_menu_node_presave($node) {
 }
 
 /**
- * Implementation of hook_node_delete().
+ * Implements hook_node_delete().
  */
 function taxonomy_menu_node_delete($node) {
   //since the delete operation is run after the data is deleted
@@ -598,7 +600,7 @@ $item['vid']));
   }
 
   // Make sure the path has less then 256 characters
-  if (strlen($path) > 256) {
+  if (drupal_strlen($path) > 256) {
     preg_match('/(.{256}.*?)\b/', $path, $matches);
     $path = rtrim($matches[1]);
   }
@@ -621,7 +623,8 @@ $item['vid']));
     if (strpos($split[1], '?') !== FALSE) {
       // the query split didn't work, too many question marks
       // error?
-    } else {
+    }
+    else {
       parse_str($split[1], $link['options']['query']);
       $link['link_path'] = $split[0];
     }
@@ -737,7 +740,7 @@ function taxonomy_menu_path_default($vid, $tid) {
         }
         if ($tids) {
           $end = implode(' ', $tids);
-          $path .= ' '. $end;
+          $path .= ' ' . $end;
         }
       }
     }
@@ -802,7 +805,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
   }
 
   // get the first parent
-  if(is_object($term) && isset($term->parents)) {
+  if (is_object($term) && isset($term->parents)) {
     if (is_array($term->parents)) {
       foreach ($term->parents as $key => $val) {
         $ptid = $val;
@@ -861,7 +864,8 @@ function _taxonomy_menu_children_has_nodes($tid, $vid, $return = FALSE) {
   foreach ($children as $tid => $term) {
     if (_taxonomy_menu_term_count($tid) > 0) {
       $return = TRUE;
-    } else {
+    }
+    else {
       $return = _taxonomy_menu_children_has_nodes($tid, $vid, $return);
     }
   }
@@ -896,9 +900,10 @@ function _taxonomy_menu_item($item) {
       }
       $item['name'] .= " ($num)";
     }
-  } elseif ($item['tid'] == 0) {
+  }
+  elseif ($item['tid'] == 0) {
     //if custom name is provided, use that name
-    $custom_name = variable_get(_taxonomy_menu_build_variable('voc_name',$item['vid']), '');
+    $custom_name = variable_get(_taxonomy_menu_build_variable('voc_name', $item['vid']), '');
     if (!empty($custom_name)) {
       $item['name'] = $custom_name;
     }
@@ -914,7 +919,7 @@ function _taxonomy_menu_item($item) {
  * @param $vid
  * @return integer
  */
-function taxonomy_menu_term_count_nodes ($tid, $vid, $count = 0) {
+function taxonomy_menu_term_count_nodes($tid, $vid, $count = 0) {
   $count += _taxonomy_menu_term_count($tid);
   $children = taxonomy_get_children($tid, $vid);
   foreach ($children as $tid => $term) {
@@ -925,7 +930,7 @@ function taxonomy_menu_term_count_nodes ($tid, $vid, $count = 0) {
 
 
 /**
- * Implementation of hook_taxonomy_menu_insert().
+ * Implements hook_taxonomy_menu_insert().
  *
  * @param $item
  *  array with the following key/value pairs:
@@ -944,7 +949,7 @@ function taxonomy_menu_taxonomy_menu_insert(&$item) {
 }
 
 /**
- * Implementation of hook_taxonomy_menu_update().
+ * Implements hook_taxonomy_menu_update().
  *
  * @param $item
  *  array with the following key/value pairs:
@@ -1000,17 +1005,17 @@ function _taxonomy_menu_create_options($vid) {
 
 function _taxonomy_menu_build_variable($name, $vid) {
   $vocabulary = taxonomy_vocabulary_load($vid);
-  if($vocabulary) {
+  if ($vocabulary) {
     return 'taxonomy_menu_' . $name . '_' . $vocabulary->machine_name;
   }
   else {
-    return false;
+    return FALSE;
   }
 
 }
 
 /**
- * Implementation of hook_taxonomy_menu_options().
+ * Implements hook_taxonomy_menu_options().
  *
  * @return array
  *  Uses the value to set the variable taxonomy_menu_<value>_<machine_name>
@@ -1085,7 +1090,7 @@ function taxonomy_menu_taxonomy_menu_options() {
 
 
 /**
- * Implementation of hook_translated_menu_link_alter().
+ * Implements hook_translated_menu_link_alter().
  *
  * Translate menu links on the fly by using term translations.
  *
@@ -1110,7 +1115,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
               $display_num = '';
             }
             // if display number is selected and $num > 0 then change the title
-            else if (variable_get(_taxonomy_menu_build_variable('display_num', $t->vid), FALSE)) {
+            elseif (variable_get(_taxonomy_menu_build_variable('display_num', $t->vid), FALSE)) {
               // if number > 0 and display decendants, then count all of the children
               if (variable_get(_taxonomy_menu_build_variable('display_descendants', $t->vid), FALSE)) {
                 $num = taxonomy_menu_term_count_nodes($t->tid, $t->vid);
@@ -1120,7 +1125,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
 
             if ($item['title'] != ($term->name . $display_num)) {
               // Should not happen
-              watchdog('error', t('Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num)));
+              watchdog('error', 'Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num));
             }
 
             $term = i18n_taxonomy_localize_terms($term);
@@ -1132,13 +1137,13 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
           // is a vocabulary
           else {
             $vocab = taxonomy_vocabulary_load($t->vid);
-            $item['title'] = i18n_string('taxonomy:vocabulary:'. $vocab->vid .':name', $vocab->name);
+            $item['title'] = i18n_string('taxonomy:vocabulary:' . $vocab->vid . ':name', $vocab->name);
           }
         }
       }
       // no term, add a watchdog entry to help
       else {
-        watchdog('taxonomy_menu', t('Error with menu entry "%me" in menu "%mt"'), array('%me' => $item['title'],'%mt' => $item['menu_name']));
+        watchdog('taxonomy_menu', 'Error with menu entry "%me" in menu "%mt"', array('%me' => $item['title'], '%mt' => $item['menu_name']));
       }
     }
   }

@@ -6,39 +6,39 @@
  */
 
 /**
-* The $batch can include the following values. Only 'operations'
-* and 'finished' are required, all others will be set to default values.
-*
-* @param operations
-*   An array of callbacks and arguments for the callbacks.
-*   There can be one callback called one time, one callback
-*   called repeatedly with different arguments, different
-*   callbacks with the same arguments, one callback with no
-*   arguments, etc.
-*
-* @param finished
-*   A callback to be used when the batch finishes.
-*
-* @param title
-*   A title to be displayed to the end user when the batch starts.
-*
-* @param init_message
-*   An initial message to be displayed to the end user when the batch starts.
-*
-* @param progress_message
-*   A progress message for the end user. Placeholders are available.
-*   Placeholders note the progression by operation, i.e. if there are
-*   2 operations, the message will look like:
-*    'Processed 1 out of 2.'
-*    'Processed 2 out of 2.'
-*   Placeholders include:
-*     @current, @remaining, @total and @percentage
-*
-* @param error_message
-*   The error message that will be displayed to the end user if the batch
-*   fails.
-*
-*/
+ * The $batch can include the following values. Only 'operations'
+ * and 'finished' are required, all others will be set to default values.
+ *
+ * @param operations
+ *   An array of callbacks and arguments for the callbacks.
+ *   There can be one callback called one time, one callback
+ *   called repeatedly with different arguments, different
+ *   callbacks with the same arguments, one callback with no
+ *   arguments, etc.
+ *
+ * @param finished
+ *   A callback to be used when the batch finishes.
+ *
+ * @param title
+ *   A title to be displayed to the end user when the batch starts.
+ *
+ * @param init_message
+ *   An initial message to be displayed to the end user when the batch starts.
+ *
+ * @param progress_message
+ *   A progress message for the end user. Placeholders are available.
+ *   Placeholders note the progression by operation, i.e. if there are
+ *   2 operations, the message will look like:
+ *    'Processed 1 out of 2.'
+ *    'Processed 2 out of 2.'
+ *   Placeholders include:
+ *     @current, @remaining, @total and @percentage
+ *
+ * @param error_message
+ *   The error message that will be displayed to the end user if the batch
+ *   fails.
+ *
+ */
 function _taxonomy_menu_insert_link_items_batch($vid) {
   $terms = taxonomy_get_tree($vid);
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
@@ -96,7 +96,7 @@ function _taxonomy_menu_insert_link_items_success() {
  */
 function _taxonomy_menu_batch_init_context(&$context, &$start, &$end, $items) {
   // Initialize sandbox the first time through.
-  if(!isset($context['sandbox']['progress'])) {
+  if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
   }
 

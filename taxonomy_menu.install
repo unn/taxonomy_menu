@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function taxonomy_menu_uninstall() {
 
@@ -19,7 +19,7 @@ function taxonomy_menu_uninstall() {
   // Delete variables
   $query = db_select('variable', 'v')->fields('v')->execute();
   $variables = $query->fetchAll();
-  foreach($variables as $variable) {
+  foreach ($variables as $variable) {
     if (strpos($variable->name, 'taxonomy_menu') !== FALSE) {
       variable_del($variable->name);
     }
@@ -27,13 +27,13 @@ function taxonomy_menu_uninstall() {
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function taxonomy_menu_install() {
 }
 
 /**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function taxonomy_menu_schema() {
 
