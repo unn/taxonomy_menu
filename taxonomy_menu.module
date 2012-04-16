@@ -428,8 +428,8 @@ function taxonomy_menu_node_delete($node) {
  *  An array of tids.
  * @param $node
  */
-function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
-  foreach ($terms as $key => $tid) {
+function _taxonomy_menu_nodeapi_helper($op, $terms, $node) {
+  foreach ($terms as $tid) {
     $term = taxonomy_term_load($tid);
     $term->parents = array_keys(taxonomy_get_parents($tid));
     //$parents = taxonomy_get_parents($tid);
