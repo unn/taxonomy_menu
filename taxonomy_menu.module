@@ -2,7 +2,7 @@
 
 /**
  * @file
- * It Generates menu links for all selected taxonomy terms
+ * It generates menu links for all selected taxonomy terms
  */
 
 //include the database layer
@@ -269,7 +269,7 @@ function _taxonomy_menu_insert_link_items($vid) {
         'vid' => $vid,
         'menu_name' => $menu_name,
       );
-      $mlid = taxonomy_menu_handler('insert', $args);
+      taxonomy_menu_handler('insert', $args);
     }
   // Let batch api take care of inserting the menu items
   _taxonomy_menu_insert_link_items_batch($vid);
