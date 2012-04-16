@@ -343,7 +343,7 @@ function taxonomy_menu_taxonomy_term_update($term) {
  * Implements hook_taxonomy_term_delete().
  */
 function taxonomy_menu_taxonomy_term_delete($term) {
-      // only sync if taxonomy_menu is enabled for this vocab and the 'sync'
+  // only sync if taxonomy_menu is enabled for this vocab and the 'sync'
   // option has been checked.
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $term->vid), 0);
   $sync = variable_get(_taxonomy_menu_build_variable('sync', $term->vid), 0);
@@ -358,7 +358,7 @@ function taxonomy_menu_taxonomy_term_delete($term) {
     );
     $message = t('Term %term has been deleted from taxonomy menu %menu_name.', array('%term' => $term->name, '%menu_name' => $menu_name));
 
-      // run function
+    // run function
     taxonomy_menu_handler('delete', $item);
     // report status
     drupal_set_message($message, 'status');
@@ -413,17 +413,20 @@ function taxonomy_menu_node_presave($node) {
  * Implements hook_node_delete().
  */
 function taxonomy_menu_node_delete($node) {
-  //since the delete operation is run after the data is deleted
-  //pull the terms from the node object
+  // since the delete operation is run after the data is deleted
+  // pull the terms from the node object
   $terms =  _taxonomy_menu_get_node_terms($node);
   _taxonomy_menu_nodeapi_helper('delete', $terms, $node);
 }
 
 /**
- * Helper function to
- * @param $tids
+ * Builds argument arrays calls taxonomy_menu_handler.
+ *
+ * @param $op
+ *  A string of the operation to be performed [update|insert|delete]
+ * @param $terms
+ *  An array of tids.
  * @param $node
- * @return unknown_type
  */
 function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
   foreach ($terms as $key => $tid) {
@@ -433,7 +436,7 @@ function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
     //foreach ($parents as $term_id => $term_obj) {
     //  $term->parents[] = $term_id;
     //}
-    //update the menu for each term if necessary
+    // update the menu for each term if necessary
     $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $term->vid), FALSE);
     $vocb_sync = variable_get(_taxonomy_menu_build_variable('sync', $term->vid), TRUE);
     $menu_num = variable_get(_taxonomy_menu_build_variable('display_num', $term->vid), TRUE);
@@ -441,7 +444,7 @@ function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
     if ($menu_name && $vocb_sync && ($menu_num || $hide_empty)) {
       switch ($op) {
         case 'update':
-          //build argument array to save menu_item
+          // build argument array to save menu_item
           $args = array(
             'tid' => $term->tid,
             'vid' => $term->vid,
@@ -449,12 +452,12 @@ function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
             'menu_name' => $menu_name,
             'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
           );
-          //since taxonomy_get_term does not return the parents, fetch them now
+          // since taxonomy_get_term does not return the parents, fetch them now
           $args['term']->parents = _taxonomy_menu_get_parents($term->tid);
           break;
 
         case 'insert':
-          //build argument array to save menu_item
+          // build argument array to save menu_item
           $args = array(
             'tid' => $term->tid,
             'vid' => $term->vid,
@@ -462,7 +465,7 @@ function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
             'menu_name' => $menu_name,
             'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
           );
-          //since taxonomy_get_term does not return the parents, fetch them now
+          // since taxonomy_get_term does not return the parents, fetch them now
           $args['term']->parents = _taxonomy_menu_get_parents($term->tid);
           break;
 
@@ -558,7 +561,7 @@ function taxonomy_menu_handler($op, $args = array(), $node = NULL, $item = array
 }
 
 /**
- * Add/Update a taxonomy menu item.
+ * Adds/Updates a taxonomy menu item.
  *
  * We use a custom data array $item as a parameter, instead of using a
  * standard taxonomy $term object. This is because this function is also
@@ -588,7 +591,7 @@ $item['vid']));
     $item['weight'] = $item['root_term_weight'];
   }
 
-  //create the path.
+  // create the path.
   $path = taxonomy_menu_create_path($item['vid'], $item['tid']);
   // get the parent mlid: this is either:
   // - the parent tid's mlid
@@ -643,9 +646,9 @@ $item['vid']));
     $link['customized'] = 1;
   }
 
-  //set the has_children property
-  //if tid=0 then adding a vocab item and had children
-  //if the term has any children then set it to true
+  // set the has_children property
+  // if tid=0 then adding a vocab item and had children
+  // if the term has any children then set it to true
   if ($item['tid'] == 0) {
     $link['has_children'] = 1;
   }
@@ -661,7 +664,7 @@ $item['vid']));
 
   // Save the menu item
   if ($mlid = menu_link_save($link)) {
-    //if inserting a new menu item then insert a record into the table
+    // if inserting a new menu item then insert a record into the table
     if ($insert) {
       _taxonomy_menu_insert_menu_item($mlid, $item['tid'], $item['vid']);
     }
@@ -684,7 +687,7 @@ function _taxonomy_menu_get_paths() {
 }
 
 /**
- * Create the path for the vid/tid combination.
+ * Creates the path for the vid/tid combination.
  *
  * @param $vid
  * @param $tid
@@ -692,14 +695,16 @@ function _taxonomy_menu_get_paths() {
  *  path
  */
 function taxonomy_menu_create_path($vid, $tid) {
-  //get the path function for this vocabulary
+  // get the path function for this vocabulary
   $function = variable_get(_taxonomy_menu_build_variable('path', $vid), 'taxonomy_menu_path_default');
-  //run the function
+  // run the function
   return $function($vid, $tid);
 }
 
 /**
- * hook_taxonomy_menu_path.  Invoked from _taxonomy_menu_get_paths.
+ * Implements hook_taxonomy_menu_path().
+ *
+ * Invoked from _taxonomy_menu_get_paths.
  *
  * @return array
  *  function name => Display Title
@@ -717,9 +722,9 @@ function taxonomy_menu_taxonomy_menu_path() {
  * Callback for hook_taxonomy_menu_path
  */
 function taxonomy_menu_path_default($vid, $tid) {
-  //if tid = 0 then we are creating the vocab menu item format will be taxonomy/term/$tid+$tid+$tid....
+  // if tid = 0 then we are creating the vocab menu item format will be taxonomy/term/$tid+$tid+$tid....
   if ($tid == 0) {
-    //get all of the terms for the vocab
+    // get all of the terms for the vocab
     $vtids = _taxonomy_menu_get_terms($vid);
     $end = implode(' ', $vtids);
     $path = "taxonomy/term/$end";
@@ -732,8 +737,8 @@ function taxonomy_menu_path_default($vid, $tid) {
         $path .= '/all';
       }
       else {
-        //we wait to run this instead of durning the if above
-        //because we only wan to run it once.
+        // we wait to run this instead of during the if above
+        // because we only wan to run it once.
         $terms = taxonomy_get_tree($vid, $tid);
         foreach ($terms as $term) {
           $tids[] = $term->tid;
@@ -782,8 +787,7 @@ function taxonomy_menu_taxonomy_menu_delete(&$item) {
  */
 function _taxonomy_menu_create_item($args = array(), $node) {
 
-  //if tid = 0 then we are creating a vocab item
-
+  // if tid = 0 then we are creating a vocab item
   if (isset($args['tid']) && isset($args['vid']) && $args['tid'] == 0 && variable_get(_taxonomy_menu_build_variable('voc_item', $args['vid']), 0)) {
     $vocab = taxonomy_vocabulary_load($args['vid']);
     $item = array(
@@ -817,7 +821,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
     }
   }
 
-  //if ptid is empty, then set it to 0
+  // if ptid is empty, then set it to 0
   if (empty($ptid)) {
     $ptid = 0;
   }
@@ -874,16 +878,17 @@ function _taxonomy_menu_children_has_nodes($tid, $vid, $return = FALSE) {
 
 /**
  * Helper function for insert and update hooks
+ *
  * @param $item
- * @return unknown_type
+ * @return array
  */
 function _taxonomy_menu_item($item) {
-  //if tid is 0 then do not chagne any settings
+  // if tid is 0 then do not change any settings
   if ($item['tid'] > 0) {
-    //get the number of node attached to this term
+    // get the number of node attached to this term
     $num = _taxonomy_menu_term_count($item['tid']);
 
-    //if hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
+    // if hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
     if ($num == 0 &&
         variable_get(_taxonomy_menu_build_variable('hide_empty_terms', $item['vid']), FALSE) &&
         !_taxonomy_menu_children_has_nodes($item['tid'], $item['vid'])) {
@@ -892,9 +897,9 @@ function _taxonomy_menu_item($item) {
         return $item;
     }
 
-    //if display number is selected and $num > 0 then change the title
+    // if display number is selected and $num > 0 then change the title
     if (variable_get(_taxonomy_menu_build_variable('display_num', $item['vid']), FALSE)) {
-      //if number > 0 and display decendants, then count all of the children
+      // if number > 0 and display decendants, then count all of the children
       if (variable_get(_taxonomy_menu_build_variable('display_descendants', $item['vid']), FALSE)) {
         $num = taxonomy_menu_term_count_nodes($item['tid'], $item['vid']);
       }
@@ -902,7 +907,7 @@ function _taxonomy_menu_item($item) {
     }
   }
   elseif ($item['tid'] == 0) {
-    //if custom name is provided, use that name
+    // if custom name is provided, use that name
     $custom_name = variable_get(_taxonomy_menu_build_variable('voc_name', $item['vid']), '');
     if (!empty($custom_name)) {
       $item['name'] = $custom_name;
@@ -914,7 +919,7 @@ function _taxonomy_menu_item($item) {
 
 
 /**
- * Count the number of nodes linked to the term and all children
+ * Calculates the number of nodes linked to the term and all children
  * @param $tid
  * @param $vid
  * @return integer
@@ -976,33 +981,43 @@ function taxonomy_menu_taxonomy_menu_update(&$item) {
 function _taxonomy_menu_create_options($vid) {
   $options = module_invoke_all('taxonomy_menu_options');
 
-  //cycle through field
+  // cycle through field
   foreach ($options as $field_name => $field_elements) {
-    //cycle through each value of the field
+    // cycle through each value of the field
     $variable_name = _taxonomy_menu_build_variable($field_name, $vid);
 
-    //if the variable is set then use that, if the default key is set then use that, otherwise use false
+    // if the variable is set then use that, if the default key is set then use that, otherwise use false
     $options[$field_name]['#default_value'] =
       variable_get($variable_name,
       !empty($options[$field_name]['default']) ? $options[$field_name]['default'] : FALSE);
 
-    //set the type to checkbox if it is empty
+    // set the type to checkbox if it is empty
     if (empty($options[$field_name]['#type'])) {
       $options[$field_name]['#type'] = 'checkbox';
     }
 
-    //set the option feildset values
+    // set the option feildset values
     $options['#type'] = 'fieldset';
     $options['#title'] = t('Options');
     $options['#collapsible'] = TRUE;
 
-    //remove the default value from the array so we don't pass it to the form
+    // remove the default value from the array so we don't pass it to the form
     unset($options[$field_name]['default']);
   }
 
   return $options;
 }
 
+/**
+ * Builds a variable from the supplied name and machine name of the vocabulary.
+ *
+ * @param $name
+ *  String to be added to the returned variable.
+ * @param $vid
+ *  VID of the vocabulary from which the machine name will be taken.
+ *
+ * @return bool|string
+ */
 function _taxonomy_menu_build_variable($name, $vid) {
   $vocabulary = taxonomy_vocabulary_load($vid);
   if ($vocabulary) {
@@ -1059,8 +1074,7 @@ function taxonomy_menu_taxonomy_menu_options() {
 
   $options['flat'] = array(
     '#title' => t('Flatten the taxonomy\'s hierarchy in the menu'),
-    '#description' => t('Add all menu items to the same level rather than
- hierarchically.'),
+    '#description' => t('Add all menu items to the same level rather than hierarchically.'),
     'default' => FALSE,
   );
 
