@@ -797,7 +797,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
       'weight' => $vocab->weight,
       'vid' => $args['vid'],
       'ptid' => 0,
-      'root_term_weight' => $vocab_weight,
+      'root_term_weight' => $vocab->weight,
       'menu_name' => $args['menu_name'],
       'language' => $vocab->language,
     );
