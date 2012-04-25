@@ -820,7 +820,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
     $term = $args['term'];
 
     // Sometimes $term->parents is not set so we find it.
-    if (!isset($term->parents)) {
+    if (empty($term->parents)) {
       $term->parents = _taxonomy_menu_get_parents($term->tid);
       if (empty($term->parents)) {
         // even without parents, create one with $ptid = 0
