@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Tests for taxonomy.module.
+ * Tests for taxonomy_menu.module.
  */
 
 /**
@@ -78,7 +78,7 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
 
   function setUp() {
     parent::setUp('taxonomy_menu');
-    $admin_user = $this->drupalCreateUser(array('access administration pages', 'create article content', 'administer blocks', 'administer taxonomy', 'administer menu'));
+    $admin_user = $this->drupalCreateUser(array('access administration pages', 'administer blocks', 'administer taxonomy', 'administer menu', 'administer nodes', 'create article content', 'create page content', 'edit any article content', 'edit any page content', 'delete any article content', 'delete any page content', 'access content overview'));
     $this->drupalLogin($admin_user);
     $this->vocabulary = $this->createVocabulary();
     $this->term = $this->createTerm($this->vocabulary);
@@ -99,6 +99,12 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
     $this->drupalGet('<front>');
 
     $this->assertNoLink($term->name);
+
+    $node = $this->drupalCreateNode();
+    $this->drupalPost("node/$node->nid/delete", array(), t('Delete'));
+    $this->drupalGet("node/$node->nid");
+    $this->assertResponse(404);
+
   }
 
   function testTaxonomyMenuCustomMenu() {
@@ -260,5 +266,5 @@ class TaxonomyMenuTreeNode {
       $child->display($level . "  ");
     }
   }
-
 }
+
