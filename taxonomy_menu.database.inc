@@ -206,3 +206,40 @@ function _taxonomy_menu_get_vid_by_tid($tids) {
 /**
  * Options functions
  */
+
+/**
+ * Callback for generating the menu link exportable identifier.
+ * Copied from features.menu.inc
+ */
+function taxonomy_menu_link_identifier($menu_name, $mlid) {
+  if ($mlid) {
+    $link = menu_link_load($mlid);
+    return isset($link['menu_name'], $link['link_path']) ? "{$link['menu_name']}:{$link['link_path']}" : FALSE;
+  }
+  elseif ($menu_name) {
+    return "{$menu_name}:0";
+  }
+  return FALSE;
+}
+
+/**
+ * Load a menu link by its menu_name:link_path identifier.
+ * Copied from features.menu.inc
+ */
+function taxonomy_menu_link_load_identifier($identifier) {
+  if ($identifier) {
+    list($menu_name, $link_path) = explode(':', $identifier, 2);
+    if ($menu_name && $link_path) {
+      $link = db_select('menu_links')
+        ->fields('menu_links', array('mlid'))
+        ->condition('menu_name', $menu_name)
+        ->condition('link_path', $link_path)
+        ->execute()
+        ->fetchAssoc();
+      if ($link) {
+        return $link['mlid'];
+      }
+    }
+  }
+  return 0;
+}

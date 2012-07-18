@@ -42,8 +42,10 @@ function taxonomy_menu_form_alter(&$form, &$form_state, $form_id) {
 
     // The vid isn't set when a new vocabulary is being created.
     if (isset($form['vid']['#value'])) {
-      $default = variable_get(_taxonomy_menu_build_variable('vocab_menu', $form['vid']['#value']), NULL) . ':' .
-                 variable_get(_taxonomy_menu_build_variable('vocab_parent', $form['vid']['#value']), NULL);
+      $vocab_parent = taxonomy_menu_link_load_identifier(
+        variable_get(_taxonomy_menu_build_variable('vocab_parent', $form['vid']['#value']), NULL)
+      );
+      $default = variable_get(_taxonomy_menu_build_variable('vocab_menu', $form['vid']['#value']), NULL) . ':' . $vocab_parent;
       if (!isset($menu_items[$default])) {
         $default = 0;
       }
@@ -134,11 +136,12 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
 
   // Set the menu parent item and check for changes
   $variable_name = _taxonomy_menu_build_variable('vocab_parent', $vid);
-  if (_taxonomy_menu_check_variable($variable_name, $vocab_parent['vocab_parent'])) {
+  $vocab_parent_new = taxonomy_menu_link_identifier($vocab_parent['vocab_menu'], $vocab_parent['vocab_parent']);
+  if (_taxonomy_menu_check_variable($variable_name, $vocab_parent_new)) {
     $changed_menu = TRUE;
   }
-  variable_set($variable_name, $vocab_parent['vocab_parent']);
-
+  variable_set($variable_name, $vocab_parent_new);
+  
   // Set the path and check for changes
   $variable_name = _taxonomy_menu_build_variable('path', $vid);
   if (_taxonomy_menu_check_variable($variable_name, $form_state['values']['taxonomy_menu']['path'])) {
@@ -612,7 +615,9 @@ $item['vid']));
   // - the menu parent setting for this vocab
   $plid = _taxonomy_menu_get_mlid($item['ptid'], $item['vid']);
   if (!$plid || $flatten_menu) {
-    $plid = variable_get(_taxonomy_menu_build_variable('vocab_parent', $item['vid']), NULL);
+    $plid = taxonomy_menu_link_load_identifier(
+      variable_get(_taxonomy_menu_build_variable('vocab_parent', $item['vid']), NULL)
+    );
   }
 
   // Make sure the path has less then 256 characters
