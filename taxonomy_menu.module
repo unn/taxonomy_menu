@@ -811,7 +811,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
     $item = array(
       'tid' => 0,
       'name' => $vocab->name,
-      'description' => $vocab->description,
+      'description' => variable_get(_taxonomy_menu_build_variable('voc_item_description', $args['vid']), 0) ? $vocab->description : '',
       'weight' => $vocab->weight,
       'vid' => $args['vid'],
       'ptid' => 0,
@@ -849,7 +849,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
       $item = array(
         'tid' => $term->tid,
         'name' => $term->name,
-        'description' => $term->description,
+        'description' => variable_get(_taxonomy_menu_build_variable('term_item_description', $term->vid), 0) ? $term->description : '',
         'weight' => $term->weight,
         'vid' => $term->vid,
         'ptid' => $ptid,
@@ -1077,6 +1077,18 @@ function taxonomy_menu_taxonomy_menu_options() {
     '#description' => t('Shows the vocabulary name as the top level menu item of the taxonomy menu.'),
     'default' => FALSE,
     '#disabled' => TRUE,
+  );
+
+  $options['voc_item_description'] = array(
+    '#title' => t('Add description for vocabulary'),
+    '#description' => t('Add the vocabulary description to the vocabulary menu item.'),
+    'default' => FALSE,
+  );
+
+  $options['term_item_description'] = array(
+    '#title' => t('Add description for terms'),
+    '#description' => t('Add the term description to the term menu item.'),
+    'default' => FALSE,
   );
 
   $options['expanded'] = array(
