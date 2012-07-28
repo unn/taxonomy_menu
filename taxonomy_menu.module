@@ -19,6 +19,10 @@ require_once(drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.batch.
  */
 function taxonomy_menu_form_alter(&$form, &$form_state, $form_id) {
   if ($form_id == 'taxonomy_form_vocabulary') {
+    // do not alter on deletion
+    if (isset($form_state['confirm_delete']) && isset($form_state['values']['vid'])) {
+      return;
+    }
     // Choose a menu to add link items to.
     $menus = menu_get_menus();
     array_unshift($menus, t('- Disabled -'));
