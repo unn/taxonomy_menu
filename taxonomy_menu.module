@@ -405,7 +405,13 @@ function taxonomy_menu_node_presave($node) {
   //get the terms from the database before the changes are made.
   //these will be used to update the menu item's name if needed
   //we go directly to the db to bypass any caches
-  $terms_old = _taxonomy_menu_get_node_terms($node);
+  if (isset($node->nid)) {
+    $node_old = node_load($node->nid);
+    $terms_old = _taxonomy_menu_get_node_terms($node_old);
+  }
+  else {
+    $terms_old = array();
+  }
 }
 
 /**
