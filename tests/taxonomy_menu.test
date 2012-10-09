@@ -6,45 +6,9 @@
  */
 
 /**
- * Class with common helper methods.
+ * Provides common helper methods for Taxonomy Menu module tests.
  */
-class TaxonomyMenuWebTestCase extends DrupalWebTestCase {
-
-  /**
-   * Returns a new vocabulary with random properties.
-   */
-  function createVocabulary() {
-    // Create a vocabulary.
-    $vocabulary = new stdClass();
-    $vocabulary->name = $this->randomName();
-    $vocabulary->description = $this->randomName();
-    $vocabulary->machine_name = drupal_strtolower($this->randomName());
-    $vocabulary->help = '';
-    $vocabulary->nodes = array('article' => 'article');
-    $vocabulary->weight = mt_rand(0, 10);
-    taxonomy_vocabulary_save($vocabulary);
-    return $vocabulary;
-  }
-
-  /**
-   * Returns a new term with random properties in vocabulary $vid.
-   */
-  function createTerm($vocabulary) {
-    $term = $this->createNewTerm($vocabulary);
-    taxonomy_term_save($term);
-    return $term;
-  }
-
-  /**
-   * Get the first available text format
-   */
-  function getTextFormat() {
-    static $format = NULL;
-    if ($format === NULL) {
-      $format = db_query_range('SELECT format FROM {filter_format}', 0, 1)->fetchField();
-    }
-    return $format;
-  }
+class TaxonomyMenuWebTestCase extends TaxonomyWebTestCase {
 
   /**
    * Create a new term record
@@ -53,7 +17,7 @@ class TaxonomyMenuWebTestCase extends DrupalWebTestCase {
     $term = new stdClass();
     $term->name = ($name === NULL) ? $this->randomName() : $name;
     $term->description = $this->randomName();
-    $term->format = $this->getTextFormat();
+    $term->format = db_query_range('SELECT format FROM {filter_format}', 0, 1)->fetchField();
     $term->vid = $vocabulary->vid;
     if ($parent !== NULL) {
       $term->parent = array($parent->tid);
