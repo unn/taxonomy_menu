@@ -61,8 +61,15 @@ function taxonomy_menu_schema() {
         'default' => 0,
         'description' => 'Vid for the tid.',
       ),
+      'language' => array(
+        'description' => 'Language code, e.g. ’de’ or ’en-US’.',
+        'type' => 'varchar',
+        'length' => 12,
+        'not null' => TRUE,
+        'default' => LANGUAGE_NONE,
+      ),
     ),
-    'primary key' => array('mlid', 'tid'),
+    'primary key' => array('mlid', 'tid', 'language'),
     'indexes' => array(
       'vid' => array('vid'),
     ),
@@ -101,4 +108,14 @@ function taxonomy_menu_update_7000() {
       }
     }
   }
+}
+
+/**
+ * Update database schema to handle languages.
+ */
+function taxonomy_menu_update_7200() {
+  $schema = taxonomy_menu_schema();
+  db_add_field('taxonomy_menu', 'language', $schema['taxonomy_menu']['fields']['language']);
+  db_drop_primary_key('taxonomy_menu');
+  db_add_primary_key('taxonomy_menu', $schema['taxonomy_menu']['primary key']);
 }

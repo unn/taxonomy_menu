@@ -77,7 +77,7 @@ function _taxonomy_menu_update_link_items($vid) {
   $menu_links = _taxonomy_menu_get_menu_items($vid);
 
   // Cycle through the menu links
-  foreach ($menu_links as $tid => $mlid) {
+  foreach ($menu_links as $mlid => $tid) {
     // $args must be reset each time through.
     $args = array(
       'menu_name' => $menu_name,
