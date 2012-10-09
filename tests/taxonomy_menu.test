@@ -11,6 +11,44 @@
 class TaxonomyMenuWebTestCase extends TaxonomyWebTestCase {
 
   /**
+   * Creates a hierarchy of taxonomy terms for the vocabulary defined in the
+   * current class. The hierarchy is as follow:
+   *
+   * terms[1]         | depth: 0
+   * -- terms[2]      | depth: 1
+   * -- terms[3]      | depth: 1
+   * ---- terms[4]    | depth: 2
+   * -- terms[5]      | depth: 1
+   * terms[6]         | depth: 0
+   * -- terms[7]      | depth: 1
+   *
+   * @TODO Add multiple parents when taxonomy_menu can deal with it.
+   */
+  function createTermsHierarchy() {
+    $terms = array();
+
+    // Create taxonomy terms.
+    $vocabulary = $this->createVocabulary();
+    for ($i = 1; $i < 8; $i++) {
+      $terms[$i] = $this->createTerm($vocabulary);
+    }
+
+    // Set the hierarchy.
+    $terms[2]->parent = array($terms[1]->tid);
+    taxonomy_term_save($terms[2]);
+    $terms[3]->parent = array($terms[1]->tid);
+    taxonomy_term_save($terms[3]);
+    $terms[4]->parent = array($terms[3]->tid);
+    taxonomy_term_save($terms[4]);
+    $terms[5]->parent = array($terms[1]->tid);
+    taxonomy_term_save($terms[5]);
+    $terms[7]->parent = array($terms[6]->tid);
+    taxonomy_term_save($terms[7]);
+
+    return $terms;
+  }
+
+  /**
    * Create a new term record
    */
   function createNewTerm($vocabulary, $name = NULL, $parent = NULL) {
@@ -25,6 +63,61 @@ class TaxonomyMenuWebTestCase extends TaxonomyWebTestCase {
 
     return $term;
   }
+}
+
+/**
+ * Tests the taxonomy vocabulary interface.
+ */
+class TaxonomyMenuFunctionalTest extends TaxonomyMenuWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Vocabulary interface',
+      'description' => 'Test the taxonomy menu vocabulary interface.',
+      'group' => 'Taxonomy menu',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('taxonomy_menu');
+    // Create and login administrative user.
+    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu'));
+    $this->drupalLogin($admin_user);
+    // Create a vocabulary.
+    $this->vocabulary = $this->createVocabulary();
+    // Create a hierarchy of taxonomy terms.
+    $this->hierarchy = $this->createTermsHierarchy();
+  }
+
+  /**
+   * Saves a taxonomy vocabulary via the user interface.
+   */
+  function testTaxonomyMenuVocabularyInterface() {
+    $menu_name = 'user-menu';
+    $vocab = $this->vocabulary->machine_name;
+
+    // Visit the main taxonomy administration page.
+    $this->drupalGet('admin/structure/taxonomy/' . $vocab . '/edit');
+
+    // Options for the taxonomy vocabulary edit form.
+    $edit = array();
+
+    // Try to submit a vocabulary when menu location is a root menu item.
+    $edit['taxonomy_menu[vocab_parent]'] = $menu_name . ':0';
+    $this->drupalPost(NULL, $edit, t('Save'));
+    $this->assertRaw(t('The Taxonomy Menu has been updated.'));
+
+    // Try to submit a vocabulary removing the menu location.
+    $edit['taxonomy_menu[vocab_parent]'] = '0';
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+    $this->assertRaw(t('The Taxonomy Menu has been removed.'));
+
+    // Try to submit a vocabulary when menu location is a menu item.
+    $edit['taxonomy_menu[vocab_parent]'] = $menu_name . ':2';
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+    $this->assertRaw(t('The Taxonomy Menu has been updated.'));
+  }
+
 }
 
 /**
