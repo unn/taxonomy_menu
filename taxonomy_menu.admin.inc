@@ -180,7 +180,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
     }
     // If setting has changed and a menu item is enabled, then update all of the menu items.
     elseif ($changed && variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE)) {
-      _taxonomy_menu_update_link_items($vid);
+      _taxonomy_menu_update_menu_links($vid);
     }
 
     // Do a full menu rebuild in case we have removed the menu or moved it between menus.
@@ -226,11 +226,11 @@ function taxonomy_menu_overview_submit(&$form, &$form_state) {
     $sync = variable_get(_taxonomy_menu_build_variable('sync', $vid), 0);
     if ($menu_name && $sync) {
       // Update all menu items (do not rebuild the menu).
-      $message = _taxonomy_menu_update_link_items($vid);
+      $message = _taxonomy_menu_update_menu_links($vid);
 
       // Report status.
       if (isset($message)) {
-        // Message is sanitized coming out of _taxonomy_menu_update_link_items.
+        // Message is sanitized coming out of _taxonomy_menu_update_menu_links.
         // No need to reclean it here.
         drupal_set_message($message, 'status');
       }

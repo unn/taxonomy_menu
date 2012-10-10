@@ -50,7 +50,7 @@ function _taxonomy_menu_rebuild($vid) {
 
   // Re-create the menu links if a menu is set.
   if ($menu_exists) {
-    _taxonomy_menu_insert_link_items($vid);
+    _taxonomy_menu_insert_menu_links($vid);
   }
 }
 
@@ -60,7 +60,7 @@ function _taxonomy_menu_rebuild($vid) {
  * @param $vid
  *   The ID of the vocabulary.
  */
-function _taxonomy_menu_insert_link_items($vid) {
+function _taxonomy_menu_insert_menu_links($vid) {
   // Get the name of the menu from the administration settings.
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
 
@@ -74,7 +74,7 @@ function _taxonomy_menu_insert_link_items($vid) {
   }
 
   // Let batch api take care of inserting the menu items.
-  _taxonomy_menu_insert_link_items_batch($vid);
+  _taxonomy_menu_insert_menu_links_batch($vid);
 }
 
 /**
@@ -83,7 +83,7 @@ function _taxonomy_menu_insert_link_items($vid) {
  * @param $vid
  *   The ID of the vocabulary.
  */
-function _taxonomy_menu_update_link_items($vid) {
+function _taxonomy_menu_update_menu_links($vid) {
   // Get the name of the menu from the administration settings.
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
 

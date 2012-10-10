@@ -39,15 +39,15 @@
  *   fails.
  *
  */
-function _taxonomy_menu_insert_link_items_batch($vid) {
+function _taxonomy_menu_insert_menu_links_batch($vid) {
   $terms = taxonomy_get_tree($vid);
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
 
   $batch = array(
     'operations' => array(
-      array('_taxonomy_menu_insert_link_items_process', array($terms, $menu_name)),
+      array('_taxonomy_menu_insert_menu_links_process', array($terms, $menu_name)),
     ),
-    'finished' => '_taxonomy_menu_insert_link_items_success',
+    'finished' => '_taxonomy_menu_insert_menu_links_success',
     'title' => t('Rebuilding Taxonomy Menu'),
     'init_message' => t('The menu items have been deleted, and are about to be regenerated.'),
     'progress_message' => t('Import progress: Completed @current of @total stages.'),
@@ -62,7 +62,7 @@ function _taxonomy_menu_insert_link_items_batch($vid) {
 /*
  * Insert 10 menu link items
  */
-function _taxonomy_menu_insert_link_items_process($terms, $menu_name, &$context) {
+function _taxonomy_menu_insert_menu_links_process($terms, $menu_name, &$context) {
   _taxonomy_menu_batch_init_context($context, $start, $end, 10);
 
   // Loop through $terms to process each term.
@@ -82,7 +82,7 @@ function _taxonomy_menu_insert_link_items_process($terms, $menu_name, &$context)
 /*
  * Set a message stating the menu has been updated
  */
-function _taxonomy_menu_insert_link_items_success() {
+function _taxonomy_menu_insert_menu_links_success() {
   // Rebuild the menu.
   menu_rebuild();
   // Display a notification message.
