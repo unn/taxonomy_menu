@@ -271,6 +271,68 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
 }
 
 /**
+ * Tests Taxonomy Menu configuration options.
+ *
+ * @TODO Add tests for other configuration options.
+ */
+class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Configuration options',
+      'description' => 'Test configuration options.',
+      'group' => 'Taxonomy menu',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('taxonomy_menu');
+    // Create and login administrative user.
+    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu'));
+    $this->drupalLogin($admin_user);
+    // Create a vocabulary.
+    $this->vocabulary = $this->createVocabulary();
+    // Create a hierarchy of taxonomy terms.
+    $this->hierarchy = $this->createTermsHierarchy($this->vocabulary);
+  }
+
+  /**
+   * Tests Taxonommy Menu sync option.
+   */
+  function testTaxonomyMenuSyncOption() {
+    $vocab = $this->vocabulary->machine_name;
+
+    // Set settings (no sync on main-menu).
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[options][sync]' => FALSE,
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+    $this->assertResponse(200);
+
+    // Prepare changes.
+    $new_name = $this->randomName(12);
+    $test_term = $this->hierarchy[3]; // Arbitrary term from hierarchy
+    $test_term->name = $new_name;
+
+    // Save new term's name with sync option off.
+    taxonomy_term_save($test_term);
+    $mlid = _taxonomy_menu_get_mlid($test_term->tid, $this->vocabulary->vid);
+    $menu_link = menu_link_load($mlid);
+    $this->assertNotEqual($new_name, $menu_link['link_title']);
+
+    // Switch to sync option on and save.
+    $edit['taxonomy_menu[options][sync]'] = TRUE;
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+    $this->assertResponse(200);
+    $mlid = _taxonomy_menu_get_mlid($test_term->tid, $this->vocabulary->vid);
+    $menu_link = menu_link_load($mlid);
+    $this->assertEqual($new_name, $menu_link['link_title']);
+  }
+
+}
+
+/**
  * Tests for features requiring a taxonomy hierarchy
  */
 class TaxonomyMenuHierarchyTest extends TaxonomyMenuWebTestCase {
