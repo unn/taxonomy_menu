@@ -11,6 +11,14 @@ require_once(drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.databa
 //include the batch functions
 require_once(drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.batch.inc');
 
+
+/**
+ * Implements hook_help().
+ */
+function taxonomy_menu_help($path, $arg) {
+  // @TODO Implement the hook. Make documentation available to the user.
+}
+
 /**
  * Implements hook_form_FORM_ID_alter().
  */
