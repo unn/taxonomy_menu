@@ -104,17 +104,17 @@ class TaxonomyMenuFunctionalTest extends TaxonomyMenuWebTestCase {
     // Try to submit a vocabulary when menu location is a root menu item.
     $edit['taxonomy_menu[vocab_parent]'] = $menu_name . ':0';
     $this->drupalPost(NULL, $edit, t('Save'));
+    $this->assertRaw(t('The Taxonomy Menu has been created.'));
+
+    // Try to re-submit a vocabulary when an option has changed.
+    $edit['taxonomy_menu[options][voc_item_description]'] = TRUE;
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
     $this->assertRaw(t('The Taxonomy Menu has been updated.'));
 
     // Try to submit a vocabulary removing the menu location.
     $edit['taxonomy_menu[vocab_parent]'] = '0';
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
     $this->assertRaw(t('The Taxonomy Menu has been removed.'));
-
-    // Try to submit a vocabulary when menu location is a menu item.
-    $edit['taxonomy_menu[vocab_parent]'] = $menu_name . ':2';
-    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
-    $this->assertRaw(t('The Taxonomy Menu has been updated.'));
   }
 
 }

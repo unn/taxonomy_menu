@@ -176,21 +176,15 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
       (!$changed_menu && variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE) == 0)) {
     // Rebuild if rebuild is selected, menu has changed or vocabulary option changed.
     if ($form_state['values']['taxonomy_menu']['options']['rebuild'] || $changed_menu || $change_vocab_item || $changed_path) {
-      $message = _taxonomy_menu_rebuild($vid);
+      _taxonomy_menu_rebuild($vid);
     }
     // If setting has changed and a menu item is enabled, then update all of the menu items.
     elseif ($changed && variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE)) {
-      $message = _taxonomy_menu_update_link_items($vid);
+      _taxonomy_menu_update_link_items($vid);
     }
 
     // Do a full menu rebuild in case we have removed the menu or moved it between menus.
     variable_set('menu_rebuild_needed', TRUE);
-    // Only send a message if one has been created.
-    if (isset($message) && $message) {
-      // $message is sanitized coming out of its source function,
-      // no need to reclean it here
-      drupal_set_message($message, 'status');
-    }
   }
 }
 

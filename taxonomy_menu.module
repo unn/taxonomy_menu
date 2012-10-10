@@ -42,28 +42,28 @@ function taxonomy_menu_form_taxonomy_overview_terms_alter(&$form, &$form_state) 
  *   The vocabulary ID of the taxonomy terms from which to rebuild the menu links.
  */
 function _taxonomy_menu_rebuild($vid) {
-  // Remove all of the menu items for this vocabulary.
-  _taxonomy_menu_delete_all($vid);
+  // Get the name of the menu from the administration settings.
+  $menu_exists = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
 
-  // Only insert the links if a menu is set.
-  if (variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE)) {
+  // Delete the menu links associated to this vocabulary.
+  _taxonomy_menu_delete_menu_links($vid);
+
+  // Re-create the menu links if a menu is set.
+  if ($menu_exists) {
     _taxonomy_menu_insert_link_items($vid);
-    menu_rebuild();
-    return t('The Taxonomy Menu has been rebuilt.');
   }
-
-  menu_rebuild();
-  return t('The Taxonomy Menu has been removed.');
 }
 
 /**
- * Inserts menu links for this vocabulary.
+ * Inserts menu links associated to a vocabulary.
  *
  * @param $vid
  *   The ID of the vocabulary.
  */
 function _taxonomy_menu_insert_link_items($vid) {
+  // Get the name of the menu from the administration settings.
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
+
   // Check to see if we should had a vocab item.
   if (variable_get(_taxonomy_menu_build_variable('voc_item', $vid), FALSE)) {
     $args = array(
@@ -72,42 +72,58 @@ function _taxonomy_menu_insert_link_items($vid) {
     );
     taxonomy_menu_handler('insert', $args);
   }
+
   // Let batch api take care of inserting the menu items.
   _taxonomy_menu_insert_link_items_batch($vid);
 }
 
 /**
- * Updates menu items for this vocabulary.
+ * Updates menu links associated to a vocabulary.
  *
  * @param $vid
  *   The ID of the vocabulary.
  */
 function _taxonomy_menu_update_link_items($vid) {
+  // Get the name of the menu from the administration settings.
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
 
-  // Get a list of the current tid - menu_link combinations
+  // Get a list of the current tid - menu_link combinations.
   $menu_links = _taxonomy_menu_get_menu_items($vid);
 
-  // Cycle through the menu links
+  // Cycle through the menu links.
   foreach ($menu_links as $mlid => $tid) {
     // $args must be reset each time through.
     $args = array(
       'menu_name' => $menu_name,
       'mlid' => $mlid,
     );
-
     if ($tid == 0) {
       $args['vid'] = $vid;
     }
     else {
       $args['term'] = taxonomy_term_load($tid);
     }
-
-    //update the menu link
+    // Update the menu link.
     taxonomy_menu_handler('update', $args);
   }
 
-  return t('The Taxonomy Menu %menu_name has been updated.', array('%menu_name' => $menu_name));
+  // Display a notification message.
+  drupal_set_message(t('The Taxonomy Menu has been updated.'), 'status');
+}
+
+/**
+ * Deletes menu links associated to a vocabulary.
+ *
+ * @param $vid
+ *   The vocabulary ID.
+ */
+function _taxonomy_menu_delete_menu_links($vid) {
+  // Remove all of the menu items for this vocabulary.
+  _taxonomy_menu_delete_all($vid);
+  // Rebuild the menu.
+  menu_rebuild();
+  // Display a notification message.
+  drupal_set_message(t('The Taxonomy Menu has been removed.'), 'status');
 }
 
 /**
@@ -277,9 +293,7 @@ function taxonomy_menu_taxonomy_menu_update(&$item) {
 function taxonomy_menu_taxonomy_vocabulary_delete($vocabulary) {
   // When a vocabulary is deleted, remove all the menu items associated with it
   // and rebuild the menu they were inserted into.
-  _taxonomy_menu_delete_all($vocabulary->vid);
-  $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vocabulary->vid), 0);
-  menu_cache_clear($menu_name);
+  _taxonomy_menu_delete_menu_links($vocabulary->vid);
 }
 
 /**

@@ -83,8 +83,10 @@ function _taxonomy_menu_insert_link_items_process($terms, $menu_name, &$context)
  * Set a message stating the menu has been updated
  */
 function _taxonomy_menu_insert_link_items_success() {
-  // TODO state menu name here.
-  drupal_set_message(t('The Taxonomy Menu has been updated.'));
+  // Rebuild the menu.
+  menu_rebuild();
+  // Display a notification message.
+  drupal_set_message(t('The Taxonomy Menu has been created.'), 'status');
 }
 
 /*
