@@ -24,11 +24,10 @@ class TaxonomyMenuWebTestCase extends TaxonomyWebTestCase {
    *
    * @TODO Add multiple parents when taxonomy_menu can deal with it.
    */
-  function createTermsHierarchy() {
+  function createTermsHierarchy($vocabulary) {
     $terms = array();
 
     // Create taxonomy terms.
-    $vocabulary = $this->createVocabulary();
     for ($i = 1; $i < 8; $i++) {
       $terms[$i] = $this->createTerm($vocabulary);
     }
@@ -86,7 +85,7 @@ class TaxonomyMenuFunctionalTest extends TaxonomyMenuWebTestCase {
     // Create a vocabulary.
     $this->vocabulary = $this->createVocabulary();
     // Create a hierarchy of taxonomy terms.
-    $this->hierarchy = $this->createTermsHierarchy();
+    $this->hierarchy = $this->createTermsHierarchy($this->vocabulary);
   }
 
   /**
@@ -127,7 +126,7 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => 'CRUD',
+      'name' => 'CRUD functions',
       'description' => 'Test CRUD functions',
       'group' => 'Taxonomy menu',
     );
@@ -135,64 +134,140 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
 
   function setUp() {
     parent::setUp('taxonomy_menu');
-    $admin_user = $this->drupalCreateUser(array('access administration pages', 'administer blocks', 'administer taxonomy', 'administer menu', 'administer nodes', 'create article content', 'create page content', 'edit any article content', 'edit any page content', 'delete any article content', 'delete any page content', 'access content overview'));
+    // Create and login administrative user.
+    $admin_user = $this->drupalCreateUser(array(
+      'access administration pages',
+      'administer blocks',
+      'administer taxonomy',
+      'administer menu',
+    ));
     $this->drupalLogin($admin_user);
+    // Create a vocabulary.
     $this->vocabulary = $this->createVocabulary();
-    $this->term = $this->createTerm($this->vocabulary);
+    // Create a hierarchy of taxonomy terms.
+    $this->hierarchy = $this->createTermsHierarchy($this->vocabulary);
   }
 
+  /**
+   * Tests CRUD functions.
+   */
   function testTaxonomyMenuCRUD() {
-    $edit = array();
-    $edit['taxonomy_menu[vocab_parent]'] = 'main-menu:0';
-    $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, 'Save');
+    $menu_name = 'main-menu'; // Name of the menu.
+    $hierarchy_count = count($this->hierarchy);
 
+    // Set form settings.
+    $edit = array();
+    $edit['taxonomy_menu[vocab_parent]'] = $menu_name . ':0';
+
+    // Ensure that the taxonomy vocabulary form is successfully submitted.
+    $vocab = $this->vocabulary->machine_name;
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
     $this->assertResponse(200);
 
-    $term = $this->term;
-    $this->assertLink($term->name);
+    // Terms creation: ensure that the same number of menu links are created
+    // from the taxonomy terms of the vocabulary.
+    $query = db_select('taxonomy_menu', 'tm')
+      ->condition('tm.vid', $this->vocabulary->vid, '=');
+    $query->join('menu_links', 'ml', 'ml.mlid = tm.mlid');
+    $query
+      ->fields('tm')
+      ->condition('ml.module', 'taxonomy_menu')
+      ->condition('ml.menu_name', $menu_name);
+    $row_count = $query->execute()->rowCount();
+    $this->assertEqual($hierarchy_count, $row_count);
 
-    $term = $this->term;
+    // Term update: ensure that the menu link is updated when the taxonomy term is
+    // updated.
+    $term = $this->hierarchy[3]; // Arbitrary taxonomy term from the hierarchy.
+    $new_name = $this->randomName();
+    $term->name = $new_name;
+    taxonomy_term_save($term);
+    $this->drupalGet('admin/structure/menu/manage/' . $menu_name);
+    $this->assertLink($new_name);
+
+    // Term deletion: ensure that the menu link is deleted when the taxonomy
+    // term is deleted.
+    $query = db_select('taxonomy_menu', 'tm')
+      ->fields('tm')
+      ->condition('tm.vid', $this->vocabulary->vid, '=')
+      ->condition('tm.tid', $term->tid, '=');
+    $mlid = $query->execute()->fetchField();
+
     taxonomy_term_delete($term->tid);
-    $this->drupalGet('<front>');
 
-    $this->assertNoLink($term->name);
+    $query = db_select('taxonomy_menu', 'tm')
+      ->fields('tm')
+      ->condition('tm.vid', $this->vocabulary->vid, '=')
+      ->condition('tm.tid', $term->tid, '=');
+    $row_count = $query->execute()->rowCount();
+    $this->assertEqual(0, $row_count);
 
-    $node = $this->drupalCreateNode();
-    $this->drupalPost("node/$node->nid/delete", array(), t('Delete'));
-    $this->drupalGet("node/$node->nid");
-    $this->assertResponse(404);
+    $query = db_select('menu_links', 'ml')
+      ->fields('ml')
+      ->condition('ml.mlid', $mlid)
+      ->condition('ml.module', 'taxonomy_menu')
+      ->condition('ml.menu_name', $menu_name);
+    $row_count = $query->execute()->rowCount();
+    $this->assertEqual(0, $row_count);
+
+    // Vocabulary deletion: ensure that all menu links and all associations in
+    // the taxonomy menu table are deleted when a vocabulary is deleted.
+    $query = db_select('taxonomy_menu', 'tm')
+      ->fields('tm')
+      ->condition('tm.vid', $this->vocabulary->vid, '=');
+    $mlids = $query->execute()->fetchAllAssoc('mlid');
+
+    taxonomy_vocabulary_delete($this->vocabulary->vid);
+
+    $query = db_select('taxonomy_menu', 'tm')
+      ->fields('tm')
+      ->condition('tm.vid', $this->vocabulary->vid, '=');
+    $row_count = $query->execute()->rowCount();
+    $this->assertEqual(0, $row_count);
+
+    $query = db_select('menu_links', 'ml')
+    ->fields('ml')
+    ->condition('ml.mlid', array_keys($mlids), 'IN')
+    ->condition('ml.module', 'taxonomy_menu')
+    ->condition('ml.menu_name', $menu_name);
+    $row_count = $query->execute()->rowCount();
+    $this->assertEqual(0, $row_count);
 
   }
 
+  /**
+   * Tests creation of menu links on a custom menu.
+   */
   function testTaxonomyMenuCustomMenu() {
-    // Create a custom menu.
+    // Set options for the creation of a custom menu.
     $edit = array();
     $custom_name = $this->randomName(16);
     $machine_name = drupal_substr(hash('sha256', $custom_name), 0, MENU_MAX_MENU_NAME_LENGTH_UI);
     $edit['title'] = $custom_name;
     $edit['menu_name'] = $machine_name;
-    $this->drupalPost('admin/structure/menu/add', $edit, 'Save');
 
-    // Move the menu block to a region.
-    $edit = array();
-    $edit['blocks[menu_menu-' . $machine_name . '][region]'] = 'sidebar_first';
-    $this->drupalPost('admin/structure/block', $edit, 'Save blocks');
+    // Submit the menu creation form.
+    $this->drupalPost('admin/structure/menu/add', $edit, 'Save');
     $this->assertResponse(200);
 
+    // Set options of the vocabulary edit form and submit it.
     $edit = array();
     $edit['taxonomy_menu[vocab_parent]'] = 'menu-' . $machine_name . ':0';
     $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, 'Save');
+    $this->assertResponse(200);
 
-    $term = $this->term;
-    $this->drupalGet('<front>');
-    $this->assertLink($term->name);
-
-    $term = $this->term;
-    taxonomy_term_delete($term->tid);
-    $this->drupalGet('<front>');
-
-    $this->assertNoLink($term->name);
+    // Check that the menu links were created in the custom menu.
+    $query = db_select('taxonomy_menu', 'tm')
+      ->condition('tm.vid', $this->vocabulary->vid, '=');
+    $query->join('menu_links', 'ml', 'ml.mlid = tm.mlid');
+    $query
+      ->fields('ml')
+      ->condition('ml.module', 'taxonomy_menu')
+      ->condition('ml.menu_name', 'menu-' . $machine_name);
+    $row_count = $query->execute()->rowCount();
+    $this->assertEqual(count($this->hierarchy), $row_count);
   }
+
 }
 
 /**
