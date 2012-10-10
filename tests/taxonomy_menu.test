@@ -236,6 +236,53 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
   }
 
   /**
+   * Tests the hierarchy of menu links in a menu.
+   */
+  function testTaxonomyMenuTermsHierarchy() {
+    $vocab = $this->vocabulary->machine_name;
+
+    // Settings
+    $edit = array();
+    $edit['taxonomy_menu[vocab_parent]'] = 'main-menu:0';
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+    $this->assertResponse(200);
+
+    // For each taxonomy term in the hierarchy, check that the parent mlid of
+    // the corresponding term is the menu link associated to the parent of the
+    // term.
+    foreach ($this->hierarchy as $term) {
+      // Menu link id associated to the current term as defined by the taxonomy
+      // menu table.
+      $mlid = _taxonomy_menu_get_mlid($term->tid, $this->vocabulary->vid);
+      if ($mlid) {
+        // Associated menu link and parent id.
+        $menu_link = menu_link_load($mlid);
+        $menu_link_plid = $menu_link['plid'];
+
+        // Find the mlid of the menu link associated to the parent of the current
+        // taxonomy term.
+        $parents = taxonomy_get_parents($term->tid);
+        // We don't handle multiple parents, break after first one.
+        if (!empty($parents)) {
+          foreach ($parents as $ptid => $parent) {
+            $pmlid = _taxonomy_menu_get_mlid($ptid, $this->vocabulary->vid);
+            // Should be equal to the parent menu link id as defined by the menu
+            // link object.
+            $this->assertEqual($menu_link_plid, $pmlid);
+            break;
+          }
+        }
+        else {
+          // Current term has no parent term. This means that the name of the
+          // vocabulary should be associated to the 'navigation' root.
+          // Menu link of the current term as defined by taxonomy menu table.
+          $this->assertEqual($menu_link['plid'], 0);
+        }
+      }
+    }
+  }
+
+  /**
    * Tests creation of menu links on a custom menu.
    */
   function testTaxonomyMenuCustomMenu() {
