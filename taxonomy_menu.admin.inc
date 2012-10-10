@@ -375,3 +375,21 @@ function _taxonomy_menu_create_options($vid) {
 
   return $options;
 }
+
+/**
+ * Checks to see if the variable has changed.
+ *
+ * @param $variable
+ *   A string containing the name of the variable.
+ * @param $new_value
+ *   A string containing the new value of the variable.
+ *
+ * @return Boolean
+ *   TRUE if the variable has changed, FALSE if it has not.
+ */
+function _taxonomy_menu_check_variable($variable, $new_value) {
+  if ($new_value != variable_get($variable, FALSE)) {
+    return TRUE;
+  }
+  return FALSE;
+}
