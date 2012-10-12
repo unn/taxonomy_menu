@@ -89,7 +89,7 @@ class TaxonomyMenuFunctionalTest extends TaxonomyMenuWebTestCase {
   }
 
   /**
-   * Saves a taxonomy vocabulary via the user interface.
+   * Save, edit and delete a taxonomy vocabulary using the user interface.
    */
   function testTaxonomyMenuVocabularyInterface() {
     $menu_name = 'user-menu';
@@ -115,6 +115,41 @@ class TaxonomyMenuFunctionalTest extends TaxonomyMenuWebTestCase {
     $edit['taxonomy_menu[vocab_parent]'] = '0';
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
     $this->assertRaw(t('The Taxonomy Menu has been removed.'));
+  }
+
+  /**
+   * Save, edit and delete a term using the user interface.
+   */
+  function testTaxonomyMenuTermInterface() {
+    $menu_name = 'main-menu';
+    $vocab_name = $this->vocabulary->machine_name;
+    $edit = array();
+    $edit['taxonomy_menu[vocab_parent]'] = $menu_name . ':0';
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab_name . '/edit', $edit, t('Save'));
+
+    // Create a new term from the interface.
+    $edit = array();
+    $edit = array(
+      'name' => $this->randomName(12),
+      'description[value]' => $this->randomName(100),
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab_name . '/add', $edit, t('Save'));
+    $terms = taxonomy_get_term_by_name($edit['name']);
+    $term = reset($terms);
+    $this->assertRaw(t('Added term %term to taxonomy menu %menu_name.', array('%term' => $term->name, '%menu_name' => $menu_name)));
+
+    // Update an existing term from the interface.
+    $edit = array(
+      'name' => $this->randomName(12),
+      'description[value]' => $this->randomName(100),
+    );
+    $this->drupalPost('taxonomy/term/' . $term->tid . '/edit', $edit, t('Save'));
+    $this->assertRaw(t('Updated term %term in taxonomy menu %menu_name.', array('%term' => $edit['name'], '%menu_name' => $menu_name)));
+
+    // Delete an existing term from the interface.
+    $this->drupalPost('taxonomy/term/' . $term->tid . '/edit', $edit, t('Delete'));
+    $this->drupalPost(null, null, t('Delete')); // Confirm deletion.
+    $this->assertRaw(t('Deleted term %term from taxonomy menu %menu_name.', array('%term' => $edit['name'], '%menu_name' => $menu_name)));
   }
 
 }
