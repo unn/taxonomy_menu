@@ -189,6 +189,7 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
   function testTaxonomyMenuCRUD() {
     $menu_name = 'main-menu'; // Name of the menu.
     $hierarchy_count = count($this->hierarchy);
+    $vid = $this->vocabulary->vid;
 
     // Set form settings.
     $edit = array();
@@ -202,7 +203,7 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
     // Terms creation: ensure that the same number of menu links are created
     // from the taxonomy terms of the vocabulary.
     $query = db_select('taxonomy_menu', 'tm')
-      ->condition('tm.vid', $this->vocabulary->vid, '=');
+      ->condition('tm.vid', $vid, '=');
     $query->join('menu_links', 'ml', 'ml.mlid = tm.mlid');
     $query
       ->fields('tm')
@@ -222,17 +223,12 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
 
     // Term deletion: ensure that the menu link is deleted when the taxonomy
     // term is deleted.
-    $query = db_select('taxonomy_menu', 'tm')
-      ->fields('tm')
-      ->condition('tm.vid', $this->vocabulary->vid, '=')
-      ->condition('tm.tid', $term->tid, '=');
-    $mlid = $query->execute()->fetchField();
-
+    $mlid = _taxonomy_menu_get_mlid($term->tid, $vid);
     taxonomy_term_delete($term->tid);
 
     $query = db_select('taxonomy_menu', 'tm')
       ->fields('tm')
-      ->condition('tm.vid', $this->vocabulary->vid, '=')
+      ->condition('tm.vid', $vid, '=')
       ->condition('tm.tid', $term->tid, '=');
     $row_count = $query->execute()->rowCount();
     $this->assertEqual(0, $row_count);
@@ -240,31 +236,26 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
     $query = db_select('menu_links', 'ml')
       ->fields('ml')
       ->condition('ml.mlid', $mlid)
-      ->condition('ml.module', 'taxonomy_menu')
-      ->condition('ml.menu_name', $menu_name);
+      ->condition('ml.module', 'taxonomy_menu');
     $row_count = $query->execute()->rowCount();
     $this->assertEqual(0, $row_count);
 
     // Vocabulary deletion: ensure that all menu links and all associations in
     // the taxonomy menu table are deleted when a vocabulary is deleted.
-    $query = db_select('taxonomy_menu', 'tm')
-      ->fields('tm')
-      ->condition('tm.vid', $this->vocabulary->vid, '=');
-    $mlids = $query->execute()->fetchAllAssoc('mlid');
-
-    taxonomy_vocabulary_delete($this->vocabulary->vid);
+    $mlids = _taxonomy_menu_get_menu_items($vid);
+    taxonomy_vocabulary_delete($vid);
 
     $query = db_select('taxonomy_menu', 'tm')
       ->fields('tm')
-      ->condition('tm.vid', $this->vocabulary->vid, '=');
+      ->condition('tm.vid', $vid, '=');
     $row_count = $query->execute()->rowCount();
     $this->assertEqual(0, $row_count);
 
     $query = db_select('menu_links', 'ml')
-    ->fields('ml')
-    ->condition('ml.mlid', array_keys($mlids), 'IN')
-    ->condition('ml.module', 'taxonomy_menu')
-    ->condition('ml.menu_name', $menu_name);
+      ->fields('ml')
+      ->condition('ml.mlid', array_keys($mlids), 'IN')
+      ->condition('ml.module', 'taxonomy_menu')
+      ->condition('ml.menu_name', $menu_name);
     $row_count = $query->execute()->rowCount();
     $this->assertEqual(0, $row_count);
 
@@ -410,6 +401,134 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
     $mlid = _taxonomy_menu_get_mlid($test_term->tid, $this->vocabulary->vid);
     $menu_link = menu_link_load($mlid);
     $this->assertEqual($new_name, $menu_link['link_title']);
+  }
+
+  /**
+   * Tests Taxonommy Menu expand option.
+   */
+  function testTaxonomyMenuExpandedOption() {
+    $vocab = $this->vocabulary->machine_name;
+
+    // Set settings on expanded.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[options][expanded]' => TRUE,
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+
+    // Build the base query.
+    $base_query = db_select('menu_links', 'ml');
+    $base_query->join('taxonomy_menu', 'tm', 'ml.mlid = tm.mlid');
+    $base_query->fields('ml')
+      ->condition('tm.vid', $this->vocabulary->vid)
+      ->condition('ml.module', 'taxonomy_menu');
+
+    // Assert that menu links are expanded.
+    $query = $base_query->condition('ml.expanded', TRUE);
+    $row_count = $query->execute()->rowCount();
+    $this->assertEqual(count($this->hierarchy), $row_count);
+
+    // Set settings on not expanded.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[options][expanded]' => FALSE,
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+
+    // Assert that menu links are not expanded anymore.
+    $query = $base_query->condition('ml.expanded', FALSE);
+    $row_count = $query->execute()->rowCount();
+    $this->assertEqual(0, $row_count);
+  }
+
+  /**
+   * Tests Taxonommy Menu "Term description" option.
+   */
+  function testTaxonomyMenuTermDescriptionOption() {
+    $vocab = $this->vocabulary->machine_name;
+
+    // Set settings on expanded.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[options][term_item_description]' => FALSE,
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+
+    // Assert that menu links does not have the term description.
+    $term = $this->hierarchy[3];
+    $mlid = _taxonomy_menu_get_mlid($term->tid, $this->vocabulary->vid);
+    $menu_link = menu_link_load($mlid);
+    $menu_link_title = $menu_link['options']['attributes']['title'];
+    $this->assertEqual($menu_link_title, '');
+
+    // Assert that menu links does have the term description, when the option is
+    // checked.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[options][term_item_description]' => TRUE,
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+    $menu_link = menu_link_load($mlid);
+    $menu_link_title = $menu_link['options']['attributes']['title'];
+    $this->assertEqual($menu_link_title, $term->description);
+  }
+
+  /**
+   * Tests Taxonommy Menu "Flatten" option.
+   */
+  function testTaxonomyMenuFlattenOption() {
+    $vocab = $this->vocabulary->machine_name;
+
+    // Set settings.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[options][flat]' => TRUE,
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+
+    // Assert that all of the menu links have no children with the root being
+    // the menu.
+    $query = db_select('menu_links', 'ml');
+    $query->join('taxonomy_menu', 'tm', 'ml.mlid = tm.mlid');
+    $query->fields('ml');
+    $query
+      ->condition('tm.vid', $this->vocabulary->vid)
+      ->condition('ml.menu_name', 'main-menu')
+      ->condition('ml.module', 'taxonomy_menu')
+      ->condition('ml.has_children', 0)
+      ->condition('ml.plid', 0);
+    $row_count = $query->execute()->rowCount();
+    $this->assertEqual(count($this->hierarchy), $row_count);
+
+    // Assert that all of the menu links have no children with the root being
+    // a menu item.
+    $item = array (
+      'menu_name'  => 'main-menu',
+      'weight'     => 0,
+      'link_title' => 'test',
+      'link_path'  => '<front>',
+      'module'     => 'taxonomy_menu',
+    );
+    $mlid = menu_link_save($item);
+    menu_cache_clear('main-menu');
+
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:' . $mlid,
+      'taxonomy_menu[options][flat]' => TRUE,
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+
+    $query = db_select('menu_links', 'ml');
+    $query->join('taxonomy_menu', 'tm', 'ml.mlid = tm.mlid');
+    $query->fields('ml');
+    $query
+      ->condition('tm.vid', $this->vocabulary->vid)
+      ->condition('ml.menu_name', 'main-menu')
+      ->condition('ml.module', 'taxonomy_menu')
+      ->condition('ml.has_children', 0)
+      ->condition('ml.plid', $mlid);
+    $row_count = $query->execute()->rowCount();
+    $this->assertEqual(count($this->hierarchy), $row_count);
   }
 
 }
