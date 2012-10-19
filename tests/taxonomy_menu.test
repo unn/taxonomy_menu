@@ -346,7 +346,9 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
 /**
  * Tests Taxonomy Menu configuration options.
  *
- * @TODO Add tests for other configuration options.
+ * @TODO Add tests for other configuration options:
+ *   - Display children.
+ *   - Empty terms.
  */
 class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
 

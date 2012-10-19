@@ -148,6 +148,13 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
   }
   variable_set($variable_name, $form_state['values']['taxonomy_menu']['path']);
 
+  // Set the path and check for changes.
+  $variable_name = _taxonomy_menu_build_variable('path', $vid);
+  if (_taxonomy_menu_check_variable($variable_name, $form_state['values']['taxonomy_menu']['path'])) {
+    $changed_path = TRUE;
+  }
+  variable_set($variable_name, $form_state['values']['taxonomy_menu']['path']);
+
   foreach ($form_state['values']['taxonomy_menu']['options'] as $key => $value) {
     // Create the variable name.
     $variable_name = _taxonomy_menu_build_variable($key, $vid);

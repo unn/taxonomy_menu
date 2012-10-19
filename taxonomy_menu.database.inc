@@ -144,14 +144,19 @@ function _taxonomy_menu_get_parents($tid) {
 }
 
 /**
-  * Delete all rows from {taxomony_menu} associated with this tid
+  * Delete all rows from {taxomony_menu} associated with this term ID and
+  * vocabulary ID.
   *
   * @param $vid
+  *   The vocabulary ID.
   * @param $tid
+  *   The term ID.
   */
 function _taxonomy_menu_delete_item($vid, $tid) {
-  $and = db_and()->condition('vid', $vid)->condition('tid', $tid);
-  db_delete('taxonomy_menu')->condition($and)->execute();
+  db_delete('taxonomy_menu')
+    ->condition('vid', $vid)
+    ->condition('tid', $tid)
+    ->execute();
 }
 
 /**

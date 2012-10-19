@@ -2,7 +2,7 @@
 
 /**
  * @file
- * It generates menu links for all selected taxonomy terms
+ * Generates menu links for all selected taxonomy terms.
  */
 
 // Include the database layer.
@@ -44,10 +44,8 @@ function taxonomy_menu_form_taxonomy_overview_terms_alter(&$form, &$form_state) 
 function _taxonomy_menu_rebuild($vid) {
   // Get the name of the menu from the administration settings.
   $menu_exists = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
-
   // Delete the menu links associated to this vocabulary.
   _taxonomy_menu_delete_menu_links($vid);
-
   // Re-create the menu links if a menu is set.
   if ($menu_exists) {
     _taxonomy_menu_insert_menu_links($vid);
@@ -63,18 +61,12 @@ function _taxonomy_menu_rebuild($vid) {
 function _taxonomy_menu_insert_menu_links($vid) {
   // Get the name of the menu from the administration settings.
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
-
-  // Check to see if we should had a vocab item.
-  if (variable_get(_taxonomy_menu_build_variable('voc_item', $vid), FALSE)) {
-    $args = array(
-      'vid' => $vid,
-      'menu_name' => $menu_name,
-    );
-    taxonomy_menu_handler('insert', $args);
-  }
-
+  // Get a list of all the taxonomy terms for that vocabulary.
+  $terms = taxonomy_get_tree($vid);
   // Let batch api take care of inserting the menu items.
-  _taxonomy_menu_insert_menu_links_batch($vid);
+  _taxonomy_menu_save_menu_links_batch($terms, $menu_name, 'creation');
+  // Display a notification message.
+  drupal_set_message('The Taxonomy Menu has been created.', 'status');
 }
 
 /**
@@ -86,33 +78,18 @@ function _taxonomy_menu_insert_menu_links($vid) {
 function _taxonomy_menu_update_menu_links($vid) {
   // Get the name of the menu from the administration settings.
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
-
-  // Get a list of the current tid - menu_link combinations.
-  $menu_links = _taxonomy_menu_get_menu_items($vid);
-
-  // Cycle through the menu links.
-  foreach ($menu_links as $mlid => $tid) {
-    // $args must be reset each time through.
-    $args = array(
-      'menu_name' => $menu_name,
-      'mlid' => $mlid,
-    );
-    if ($tid == 0) {
-      $args['vid'] = $vid;
-    }
-    else {
-      $args['term'] = taxonomy_term_load($tid);
-    }
-    // Update the menu link.
-    taxonomy_menu_handler('update', $args);
-  }
-
+  // Get a list of all the terms to update.
+  $tm_menu_links = _taxonomy_menu_get_menu_items($vid);
+  $term_ids = array_values($tm_menu_links);
+  $terms = taxonomy_term_load_multiple($term_ids);
+  // Let batch api take care of inserting the menu items.
+  _taxonomy_menu_save_menu_links_batch($terms, $menu_name);
   // Display a notification message.
-  drupal_set_message(t('The Taxonomy Menu has been updated.'), 'status');
+  drupal_set_message('The Taxonomy Menu has been updated.', 'status');
 }
 
 /**
- * Deletes menu links associated to a vocabulary.
+ * Deletes all menu links associated to a vocabulary.
  *
  * @param $vid
  *   The vocabulary ID.
@@ -127,164 +104,222 @@ function _taxonomy_menu_delete_menu_links($vid) {
 }
 
 /**
- * Create the initial $item array.
+ * Prepares a taxonomy item $item to be saved as a menu link.
  *
- * @param $args
- *  array with the following key/value pairs:
- *   'term' => term object, if updating a term
- *   'menu_name' => menu that the item is set to apply to
- *   'vid' => vocab id.  if editing vocab item
- *   'mlid' => menu id
+ * A menu item has the following properties:
+ *  - link_path: (required)
+ *  - link_title: (required)
+ *  - menu_name: (optional)
+ *  - weight: (optional)
+ *  - expanded: (optional)
+ *  - options: (optional)
+ *  - mlid: (optional)
+ *  - plid: (optional)
+ *  - router_path:
  *
- * @param $node
- *   The node object.
+ * @param $term
+ *   A taxonomy term used to save a respective menu item.
+ * @param $menu_name
+ *   The machine name of the menu in which the menu link should be saved.
+ *
+ * @return
+ *   A menu link to be saved in the menu.
+ *
+ * @TODO Deal with paths validation.
  */
-function _taxonomy_menu_create_item($args = array(), $node) {
+function _taxonomy_menu_prepare_menu_link($term, $menu_name) {
+  static $weight = 0;
+  $children_count = 0;
+  $nodes_attached_count = 0;
+  $langcode = isset($term->language) ? $term->language : LANGUAGE_NONE;
 
-  // If tid = 0, then we are creating a vocab item
-  if (isset($args['tid']) && isset($args['vid']) && $args['tid'] == 0 && variable_get(_taxonomy_menu_build_variable('voc_item', $args['vid']), 0)) {
-    $vocab = taxonomy_vocabulary_load($args['vid']);
-    $item = array(
-      'tid' => 0,
-      'name' => $vocab->name,
-      'description' => variable_get(_taxonomy_menu_build_variable('voc_item_description', $args['vid']), 0) ? $vocab->description : '',
-      'weight' => $vocab->weight,
-      'vid' => $args['vid'],
-      'ptid' => 0,
-      'root_term_weight' => $vocab->weight,
-      'menu_name' => $args['menu_name'],
-      'language' => $vocab->language,
-    );
+  // Options related to taxonomy menu and not the menu item in itself.
+  $taxonomy_menu_options = array(
+    'update' => TRUE,
+  );
+
+  // If a taxonomy term has already been saved as a menu item, load the menu
+  // item. Else, we build it from scratch.
+  $mlid = _taxonomy_menu_get_mlid($term->tid, $term->vid, $langcode);
+  if ($mlid) {
+    $menu_link = menu_link_load($mlid);
   }
   else {
-    // If tid <> 0 then we are creating a term item.
-    $term = $args['term'];
+    // Flag a menu item creation for later use.
+    $taxonomy_menu_options['update'] = FALSE;
+    $menu_link = array();
 
-    // Sometimes $term->parents is not set so we find it.
-    if (empty($term->parents)) {
-      $term->parents = _taxonomy_menu_get_parents($term->tid);
-      if (empty($term->parents)) {
-        // even without parents, create one with $ptid = 0
-        $term->parents = array(0 => '0');
-      }
-    }
+    // Only add/change a weight for newly created items. This is important for
+    // menu links that have nodes as links.
+    $menu_link['weight'] = $term->weight;
+  }
 
-    // Find the weight of the root taxonomy term; we'll need it in case we want
-    // a flat taxonomy menu.
-    if (is_object($term)) {
-      $term_parents = taxonomy_get_parents_all($term->tid);
-      $root_term_weight = $term_parents[count($term_parents) - 1]->weight;
+  // Menu name, language, module ownership
+  $menu_link['module'] = 'taxonomy_menu';
+  $menu_link['menu_name'] = $menu_name;
+  $menu_link['language'] = $langcode;
+
+  // Has children.
+  $children = taxonomy_get_children($term->tid, $term->vid);
+  if (!empty($children)) {
+    $menu_link['has_children'] = 1;
+    $children_count = count($children);
+  }
+
+  // Expanded.
+  $menu_link['expanded'] = variable_get(_taxonomy_menu_build_variable('expanded', $term->vid), 0);
+
+  // Flatten.
+  $flatten_menu = variable_get(_taxonomy_menu_build_variable('flat', $term->vid));
+  if ($flatten_menu) {
+    $menu_link['weight'] = $weight++;
+    $menu_link['has_children'] = 0;
+    $menu_link['plid'] = variable_get(_taxonomy_menu_build_variable('vocab_parent', $term->vid), NULL);
+    $menu_link['expanded'] = 0;
+  }
+
+  // Empty terms.
+  // Hide all terms that are not associated to a node.
+  $hide_empty_terms = variable_get(_taxonomy_menu_build_variable('hide_empty_terms', $term->vid), FALSE);
+  if ($hide_empty_terms) {
+    $result = taxonomy_menu_term_count_nodes($term->tid, $term->vid);
+    $menu_link['hidden'] = ($result == 0) ? 1 : 0;
+  }
+
+  // Title.
+  // Append the number of children per taxonomy terms to the menu link's title
+  // if selected, else give it the name of the taxonomy term.
+  $menu_link['link_title'] = $term->name;
+  $display_number = variable_get(_taxonomy_menu_build_variable('display_num', $term->vid), FALSE);
+  if ($display_number && !$flatten_menu && $children_count != 0) {
+    $node_count = taxonomy_menu_term_count_nodes($term->tid, $term->vid);
+    $menu_link['link_title'] .= " (" . $children_count . ")";
+  }
+
+  // Description.
+  $term_description = variable_get(_taxonomy_menu_build_variable('term_item_description', $term->vid), 0);
+  $menu_link['options']['attributes']['title'] = $term_description ? $term->description : '';
+
+  // Path.
+  // Create the path of the menu item and normalize it.
+  $link_path = taxonomy_menu_create_path($term->vid, $term->tid);
+  $menu_link['link_path'] = drupal_get_normal_path($link_path, $langcode);
+
+  // Set the mlid of its parent. Flatten option has already been processed.
+  if (!$flatten_menu) {
+    $menu_link['plid'] = _taxonomy_menu_determine_plid($term, $langcode);
+  }
+
+  // Set the taxonomy menu options.
+  $menu_link['taxonomy_menu'] = $taxonomy_menu_options;
+
+  return $menu_link;
+}
+
+/**
+ * Helper function to check if a taxonomy term is empty.
+ *
+ * A taxonomy term is empty if there is no nodes attached to it. For now, the
+ * function is not recursive.
+ *
+ * @param $term
+ *   The taxonomy term to be checked.
+ *
+ * @TODO Make the function recursive if necessary.
+ */
+function _taxonomy_menu_is_term_empty($term) {
+  $nodes = taxonomy_select_nodes($term);
+  $is_term_empty = empty($nodes);
+
+  return $is_term_empty;
+}
+
+/**
+ * Helper function to determine a parent mlid for a specific taxonomy term, in
+ * function of the settings of the administration pages.
+ *
+ * @param $term
+ *   The term, which we want to find the parent mlid.
+ * @param $langcode
+ *   The language of the term.
+ *
+ * @return $plid
+ *   The corresponding parent mlid.
+ */
+function _taxonomy_menu_determine_plid($term, $langcode){
+  $plid = 0;
+  $parents = taxonomy_get_parents($term->tid);
+  if (empty($parents)) {
+    // Try to get the vocabulary parent from the settings
+    // Returns for example:
+    //  - "0:0" : DISABLED
+    //  - "main-menu:0" : MENU ROOT
+    //  - "main-menu:123" : MENU ITEM ROOT
+    $vocab_parent = variable_get(_taxonomy_menu_build_variable('vocab_parent', $term->vid), NULL);
+    if ($vocab_parent) {
+      // "main-menu:123" case
+      $plid = $vocab_parent;
     }
     else {
-      $root_term_weight = 0;
+      // "main-menu:0" OR "0:0" cases
+      $plid = 0;
     }
-
-    foreach ($term->parents as $parent) {
-      $ptid = $parent;
-      // turn the term into the correct $item array form
-      $item = array(
-        'tid' => $term->tid,
-        'name' => $term->name,
-        'description' => variable_get(_taxonomy_menu_build_variable('term_item_description', $term->vid), 0) ? $term->description : '',
-        'weight' => $term->weight,
-        'vid' => $term->vid,
-        'ptid' => $ptid,
-        'root_term_weight' => $root_term_weight,
-        'menu_name' => $args['menu_name'],
-        'language' => isset($term->language) ? $term->language : ($node ? $node->language : $GLOBALS['language']->language),
-      );
-      if (isset($args['mlid'])) {
-        $item['mlid'] = $args['mlid'];
-      }
-      // Mutiple parents are not supported yet, hence this break.
-      // without the break, the item is inserted multiple under one parent, instead once under each parent.
+  }
+  else {
+    // We have parents for this taxonomy term. Only get the first one, we don't
+    // support multiple parents yet.
+    // @TODO Support multiple parents.
+    foreach ($parents as $parent) {
+      $plid = _taxonomy_menu_get_mlid($parent->tid, $term->vid, $langcode);
       break;
     }
+    if ($plid == FALSE) {
+      $plid = 0;
+    }
   }
 
-  return $item;
+  return $plid;
 }
 
 /**
- * Handles operations on taxonomy menu items.
+ * Saves a menu link in a menu, based on a taxonomy term.
  *
- * @param $op
- *   Possible operations are:
- *   - 'insert': menu link is going to be saved.
- *   - 'update': menu link is going to be updated.
- *   - 'delete': menu link is going to be deleted.
- *   - 'path': ???.
+ * @param $term
+ *   A taxonomy term used to save a respective menu item.
+ * @param $menu_name
+ *   The machine name of the menu in which the menu link should be saved.
  *
- * @param $node
- *   The node object.
- *
- * @param $args
- *   if $op == 'insert' then:
- *     'term'      => Term object,
- *     'menu_name' => menu that the item is set to apply to
- *   if $op == 'update' then:
- *     'term'      => Term object,
- *     'menu_name' => menu that the item is set to apply to
- *     'mlid'      => Menu ID
- *   if $op == 'delete' then:
- *     'tid'  => Term ID
- *     'mlid' => Menu ID
+ * @return
+ *   The menu link ID of the menu item that has been saved. FALSE, if no item
+ *   could be saved.
  */
-function taxonomy_menu_handler($op, $args = array(), $node = NULL, $item = array()) {
-  // Get the initial $item
-  if (empty($item)) {
-    $item = _taxonomy_menu_create_item($args, $node);
+function taxonomy_menu_save_menu_link($term, $menu_name) {
+  $hook = 'taxonomy_menu';
+
+  // Prepare a menu link based on the settings of the vocabulary edit page.
+  $menu_link = _taxonomy_menu_prepare_menu_link($term, $menu_name);
+
+  // Save the resulting menu item.
+  $mlid = menu_link_save($menu_link);
+
+  // Let other modules perform actions after the menu item has been saved.
+  foreach (module_implements($hook . '_save') as $module) {
+    $function = $module . '_' . $hook . '_save';
+    $function($term, $menu_link, $mlid);
   }
 
-  // Let other modules make edits
-  $hook = 'taxonomy_menu_' . $op;
-  foreach (module_implements($hook) as $module) {
-    $function = $module . '_' . $hook;
-    $function($item);
-  }
-
-  // Update the menu and return the mlid if the remove element is not true
-  if ($op != 'delete') {
-    return _taxonomy_menu_save($item);
-  }
+  return $mlid;
 }
 
 /**
- * Implements hook_taxonomy_menu_insert().
+ * Implements hook_taxonomy_menu_save().
  *
- * @param $item
- *  array with the following key/value pairs:
- *   'tid' => the term id (if 0 then updating the vocab as an item)
- *   'name' => new menu name
- *   'description' => new menu description, used as to build the title attribute
- *   'weight' => new menu weight
- *   'vid' => the new vocabulary's id
- *   'ptid' => the new parent tid
- *   'remove' => if this is set to TRUE then the $item is not added as a menu
- *
- * @return $item
+ * Updates {taxonomy_menu} table using the newly created menu item.
  */
-function taxonomy_menu_taxonomy_menu_insert(&$item) {
-  $item = _taxonomy_menu_item($item);
-}
-
-/**
- * Implements hook_taxonomy_menu_update().
- *
- * @param $item
- *  array with the following key/value pairs:
- *   'tid' => the term id (if 0 then updating the vocab as an item)
- *   'name' => new menu name
- *   'description' => new menu description, used as to build the title attribute
- *   'weight' => new menu weight
- *   'vid' => the new vocabulary's id
- *   'ptid' => the new parent tid
- *   'mlid' => mlid that needs to be edited
- *   'remove' => if this is set to TRUE then the $item is not added as a menu
- *
- */
-function taxonomy_menu_taxonomy_menu_update(&$item) {
-  $item = _taxonomy_menu_item($item);
+function taxonomy_menu_taxonomy_menu_save($term, $menu_link, $mlid) {
+  if ($menu_link['taxonomy_menu']['update'] == FALSE) {
+    _taxonomy_menu_insert_menu_item($mlid, $term->tid, $term->vid, $menu_link['language']);
+  }
 }
 
 /**
@@ -301,7 +336,7 @@ function taxonomy_menu_taxonomy_vocabulary_delete($vocabulary) {
  */
 
 function taxonomy_menu_taxonomy_term_insert($term) {
-  _taxonomy_menu_taxonomy_termapi_helper($term, 'insert');
+  _taxonomy_menu_termapi_helper($term, 'insert');
 }
 
 /**
@@ -309,7 +344,7 @@ function taxonomy_menu_taxonomy_term_insert($term) {
  */
 
 function taxonomy_menu_taxonomy_term_update($term) {
-  _taxonomy_menu_taxonomy_termapi_helper($term, 'update');
+  _taxonomy_menu_termapi_helper($term, 'update');
 }
 
 /**
@@ -317,84 +352,96 @@ function taxonomy_menu_taxonomy_term_update($term) {
  */
 
 function taxonomy_menu_taxonomy_term_delete($term) {
-  _taxonomy_menu_taxonomy_termapi_helper($term, 'delete');
+  _taxonomy_menu_termapi_helper($term, 'delete');
 }
 
 /**
  * Implements hook_node_insert().
+ *
+ * @TODO Update the menu items count, empty terms.
  */
 function taxonomy_menu_node_insert($node) {
-  $terms_old = &drupal_static('taxonomy_menu_terms_old');
-  // We use this direct table pull to avoid the cache and because
-  // free tags are not formated in a matter where extrating the
-  // tid's is easy.
-  $terms_new = _taxonomy_menu_get_node_terms($node);
-
-  // Merge current terms and previous terms to update both menu items.
-  $terms = array_unique(array_merge((array)$terms_new, (array)$terms_old));
-  _taxonomy_menu_nodeapi_helper('insert', $terms, $node);
 }
 
 /**
  * Implements hook_node_update().
+ *
+ * @TODO Update the menu items count, empty terms.
  */
 function taxonomy_menu_node_update($node) {
-  $terms_old = &drupal_static('taxonomy_menu_terms_old');
-  //we use this direct table pull to avoid the cache and because
-  //free tags are not formated in a matter where extrating the
-  //tid's is easy
-  $terms_new = _taxonomy_menu_get_node_terms($node);
-
-  //merge current terms and previous terms to update both menu items.
-  $terms = array_unique(array_merge((array)$terms_new, (array)$terms_old));
-  _taxonomy_menu_nodeapi_helper('update', $terms, $node);
 }
 
 /**
  * Implements hook_node_presave().
+ *
+ * @TODO Update the menu items count, empty terms.
  */
 function taxonomy_menu_node_presave($node) {
-  $terms_old = &drupal_static('taxonomy_menu_terms_old');
-  //get the terms from the database before the changes are made.
-  //these will be used to update the menu item's name if needed
-  //we go directly to the db to bypass any caches
-  if (isset($node->nid)) {
-    $node_old = node_load($node->nid);
-    $terms_old = _taxonomy_menu_get_node_terms($node_old);
-  }
-  else {
-    $terms_old = array();
-  }
 }
 
 /**
  * Implements hook_node_delete().
+ *
+ * @TODO Update the menu items count, empty terms.
  */
 function taxonomy_menu_node_delete($node) {
-  // since the delete operation is run after the data is deleted
-  // pull the terms from the node object
-  $terms =  _taxonomy_menu_get_node_terms($node);
-  _taxonomy_menu_nodeapi_helper('delete', $terms, $node);
 }
 
 /**
- * Abstraction of hook_taxonomy_term_<operation>()
+ * Abstraction of hook_node_<op>().
+ *
+ * @param $node
+ *   The node to process.
+ * @param $operation
+ *   A string of the operation to be performed [update|insert|delete].
+ *
+ * @TODO Rebuild the function.
  */
-function _taxonomy_menu_taxonomy_termapi_helper($term, $operation) {
+function _taxonomy_menu_nodeapi_helper($node, $operation) {
+  $terms = array();
+
+  // Update the taxonomy menu for each terms
+  foreach ($terms as $key => $tid) {
+    $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $term->vid), FALSE);
+    $sync = variable_get(_taxonomy_menu_build_variable('sync', $term->vid), TRUE);
+    $display_num = variable_get(_taxonomy_menu_build_variable('display_num', $term->vid), TRUE);
+    $hide_empty_terms = variable_get(_taxonomy_menu_build_variable('hide_empty_terms', $term->vid), FALSE);
+
+    $term = taxonomy_term_load($tid);
+    if ($term  && $menu_name && $sync && ($display_num || $hide_empty)) {
+      switch ($operation) {
+        case 'insert':
+          break;
+        case 'update':
+          if ($hide_empty_terms) {
+            _taxonomy_menu_update_all_parents($term, $menu_name);
+          }
+          break;
+        case 'delete':
+          break;
+      }
+    }
+    // Report status.
+    drupal_set_message($message, 'status');
+    // Rebuild the menu.
+    menu_cache_clear($menu_name);
+  }
+}
+
+/**
+ * Abstraction of hook_termapi_<op>().
+ *
+ * @param $term
+ *   The term to process.
+ * @param $operation
+ *   A string of the operation to be performed [update|insert|delete].
+ */
+function _taxonomy_menu_termapi_helper($term, $operation) {
   // Only sync if taxonomy_menu is enabled for this vocab and the 'sync'
   // option has been checked.
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $term->vid), 0);
   $sync = variable_get(_taxonomy_menu_build_variable('sync', $term->vid), 0);
-
   if ($menu_name && $sync) {
-    $item = array(
-      'tid' => $term->tid,
-      'vid' => $term->vid,
-      'term' => $term,
-      'menu_name' => $menu_name,
-      'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
-    );
-
     switch ($operation) {
       case 'insert':
         $text = 'Added term %term to taxonomy menu %menu_name.';
@@ -407,226 +454,42 @@ function _taxonomy_menu_taxonomy_termapi_helper($term, $operation) {
         break;
     }
     $message = t($text, array('%term' => $term->name, '%menu_name' => $menu_name));
-
-    // run function
-    taxonomy_menu_handler($operation, $item);
-
-    // report status
+    // Delete the association in the {taxonomy_menu} table, else save the menu link.
+    if ($operation == 'delete') {
+      $mlid = _taxonomy_menu_get_mlid($term->tid, $term->vid);
+      _taxonomy_menu_delete_item($term->vid, $term->tid);
+      menu_link_delete($mlid);
+    }
+    else {
+      taxonomy_menu_save_menu_link($term, $menu_name);
+    }
+    // Report status.
     drupal_set_message($message, 'status');
-
-    // rebuild the menu
+    // Rebuild the menu.
     menu_cache_clear($menu_name);
   }
 }
 
 /**
- * Builds argument arrays calls taxonomy_menu_handler.
+ * Update all parent items.
  *
- * @param $op
- *  A string of the operation to be performed [update|insert|delete]
- * @param $terms
- *  An array of tids.
- * @param $node
- */
-function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
-  foreach ($terms as $key => $tid) {
-    $term = taxonomy_term_load($tid);
-
-    // update the menu for each term if necessary
-    $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $term->vid), FALSE);
-    $vocb_sync = variable_get(_taxonomy_menu_build_variable('sync', $term->vid), TRUE);
-    $menu_num = variable_get(_taxonomy_menu_build_variable('display_num', $term->vid), TRUE);
-    $hide_empty = variable_get(_taxonomy_menu_build_variable('hide_empty_terms', $term->vid), FALSE);
-    if ($menu_name && $vocb_sync && ($menu_num || $hide_empty)) {
-      //build argument array to save menu_item
-      $args = array(
-        'tid' => $term->tid,
-        'vid' => $term->vid,
-        'term' => $term,
-        'menu_name' => $menu_name,
-        'mlid' => _taxonomy_menu_get_mlid($term->tid, $term->vid),
-      );
-
-      if ($op == 'delete') {
-        /* Turn the op to 'update' here since we really do want to update the item
-        * and not delete/recreate it, since the latter will break hierarchy and
-        * customizations.
-        */
-        $op = 'update';
-      }
-
-      taxonomy_menu_handler($op, $args, $node);
-      if (variable_get(_taxonomy_menu_build_variable('hide_empty_terms', $term->vid), FALSE)) {
-        _taxonomy_menu_update_all_parents($term, $menu_name);
-      }
-    }
-  }
-}
-
-/**
- * Update all parent items
- *
- * @param $op
- *  options are 'insert', 'update', 'delete' or path
- *
- * @param $node
- *  The node object.
+ * @param $term
+ *   The taxonomy term from which to update the parents.
+ * @param $menu_name
+ *   The menu name of the resulting menu links.
  */
 function _taxonomy_menu_update_all_parents($term, $menu_name) {
   $parents = taxonomy_get_parents($term->tid);
   if ($parents) {
-    foreach ($parents as $parent) {
-      $parent->parents = array_keys(taxonomy_get_parents($parent->tid));
-      $item = array(
-        'term' => $parent,
-        'menu_name' => $menu_name,
-        'mlid' => _taxonomy_menu_get_mlid($parent->tid, $parent->vid),
-        'remove' => FALSE,
-      );
-      taxonomy_menu_handler('update', $item);
-      _taxonomy_menu_update_all_parents($parent, $menu_name);
-    }
+    // Let batch api take care of updating the menu items.
+    _taxonomy_menu_save_menu_links_batch($parents, $menu_name);
   }
-}
-
-/**
- * Adds/Updates a taxonomy menu item.
- *
- * We use a custom data array $item as a parameter, instead of using a
- * standard taxonomy $term object. This is because this function is also
- * called from hook_taxonomy(), which doesn't have a $term object. Rather
- * have one consistent method of passing the data.
- *
- * @param $item
- *   array with the following key/value pairs:
- *     'tid' => the term id (if 0 then adding the vocab as an item)
- *     'name' => the term's name
- *     'description' => term description, used as to build the title attribute
- *     'weight' => term weight
- *       (This will be overriden by the order created from taxonomy_get_tree which respects the correct wight)
- *     'vid' => the vocabulary's id
- *     'ptid' => the term's parent's term id
- *     'menu_name' => the menu that the link item will be inserted into
- *     'mlid' => if this is filled in then the mlid will be updated
- */
-function _taxonomy_menu_save($item) {
-  $insert = TRUE;
-
-  $flatten_menu = variable_get(_taxonomy_menu_build_variable('flat',
-$item['vid']));
-  // Child items should appear around the parent/root, so set their weight
-  // equal to the root term's
-  if ($flatten_menu) {
-    $item['weight'] = $item['root_term_weight'];
-  }
-
-  // create the path.
-  $path = taxonomy_menu_create_path($item['vid'], $item['tid']);
-  // get the parent mlid: this is either:
-  // - the parent tid's mlid
-  // - the vocab menu item's mlid
-  // - the menu parent setting for this vocab
-  $plid = _taxonomy_menu_get_mlid($item['ptid'], $item['vid']);
-  if (!$plid || $flatten_menu) {
-    $plid = variable_get(_taxonomy_menu_build_variable('vocab_parent', $item['vid']), NULL);
-  }
-
-  // Make sure the path has less then 256 characters
-  if (drupal_strlen($path) > 256) {
-    preg_match('/(.{256}.*?)\b/', $path, $matches);
-    $path = rtrim($matches[1]);
-  }
-
-  $link = array(
-    'link_title' => $item['name'],
-    'menu_name' => $item['menu_name'],
-    'plid' => $plid,
-    'options' => array('attributes' => array('title' => trim($item['description'])
-      ? $item['description'] : $item['name'])),
-    'weight' => $item['weight'],
-    'module' => 'taxonomy_menu',
-    'expanded' => variable_get(_taxonomy_menu_build_variable('expanded', $item['vid']), TRUE),
-    'link_path' => $path,
-  );
-
-  // Add setup the query paramater in the URL correctly
-  if (strpos($path, '?') !== FALSE) {
-    $split = explode('?', $path);
-    if (strpos($split[1], '?') !== FALSE) {
-      // the query split didn't work, too many question marks
-      // error?
-    }
-    else {
-      parse_str($split[1], $link['options']['query']);
-      $link['link_path'] = $split[0];
-    }
-  }
-
-  // If passed a mlid then add it
-  if (isset($item['mlid']) && $item['mlid']) {
-    $link['mlid'] = $item['mlid'];
-    $insert = FALSE;
-  }
-
-  // FIXME: i18nmenu need to be cleaned up to allow translation from other menu module
-  if (module_exists('i18n_menu')) {
-    $link['options']['alter'] = TRUE;
-    $link['language'] = $item['language'];
-    $link['customized'] = 1;
-  }
-
-  // set the has_children property
-  // if tid=0 then adding a vocab item and had children
-  // if the term has any children then set it to true
-  if ($item['tid'] == 0) {
-    $link['has_children'] = 1;
-  }
-  else {
-    $children = taxonomy_get_children($item['tid']);
-    if (!empty($children)) {
-      $link['has_children'] = 1;
-    }
-  }
-
-  // If remove is true then set hidden to 1
-  $link['hidden'] = (isset($item['remove']) && $item['remove']) ? 1 : 0;
-
-  // Save the menu item
-  if ($mlid = menu_link_save($link)) {
-    // if inserting a new menu item then insert a record into the table
-    if ($insert) {
-      _taxonomy_menu_insert_menu_item($mlid, $item['tid'], $item['vid']);
-    }
-    return $mlid;
-  }
-  else {
-    drupal_set_message(t('Could not save the menu link for the taxonomy menu.'), 'error');
-    return FALSE;
-  }
-}
-
-/**
- * hook_taxonomy_menu_delete
- *
- * @param $args
- *  array(
- *   'vid' => Vocab ID
- *   'tid' => TermID
- *   'mlid' => Menu ID
- *  )
- *
- */
-function taxonomy_menu_taxonomy_menu_delete(&$item) {
-  menu_link_delete($item['mlid']);
-  _taxonomy_menu_delete_item($item['vid'], $item['tid']);
-  unset($item['mlid']);
 }
 
 /**
  * Helper function to see if any of the children have any nodes.
  *
  * @param $tid
- *
  * @param $vid
  *
  * @return boolean
@@ -688,20 +551,41 @@ function _taxonomy_menu_item($item) {
 
 
 /**
- * Calculates the number of nodes linked to the term and all children.
+ * Calculates the number of nodes linked to a term. It can be either recursive
+ * and process all the children or just for this very term.
  *
  * @param $tid
- *
+ *   The term ID.
  * @param $vid
+ *   The vocabulary ID.
+ * @param $count
+ *   The current node count.
+ * @param $recursive
+ *   Process all the children or not. Default is TRUE.
  *
- * @return integer
+ * @return int
+ *   The number of nodes attached to a term and optionally its children.
  */
-function taxonomy_menu_term_count_nodes($tid, $vid, $count = 0) {
-  $count += _taxonomy_menu_term_count($tid);
-  $children = taxonomy_get_children($tid, $vid);
-  foreach ($children as $tid => $term) {
-    $count = taxonomy_menu_term_count_nodes($term->tid, $term->vid, $count);
+function taxonomy_menu_term_count_nodes($tid, $vid, $count = 0, $recursive = TRUE) {
+  if ($recursive) {
+    $children = taxonomy_get_children($tid, $vid);
+    if (!empty($children)) {
+      foreach ($children as $term) {
+        $associated_nodes = taxonomy_select_nodes($term->tid);
+        $current_count = empty($associated_nodes) ? 0 : count($associated_nodes);
+        $count += taxonomy_menu_term_count_nodes($term->tid, $term->vid, $current_count);
+      }
+    }
+    else {
+      $associated_nodes = taxonomy_select_nodes($tid);
+      $count = !empty($associated_nodes) ? count($associated_nodes) : 0;
+    }
   }
+  else {
+    $associated_nodes = taxonomy_select_nodes($tid);
+    $count = !empty($associated_nodes) ? count($associated_nodes) : 0;
+  }
+
   return $count;
 }
 
@@ -723,7 +607,7 @@ function taxonomy_menu_taxonomy_menu_path() {
 }
 
 /**
- * Callback for hook_taxonomy_menu_path
+ * Callback for hook_taxonomy_menu_path.
  */
 function taxonomy_menu_path_default($vid, $tid) {
   // If tid = 0 then we are creating the vocab menu item format will be
@@ -773,7 +657,6 @@ function _taxonomy_menu_get_paths() {
  * Creates the path for the vid/tid combination.
  *
  * @param $vid
- *
  * @param $tid
  *
  * @return string
@@ -789,7 +672,6 @@ function taxonomy_menu_create_path($vid, $tid) {
  * Implements hook_translated_menu_link_alter().
  *
  * Translate menu links on the fly by using term translations.
- *
  */
 function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
   if (module_exists('i18n_taxonomy')) {

@@ -2,126 +2,94 @@
 
 /**
  * @file
- * Batch API Code
+ * Batch API Code.
  */
 
 /**
- * The $batch can include the following values. Only 'operations'
- * and 'finished' are required, all others will be set to default values.
+ * Saves link items in a menu based on available taxonomy terms.
  *
- * @param operations
- *   An array of callbacks and arguments for the callbacks.
- *   There can be one callback called one time, one callback
- *   called repeatedly with different arguments, different
- *   callbacks with the same arguments, one callback with no
- *   arguments, etc.
- *
- * @param finished
- *   A callback to be used when the batch finishes.
- *
- * @param title
- *   A title to be displayed to the end user when the batch starts.
- *
- * @param init_message
- *   An initial message to be displayed to the end user when the batch starts.
- *
- * @param progress_message
- *   A progress message for the end user. Placeholders are available.
- *   Placeholders note the progression by operation, i.e. if there are
- *   2 operations, the message will look like:
- *    'Processed 1 out of 2.'
- *    'Processed 2 out of 2.'
- *   Placeholders include:
- *     @current, @remaining, @total and @percentage
- *
- * @param error_message
- *   The error message that will be displayed to the end user if the batch
- *   fails.
- *
+ * @param $terms
+ *   A list of taxonomy term objects to build the menu items upon.
+ * @param $menu_name
+ *   The machine name of the menu in which the menu links should be inserted.
  */
-function _taxonomy_menu_insert_menu_links_batch($vid) {
-  $terms = taxonomy_get_tree($vid);
-  $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
-
+function _taxonomy_menu_save_menu_links_batch($terms, $menu_name) {
   $batch = array(
     'operations' => array(
-      array('_taxonomy_menu_insert_menu_links_process', array($terms, $menu_name)),
+      array('_taxonomy_menu_save_menu_links_process', array($terms, $menu_name)),
     ),
-    'finished' => '_taxonomy_menu_insert_menu_links_success',
+    'finished' => '_taxonomy_menu_save_menu_links_finished',
     'title' => t('Rebuilding Taxonomy Menu'),
     'init_message' => t('The menu items have been deleted, and are about to be regenerated.'),
-    'progress_message' => t('Import progress: Completed @current of @total stages.'),
+    'progress_message' => t('Import progress: Completed @current of @total operations.'),
     'redirect' => 'admin/structure/taxonomy',
-    'error_message' => t('The Taxonomy Menu rebuild process encountered an error.'),
+    'error_message' => t('The Taxonomy Menu creation process has encountered an error.'),
   );
   batch_set($batch);
-  batch_process();
 }
 
-
-/*
- * Insert 10 menu link items
+/**
+ * Processes the batch.
+ *
+ * @param $terms
+ *   A list of taxonomy term objects to build the menu items upon.
+ * @param $menu_name
+ *   The machine name of the menu in which the menu links should be inserted.
  */
-function _taxonomy_menu_insert_menu_links_process($terms, $menu_name, &$context) {
-  _taxonomy_menu_batch_init_context($context, $start, $end, 10);
+function _taxonomy_menu_save_menu_links_process($terms, $menu_name, &$context) {
+  // Terms are processed 10 by 10.
+  $limit = 10;
 
-  // Loop through $terms to process each term.
-  for ($i=$start; $i<count($terms) && $i<$end; $i++) {
-    $args = array(
-      'term' => $terms[$i],
-      'menu_name' => $menu_name,
-    );
-    $mlid = taxonomy_menu_handler('insert', $args);
-  }
-
-  _taxonomy_menu_batch_update_context($context, $end, count($terms), 'Creating Menu Items');
-}
-
-
-
-/*
- * Set a message stating the menu has been updated
- */
-function _taxonomy_menu_insert_menu_links_success() {
-  // Rebuild the menu.
-  menu_rebuild();
-  // Display a notification message.
-  drupal_set_message(t('The Taxonomy Menu has been created.'), 'status');
-}
-
-/*
- * Initialise the batch context
- * @param array $context Batch context array.
- * @param int $start The item to start on in this pass
- * @param int $end The end item of this pass
- * @param int $items The number of items to process in this pass
- */
-function _taxonomy_menu_batch_init_context(&$context, &$start, &$end, $items) {
-  // Initialize sandbox the first time through.
+  // Initialize the sandbox the first time through.
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
+    $context['sandbox']['max'] = count($terms);
   }
 
-  $start = $context['sandbox']['progress'];
-  $end = $start + $items;
+  // Store all the terms in the sandbox and retrieve the next
+  // group of terms to be processed.
+  $context['sandbox']['chunks'] = array_chunk($terms, $limit);
+
+  // Loop through eack chunk and process its terms.
+  foreach ($context['sandbox']['chunks'] as $chunk) {
+    foreach ($chunk as $term) {
+      // Save the menu link for this taxonomy term.
+      $mlid = taxonomy_menu_save_menu_link($term, $menu_name);
+
+      // Store some result for post-processing in the finished callback.
+      $context['results'][] = check_plain($term->name);
+      // Update our progress information.
+      $context['sandbox']['progress']++;
+      $context['sandbox']['current_term'] = $term->tid;
+    }
+
+    // Inform the batch engine that we are not finished, and provide an estimation
+    // of the completion level we reached.
+    if ($context['sandbox']['progress'] < $context['sandbox']['max']) {
+      $current_count = $context['sandbox']['max'] - $context['sandbox']['progress'];
+      $context['message'] = t('Remaining %current taxonomy terms to process out of %count ...', array('%current' => $current_count, '%count' => $context['sandbox']['max']));
+      $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+    }
+    else {
+      $context['finished'] = 1;
+    }
+  }
 }
 
-
-/*
- * Update the batch context
- *
- * @param array $context Batch context array.
- * @param int $end The end point of the most recent pass
- * @param int $total The total number of items to process in this batch
- * @param str $msg Message for the progress bar
+/**
+ * Batch 'finished' callback.
  */
-function _taxonomy_menu_batch_update_context(&$context, $end, $total, $msg) {
-  //Update context array
-  if ($end > $total) {
-    $context['finished'] = 1;
-    return;
+function _taxonomy_menu_save_menu_links_finished($success, $results, $operations) {
+  if ($success) {
+    $message = count($results) .' taxonomy terms were processed.</br>';
+    $message .= t('The Taxonomy Menu has been created.');
   }
-  $context['message'] = "{$msg}: {$end} of {$total}";
-  $context['sandbox']['progress'] = $end;
-  $context['finished'] = $end/$total;
+  else {
+    // An error occurred.
+    // $operations contains the operations that remained unprocessed.
+    $error_operation = reset($operations);
+    $message = t('An error occurred while processing %error_operation with arguments: @arguments', array('%error_operation' => $error_operation[0], '@arguments' => print_r($error_operation[1], TRUE)));
+  }
+  // Clear cache after saving menu links.
+  menu_cache_clear_all();
 }
