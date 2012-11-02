@@ -200,9 +200,15 @@ function _taxonomy_menu_prepare_menu_link($term, $menu_name) {
     $menu_link['link_title'] .= " (" . $children_count . ")";
   }
 
-  // Description.
-  $term_description = taxonomy_menu_variable_get('term_item_description', $term->vid, 0);
-  $menu_link['options']['attributes']['title'] = $term_description ? $term->description : '';
+  // CSS Title
+  $display_title_att = taxonomy_menu_variable_get('display_title_attr', $term->vid, TRUE);
+  if ($display_title_att) {
+    $term_description = taxonomy_menu_variable_get('term_item_description', $term->vid, 0);
+    $menu_link['options']['attributes']['title'] = $term_description ? $term->description : '';
+  }
+  else {
+    $menu_link['options']['attributes']['title'] = '';
+  }
 
   // Path.
   // Create the path of the menu item and normalize it.

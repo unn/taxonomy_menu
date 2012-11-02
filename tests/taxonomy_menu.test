@@ -457,6 +457,7 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
     $edit = array(
       'taxonomy_menu[vocab_parent]' => 'main-menu:0',
       'taxonomy_menu[options][term_item_description]' => FALSE,
+      'taxonomy_menu[options][display_title]' => TRUE,
     );
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
 
@@ -472,11 +473,24 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
     $edit = array(
       'taxonomy_menu[vocab_parent]' => 'main-menu:0',
       'taxonomy_menu[options][term_item_description]' => TRUE,
+      'taxonomy_menu[options][display_title]' => TRUE,
     );
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
     $menu_link = menu_link_load($mlid);
     $menu_link_title = $menu_link['options']['attributes']['title'];
     $this->assertEqual($menu_link_title, $term->description);
+
+    // Assert that menu links does not have the term description, when the option
+    // for displaying a description is on but the display title option is off.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[options][term_item_description]' => TRUE,
+      'taxonomy_menu[options][display_title]' => FALSE,
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+    $menu_link = menu_link_load($mlid);
+    $menu_link_title = $menu_link['options']['attributes']['title'];
+    $this->assertEqual($menu_link_title, '');
   }
 
   /**

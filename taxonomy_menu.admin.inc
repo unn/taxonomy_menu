@@ -93,6 +93,12 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
     '#description' => t('Automatically show all menu items as expanded.'),
     '#default_value' => taxonomy_menu_variable_get('expanded', $vid, $defaults['expanded']),
   );
+  $form['taxonomy_menu']['options']['display_title_attr'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display HTML title attributes on menu links.'),
+    '#description' => t('Extra information, like the description of the term, is shown as a tooltip text when the mouse moves over the menu link.'),
+    '#default_value' => taxonomy_menu_variable_get('display_title', $vid, $defaults['display_title']),
+  );
   $form['taxonomy_menu']['options']['term_item_description'] = array(
     '#type' => 'checkbox',
     '#title' => t('Add description for terms'),
@@ -393,6 +399,7 @@ function _taxonomy_menu_get_form_settings_defaults() {
     'voc_name' => '',
     'display_descendants' => FALSE,
     'end_all' => FALSE,
+    'display_title_attr' => FALSE,
   );
 
   return $defaults;
