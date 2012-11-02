@@ -200,7 +200,7 @@ function _taxonomy_menu_prepare_menu_link($term, $menu_name) {
     $menu_link['link_title'] .= " (" . $children_count . ")";
   }
 
-  // CSS Title
+  // HTML Title attribute.
   $display_title_att = taxonomy_menu_variable_get('display_title_attr', $term->vid, TRUE);
   if ($display_title_att) {
     $term_description = taxonomy_menu_variable_get('term_item_description', $term->vid, 0);
