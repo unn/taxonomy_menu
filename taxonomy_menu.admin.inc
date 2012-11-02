@@ -356,8 +356,7 @@ function _taxonomy_menu_get_changed_options($submitted_options, $vid) {
  * @return
  *   An flattened array of options.
  *
- * @TODO Compatible with PHP 5.3 only. Find a way for 5.2 compatibility.
- *
+ * @TODO Compatible with PHP 5.3 and more only. Find a way for 5.2 compatibility.
  */
 function _taxonomy_menu_flatten_form_settings($options) {
   $flatten = array();

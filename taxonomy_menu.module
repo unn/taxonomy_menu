@@ -97,8 +97,6 @@ function _taxonomy_menu_update_menu_links($vid) {
 function _taxonomy_menu_delete_menu_links($vid) {
   // Remove all of the menu items for this vocabulary.
   _taxonomy_menu_delete_all($vid);
-  // Rebuild the menu.
-  menu_rebuild();
   // Display a notification message.
   drupal_set_message(t('The Taxonomy Menu has been removed.'), 'status');
 }
@@ -424,7 +422,7 @@ function _taxonomy_menu_nodeapi_helper($node, $operation) {
     // Report status.
     drupal_set_message($message, 'status');
     // Rebuild the menu.
-    menu_cache_clear($menu_name);
+    variable_set('menu_rebuild_needed', TRUE);
   }
 }
 
@@ -466,7 +464,7 @@ function _taxonomy_menu_termapi_helper($term, $operation) {
     // Report status.
     drupal_set_message($message, 'status');
     // Rebuild the menu.
-    menu_cache_clear($menu_name);
+    variable_set('menu_rebuild_needed', TRUE);
   }
 }
 
@@ -506,49 +504,6 @@ function _taxonomy_menu_children_has_nodes($tid, $vid, $return = FALSE) {
   }
   return $return;
 }
-
-/**
- * Helper function for insert and update hooks.
- *
- * @param $item
- *
- * @return array
- */
-function _taxonomy_menu_item($item) {
-  // if tid is 0 then do not change any settings
-  if ($item['tid'] > 0) {
-    // get the number of node attached to this term
-    $num = _taxonomy_menu_term_count($item['tid']);
-
-    // if hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
-    if ($num == 0 &&
-        variable_get(_taxonomy_menu_build_variable('hide_empty_terms', $item['vid']), FALSE) &&
-        !_taxonomy_menu_children_has_nodes($item['tid'], $item['vid'])) {
-
-        $item['remove'] = TRUE;
-        return $item;
-    }
-
-    // if display number is selected and $num > 0 then change the title
-    if (variable_get(_taxonomy_menu_build_variable('display_num', $item['vid']), FALSE)) {
-      // if number > 0 and display decendants, then count all of the children
-      if (variable_get(_taxonomy_menu_build_variable('display_descendants', $item['vid']), FALSE)) {
-        $num = taxonomy_menu_term_count_nodes($item['tid'], $item['vid']);
-      }
-      $item['name'] .= " ($num)";
-    }
-  }
-  elseif ($item['tid'] == 0) {
-    // if custom name is provided, use that name
-    $custom_name = variable_get(_taxonomy_menu_build_variable('voc_name', $item['vid']), '');
-    if (!empty($custom_name)) {
-      $item['name'] = $custom_name;
-    }
-  }
-
-  return $item;
-}
-
 
 /**
  * Calculates the number of nodes linked to a term. It can be either recursive
@@ -644,10 +599,10 @@ function taxonomy_menu_path_default($vid, $tid) {
 }
 
 /**
- * Creates the path to use in the menu item.
+ * Creates the path to use in a menu item.
  *
  * @return array
- *   path selections
+ *   An array of paths' selections.
  */
 function _taxonomy_menu_get_paths() {
   return module_invoke_all('taxonomy_menu_path');
