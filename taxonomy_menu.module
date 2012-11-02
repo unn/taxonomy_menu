@@ -89,13 +89,19 @@ function _taxonomy_menu_update_menu_links($vid) {
 }
 
 /**
- * Deletes all menu links associated to a vocabulary.
+ * Deletes all the menu links associated to a vocabulary.
  *
  * @param $vid
- *   The vocabulary ID.
+ *   The vocabulary ID from which to delete the menu items.
  */
 function _taxonomy_menu_delete_menu_links($vid) {
-  // Remove all of the menu items for this vocabulary.
+  $menu_items = _taxonomy_menu_get_menu_items($vid);
+  $mlids = array_keys($menu_items);
+  // Deletes all the menu items.
+  foreach ($mlids as $mlid) {
+    menu_link_delete($mlid);
+  }
+  // Delete all the database entries in {taxonomy_menu} table.
   _taxonomy_menu_delete_all($vid);
   // Display a notification message.
   drupal_set_message(t('The Taxonomy Menu has been removed.'), 'status');

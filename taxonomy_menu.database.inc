@@ -78,25 +78,15 @@ function _taxonomy_menu_get_menu_items($vid) {
 }
 
 /**
- * Deletes all links associated with this vocab from both the taxonomy_menu
- * table and the menu_link table.
+ * Deletes all links associated with this vocab from {taxonomy_menu} table.
  *
  * @param $vid
  *   the vocabulary's id to delete items from.
  */
 function _taxonomy_menu_delete_all($vid) {
-  $menu_items = _taxonomy_menu_get_menu_items($vid);
-  $mlids = array_keys($menu_items);
-  if (!empty($mlids)) {
-    // Delete all items from the {menu_links} table
-    db_delete('menu_links')
-      ->condition('mlid', $mlids, 'IN')
-      ->execute();
-    // Delete all items from the {taxonomy_menu} table
-    db_delete('taxonomy_menu')
-      ->condition('vid', $vid)
-      ->execute();
-  }
+  db_delete('taxonomy_menu')
+    ->condition('vid', $vid)
+    ->execute();
 }
 
 /**
