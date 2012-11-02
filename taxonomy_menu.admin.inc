@@ -33,7 +33,7 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
   // Turn the vocab terms into menu items and add an option at the top for
   // disabling the menu.
   $menu_items = menu_parent_options(menu_get_menus(), array('mlid' => 0));
-  array_unshift($menu_items, '= DISABLED =');
+  array_unshift($menu_items, '= NONE =');
   // Try to get the current menu location value if the vocabulary has already
   // been created.
   if ($vid) {
