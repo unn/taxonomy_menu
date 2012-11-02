@@ -97,7 +97,7 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
     '#type' => 'checkbox',
     '#title' => t('Display HTML title attributes on menu links.'),
     '#description' => t('Extra information, like the description of the term, is shown as a tooltip text when the mouse moves over the menu link.'),
-    '#default_value' => taxonomy_menu_variable_get('display_title', $vid, $defaults['display_title']),
+    '#default_value' => taxonomy_menu_variable_get('display_title_attr', $vid, $defaults['display_title_attr']),
   );
   $form['taxonomy_menu']['options']['term_item_description'] = array(
     '#type' => 'checkbox',
