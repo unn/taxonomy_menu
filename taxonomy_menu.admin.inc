@@ -17,32 +17,36 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
     return;
   }
 
-  // Get the vocabulary ID that is displayed.
-  $vid = (isset($form['vid']) && $form['vid']['#value']) ? $form['vid']['#value'] : 0;
-
   // Build options.
+  $defaults = _taxonomy_menu_get_form_settings_defaults();
   $form['taxonomy_menu'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
-    '#title' => t('Taxonomy menu'),
-    '#weight' => 10,
-    '#tree' => TRUE,
+      '#type' => 'fieldset',
+      '#collapsible' => TRUE,
+      '#title' => t('Taxonomy menu'),
+      '#weight' => 10,
+      '#tree' => TRUE,
   );
 
-  // Menu location option.
+  // Get the vocabulary ID.
+  $vid = (isset($form['vid']) && $form['vid']['#value']) ? $form['vid']['#value'] : 0;
+
   // Turn the vocab terms into menu items and add an option at the top for
   // disabling the menu.
   $menu_items = menu_parent_options(menu_get_menus(), array('mlid' => 0));
   array_unshift($menu_items, '= DISABLED =');
   // Try to get the current menu location value if the vocabulary has already
   // been created.
-  if (isset($form['vid']['#value'])) {
-    $vid = $form['vid']['#value'];
+  if ($vid) {
     $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), 0);
     $mlid = variable_get(_taxonomy_menu_build_variable('vocab_parent', $vid), 0);
     $current_menu_value =  $menu_name . ':' . $mlid;
+    $default_menu = isset($menu_items[$current_menu_value]) ? $current_menu_value : 0;
   }
-  $default_menu = isset($menu_items[$current_menu_value]) ? $current_menu_value : 0;
+  else {
+    $default_menu = 0;
+  }
+
+  // Menu location.
   $form['taxonomy_menu']['vocab_parent'] = array(
     '#type' => 'select',
     '#title' => t('Menu location'),
@@ -51,19 +55,114 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
     '#description' => t('The menu and parent under which to insert taxonomy menu items.'),
     '#attributes' => array('class' => array('menu-title-select')),
   );
-
-  // Path option.
-  $path_option = variable_get(_taxonomy_menu_build_variable('path', $form['vid']['#value']), 0);
+  // Path.
+  $variable_name = _taxonomy_menu_build_variable('path', $vid);
   $form['taxonomy_menu']['path'] = array(
     '#type' => 'select',
     '#title' => t('Menu path type'),
-    '#default_value' => isset($form['vid']['#value']) ? $path_option : 0,
-    '#options' => _taxonomy_menu_get_paths(),
     '#description' => t('The path will be taxonomy/term/tid if <em>Default</em> has been selected.<br />The menu path will be passed through drupal_get_path_alias() function so all aliases will be applied.'),
+    '#default_value' => variable_get($variable_name, 0),
+    '#options' => _taxonomy_menu_get_paths(),
+  );
+  // Sync
+  $variable_name = _taxonomy_menu_build_variable('sync', $vid);
+  $form['taxonomy_menu']['sync'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Synchronise changes to this vocabulary'),
+    '#description' => t('Every time a term is added/deleted/modified, the corresponding menu link will be altered too.'),
+    '#default_value' => variable_get($variable_name, $defaults['sync']),
+  );
+  // Rebuild
+  $variable_name = _taxonomy_menu_build_variable('rebuild', $vid);
+  $form['taxonomy_menu']['rebuild'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Rebuild the menu on submit.'),
+    '#description' => t('<strong>Warning</strong>: This will delete then re-create all of the menu items. Only use this option if you are experiencing issues like missing menu items or other inconsistencies.'),
+    '#default_value' => variable_get($variable_name, $defaults['rebuild']),
   );
 
-  // Other Taxonomy Menu options.
-  $form['taxonomy_menu']['options'] = _taxonomy_menu_create_options($vid);
+  // Other options.
+  $form['taxonomy_menu']['options'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Extended options'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $variable_name = _taxonomy_menu_build_variable('expanded', $vid);
+  $form['taxonomy_menu']['options']['expanded'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Auto expand menu items'),
+    '#description' => t('Automatically show all menu items as expanded.'),
+    '#default_value' => variable_get($variable_name, $defaults['expanded']),
+  );
+  $variable_name = _taxonomy_menu_build_variable('term_item_description', $vid);
+  $form['taxonomy_menu']['options']['term_item_description'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Add description for terms'),
+    '#description' => t('Add the term description to the term menu item.'),
+    '#default_value' => variable_get($variable_name, $defaults['term_item_description']),
+  );
+  $variable_name = _taxonomy_menu_build_variable('display_num', $vid);
+  $form['taxonomy_menu']['options']['display_num'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display number of items'),
+    '#description' => t('Display the number of items per taxonomy terms. Will not show up for vocabulary menu items.'),
+    '#default_value' => variable_get($variable_name, $defaults['display_num']),
+  );
+  $variable_name = _taxonomy_menu_build_variable('hide_empty_terms', $vid);
+  $form['taxonomy_menu']['options']['hide_empty_terms'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Hide empty terms'),
+    '#description' => t('Hide terms with no items attached to them.'),
+    '#default_value' => variable_get($variable_name, $defaults['hide_empty_terms']),
+  );
+  $variable_name = _taxonomy_menu_build_variable('voc_item_description', $vid);
+  $form['taxonomy_menu']['options']['voc_item_description'] = array(
+    '#title' => t('Add description for vocabulary'),
+    '#description' => t('Add the vocabulary description to the vocabulary menu item.'),
+    '#default_value' => variable_get($variable_name, $defaults['voc_item_description']),
+  );
+  $variable_name = _taxonomy_menu_build_variable('flat', $vid);
+  $form['taxonomy_menu']['options']['flat'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Flatten the taxonomy\'s hierarchy in the menu'),
+    '#description' => t('Add all menu items to the same level rather than hierarchically.'),
+    '#default_value' => variable_get($variable_name, $defaults['flat']),
+  );
+
+  // Disabled / Not tested options
+  $variable_name = _taxonomy_menu_build_variable('voc_item', $vid);
+  $form['taxonomy_menu']['options']['voc_item'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Add item for vocabulary'),
+    '#description' => t('Shows the vocabulary name as the top level menu item of the taxonomy menu.'),
+    '#disabled' => TRUE,
+    '#default_value' => variable_get($variable_name, $defaults['voc_item']),
+  );
+  $variable_name = _taxonomy_menu_build_variable('voc_name', $vid);
+  $form['taxonomy_menu']['options']['voc_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Custom name for vocabulary item'),
+    '#description' => t('Changes the name of the vocabulary item (if enabled above). Leave blank to use the name of the vocabulary.'),
+    '#disabled' => TRUE,
+    '#default_value' => variable_get($variable_name, $defaults['voc_name']),
+  );
+  $variable_name = _taxonomy_menu_build_variable('display_descendants', $vid);
+  $form['taxonomy_menu']['options']['display_descendants'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display descendants'),
+    '#description' => t('Changes the default path to taxonomy/term/tid+tid+tid for all terms thave have child terms.'),
+    '#default_value' => variable_get($variable_name, $defaults['display_descendants']),
+    '#disabled' => TRUE,
+  );
+  $variable_name = _taxonomy_menu_build_variable('end_all', $vid);
+  $form['taxonomy_menu']['options']['end_all'] = array(
+    '#type' => 'checkbox',
+    '#title' => t("Use 'all' at the end of URL"),
+    '#description' => t('This changes tid+tid+tid to "All" in term when <em>Display descendants</em> has been selected.<br />Only used if <em>Menu path type</em> is "Default path".<br />Works with default taxonomy page.'),
+    '#disabled' => TRUE,
+    '#default_value' => variable_get($variable_name, $defaults['end_all']),
+  );
 
   // Move the buttons to the bottom of the form.
   $form['submit']['#weight'] = 49;
@@ -95,90 +194,73 @@ function taxonomy_menu_form_taxonomy_overview_terms(&$form, &$form_state) {
  * @see taxonomy_menu_form_taxonomy_form_vocabulary()
  */
 function taxonomy_menu_vocab_submit($form, &$form_state) {
-  $changed = FALSE;
-
-  // Submitted vocabulary.
+  // Initialize flag variables for updating/rebuilding the taxonomy menu.
+  $update = FALSE;
+  $insert = FALSE;
+  $menu_disabled = $form_state['values']['taxonomy_menu']['vocab_parent'] == '0';
+  // Get the vid of the submitted vocabulary.
   $vid = $form_state['values']['vid'];
 
+  // Submitted taxonomy menu's options. Split the menu location into menu name
+  // and mlid to save menu and parent separately.
+  // Options array is flattened.
+  $flatten_options = _taxonomy_menu_flatten_form_settings($form_state['values']['taxonomy_menu']);
 
-  if (is_numeric($form_state['values']['taxonomy_menu']['vocab_parent'])) {
-    // Menu location has been set to disabled, don't want to throw notices.
-    $form_state['values']['taxonomy_menu']['vocab_parent'] = '0:0';
-  }
+  // If menu location has been set to disabled, don't throw notices by trying to
+  // explode 0 with ':' .
+  $vocab_parent =  $flatten_options['vocab_parent'];
+  $menu_location = ($vocab_parent == '0') ? '0:0' : $vocab_parent;
+  list($flatten_options['vocab_menu'], $flatten_options['vocab_parent']) = explode(':', $menu_location);
 
-  // Split the menu location into menu name and menu item id.
-  list($vocab_parent['vocab_menu'], $vocab_parent['vocab_parent']) = explode(':', $form_state['values']['taxonomy_menu']['vocab_parent']);
-
-  // Init flag variables to avoid notices if changes haven't happened.
-  $changed_menu = FALSE;
-  $change_vocab_item = FALSE;
-  $changed_path = FALSE;
-
-  // Set the menu name and check for changes.
-  $variable_name = _taxonomy_menu_build_variable('vocab_menu', $vid);
-  if (_taxonomy_menu_check_variable($variable_name, $vocab_parent['vocab_menu'])) {
-    $changed_menu = TRUE;
-  }
-  variable_set($variable_name, $vocab_parent['vocab_menu']);
-
-  // Set the menu parent item and check for changes.
-  $variable_name = _taxonomy_menu_build_variable('vocab_parent', $vid);
-  if (_taxonomy_menu_check_variable($variable_name, $vocab_parent['vocab_parent'])) {
-    $changed_menu = TRUE;
-  }
-  variable_set($variable_name, $vocab_parent['vocab_parent']);
-
-  // Set the path and check for changes.
-  $variable_name = _taxonomy_menu_build_variable('path', $vid);
-  if (_taxonomy_menu_check_variable($variable_name, $form_state['values']['taxonomy_menu']['path'])) {
-    $changed_path = TRUE;
-  }
-  variable_set($variable_name, $form_state['values']['taxonomy_menu']['path']);
-
-  // Set the path and check for changes.
-  $variable_name = _taxonomy_menu_build_variable('path', $vid);
-  if (_taxonomy_menu_check_variable($variable_name, $form_state['values']['taxonomy_menu']['path'])) {
-    $changed_path = TRUE;
-  }
-  variable_set($variable_name, $form_state['values']['taxonomy_menu']['path']);
-
-  foreach ($form_state['values']['taxonomy_menu']['options'] as $key => $value) {
-    // Create the variable name.
-    $variable_name = _taxonomy_menu_build_variable($key, $vid);
-
-    // Check to see if the vocab enable options has changed.
-    if ($key == 'voc_item') {
-      if (_taxonomy_menu_check_variable($variable_name, $value)) {
-        $change_vocab_item = TRUE;
+  // Get all the options that changed since last submit. If some values have
+  // changed, then update the taxonomy menu.
+  $changed_options = array();
+  if ($vid != 0) {
+    $changed_options = _taxonomy_menu_get_changed_options($flatten_options, $vid);
+    if (!empty($changed_options)) {
+      $update = TRUE;
+      // Options have changed, save/update the menu.
+      $menu_change = in_array('vocab_parent', $changed_options) || in_array('vocab_menu', $changed_options);
+      if ($menu_change) {
+        // Menu location has changed.
+        if ($menu_disabled) {
+          // Menu was disabled, delete all existing menu links.
+          _taxonomy_menu_delete_menu_links($vid);
+        }
+        else {
+          // Menu location has been changed and is not disabled.
+          $old_vocab_parent = variable_get(_taxonomy_menu_build_variable('vocab_parent', $vid), '0');
+          $old_vocab_menu = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), '0');
+          if ($old_vocab_menu == '0' && $old_vocab_parent == '0') {
+            // Menu was disabled before, create new links.
+            $insert = TRUE;
+          }
+        }
+        // Do a full menu rebuild in case we have removed or moved the menu.
+        variable_set('menu_rebuild_needed', TRUE);
       }
     }
-
-    // If $changed is alreayd set to true, then don't bother checking any others.
-    if (!$changed) {
-      // Check to see if the variable has changed.
-      if (_taxonomy_menu_check_variable($variable_name, $value)) {
-        $changed = TRUE;
-      }
+    else {
+      // Display a notification message. Nothing to update.
+      drupal_set_message('The Taxonomy Menu was not updated. Nothing to update.', 'status');
     }
-    // Save variable.
-    variable_set($variable_name, $value);
   }
 
-  // If the menu hasn't changed and the menu is disabled then do not do anything else.
-  if ($form_state['values']['taxonomy_menu']['options']['rebuild'] ||
-      $changed_menu ||
-      (!$changed_menu && variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE) == 0)) {
-    // Rebuild if rebuild is selected, menu has changed or vocabulary option changed.
-    if ($form_state['values']['taxonomy_menu']['options']['rebuild'] || $changed_menu || $change_vocab_item || $changed_path) {
-      _taxonomy_menu_rebuild($vid);
-    }
-    // If setting has changed and a menu item is enabled, then update all of the menu items.
-    elseif ($changed && variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE)) {
-      _taxonomy_menu_update_menu_links($vid);
-    }
+  // Save all the submitted values.
+  _taxonomy_menu_save_form_settings($flatten_options, $vid);
 
-    // Do a full menu rebuild in case we have removed the menu or moved it between menus.
-    variable_set('menu_rebuild_needed', TRUE);
+  // We don't need to check for the disabled menu location because the rebuild
+  // function will delete the taxonomy menu in all cases.
+  if ($flatten_options['rebuild']) {
+    _taxonomy_menu_rebuild($vid);
+  }
+  elseif ($insert) {
+    // Update only menu links that are available in taxonomy_menu table.
+    _taxonomy_menu_insert_menu_links($vid);
+  }
+  elseif ($update) {
+    // Update only menu links that are available in taxonomy_menu table.
+    _taxonomy_menu_update_menu_links($vid);
   }
 }
 
@@ -236,147 +318,96 @@ function taxonomy_menu_overview_submit(&$form, &$form_state) {
 }
 
 /**
- * Implements hook_taxonomy_menu_options().
+ * Helper function to find which submitted values have changed upon submission
+ * of a vocabulary's creation/updating form.
  *
- * Returns Taxonomy Menu options for the vocabulary editing form.
+ * @param $form
+ *   the submitted taxonomy menu options, includes values that are not in the
+ *   'extended options' fieldset like path or menu location.
+ * @param
+ *   the vid of the vocabulary.
  *
- * @return array
- *   An array of Taxonomy Menu options.
- *   Uses the value to set the variable taxonomy_menu_<value>_<machine_name>.
- *   The following values are available in the $otpions array:
- *     - #title - required.
- *     - #description - required.
- *     - #type - optional. The type of the form element.
- *     - #disabled - optional. Should the option be disabled or not.
- *     - default - optional. This is what will be used if the variable is not
- *       set. If empty, FALSE is used.
+ * @return $changed_options
+ *   an array of options, which have changed since the last submit.
  */
-function taxonomy_menu_taxonomy_menu_options() {
-  $options = array();
+function _taxonomy_menu_get_changed_options($submitted_options, $vid) {
+  $saved_options = array();
+  $defaults = _taxonomy_menu_get_form_settings_defaults();
+  // Build an array of all saved values of options from taxonomy menu and
+  // other modules.
+  foreach ($submitted_options as $key => $option) {
+    $variable_name = _taxonomy_menu_build_variable($key, $vid);
+    $value = variable_get($variable_name, $defaults[$key]);
+    $saved_options[$key] = $value;
+  }
 
-  $options['sync'] = array(
-    '#title' => t('Synchronise changes to this vocabulary'),
-    '#description' => t('Every time a term is added/deleted/modified, the corresponding menu link will be altered too.'),
-    'default' => TRUE,
-  );
-  $options['display_num'] = array(
-    '#title' => t('Display number of items'),
-    '#description' => t('Display the number of items per taxonomy terms. Will not show up for vocabulary menu items.'),
-    'default' => FALSE,
-  );
-  $options['hide_empty_terms'] = array(
-    '#title' => t('Hide empty terms'),
-    '#description' => t('Hide terms with no items attached to them.'),
-    'default' => FALSE,
-  );
-  $options['voc_item'] = array(
-    '#title' => t('Add item for vocabulary'),
-    '#description' => t('Shows the vocabulary name as the top level menu item of the taxonomy menu.'),
-    '#disabled' => TRUE,
-    'default' => FALSE,
-  );
-  $options['voc_item_description'] = array(
-    '#title' => t('Add description for vocabulary'),
-    '#description' => t('Add the vocabulary description to the vocabulary menu item.'),
-    'default' => FALSE,
-  );
-  $options['term_item_description'] = array(
-    '#title' => t('Add description for terms'),
-    '#description' => t('Add the term description to the term menu item.'),
-    'default' => FALSE,
-  );
-  $options['expanded'] = array(
-    '#title' => t('Auto expand menu items'),
-    '#description' => t('Automatically show all menu items as expanded.'),
-    'default' => TRUE,
-  );
-  $options['flat'] = array(
-    '#title' => t('Flatten the taxonomy\'s hierarchy in the menu'),
-    '#description' => t('Add all menu items to the same level rather than hierarchically.'),
-    'default' => FALSE,
-  );
-  $options['voc_name'] = array(
-    '#title' => t('Custom name for vocabulary item'),
-    '#description' => t('Changes the name of the vocabulary item (if enabled above). Leave blank to use the name of the vocabulary.'),
-    '#type' => 'textfield',
-    '#disabled' => TRUE,
-    'default' => '',
-  );
-  $options['display_descendants'] = array(
-    '#title' => t('Display descendants'),
-    '#description' => t('Changes the default path to taxonomy/term/tid+tid+tid for all terms thave have child terms.'),
-    'default' => FALSE,
-  );
-  $options['end_all'] = array(
-    '#title' => t("Use 'all' at the end of URL"),
-    '#description' => t('This changes tid+tid+tid to "All" in term when <em>Display descendants</em> has been selected.<br />Only used if <em>Menu path type</em> is "Default path".<br />Works with default taxonomy page.'),
-    '#disabled' => TRUE,
-    'default' => FALSE,
-  );
-  $options['rebuild'] = array(
-    '#title' => t('Rebuild the menu on submit.'),
-    '#description' => t('Rebuild the menu on submit. <strong>Warning</strong>: This will delete then re-create all of the menu items. Only use this option if you are experiencing issues like missing menu items or other inconsistencies.'),
-    'default' => 0,
-  );
+  // Keep only the values that changed.
+  $changed_options = array_keys(array_diff_assoc($saved_options, $submitted_options));
 
-  return $options;
+  return $changed_options;
 }
 
 /**
- * Creates Taxonomy Menu options. Invokes hook_taxonomy_menu_options().
+ * Flatten an array of submitted values.
  *
- * @param $vid
- *   The vocabulary ID, from which to build the options.
+ * @param $options
+ *   An array of options to be flattened.
  *
- * @return array
- *   An array of options to be build for that vocabulary.
+ * @return
+ *   An flattened array of options.
+ *
+ * @TODO Compatible with PHP 5.3 only. Find a way for 5.2 compatibility.
+ *
  */
-function _taxonomy_menu_create_options($vid) {
-  // Invoke options provided by other modules.
-  $options = module_invoke_all('taxonomy_menu_options');
+function _taxonomy_menu_flatten_form_settings($options) {
+  $flatten = array();
+  array_walk_recursive($options, function($a, $b) use (&$flatten) { $flatten[$b] = $a; });
 
-  // Cycle through all options' fields.
-  foreach ($options as $field_name => $field_elements) {
-    // Get the value of the field.
-    $variable_name = _taxonomy_menu_build_variable($field_name, $vid);
+  return $flatten;
+}
 
-    // If the variable is set then use that, if the default key is set then use
-    // that, otherwise use false.
-    $default_value = !empty($options[$field_name]['default']) ? $options[$field_name]['default'] : FALSE;
-    $options[$field_name]['#default_value'] = variable_get($variable_name, $default_value);
-
-    // Set the type to checkbox if it is empty.
-    if (empty($options[$field_name]['#type'])) {
-      $options[$field_name]['#type'] = 'checkbox';
+/**
+ * Recursively saves all the submitted values of a form.
+ *
+ * @param $options
+ *   An array of all the settings to be saved.
+ */
+function _taxonomy_menu_save_form_settings($options, $vid) {
+  foreach ($options as $key => $value) {
+    if (is_array($value)) {
+      _taxonomy_menu_save_form_settings($value, $vid);
     }
-
-    // Set the option fieldset values.
-    $options['#type'] = 'fieldset';
-    $options['#title'] = t('Extended options');
-    $options['#collapsible'] = TRUE;
-    $options['#collapsed'] = TRUE;
-
-    // Remove the default value from the array so we don't pass it to the form.
-    unset($options[$field_name]['default']);
+    else {
+      $variable_name = _taxonomy_menu_build_variable($key, $vid);
+      variable_set($variable_name, $value);
+    }
   }
-
-  return $options;
 }
 
 /**
- * Checks to see if the variable has changed.
+ * Get default values for Taxonomy Menu options.
+ * This is useful in order to check settings that have changed.
  *
- * @param $variable
- *   A string containing the name of the variable.
- * @param $new_value
- *   A string containing the new value of the variable.
- *
- * @return boolean
- *   TRUE if the variable has changed, FALSE if it has not.
+ * @see _taxonomy_menu_get_changed_options()
  */
-function _taxonomy_menu_check_variable($variable, $new_value) {
-  if ($new_value != variable_get($variable, FALSE)) {
-    return TRUE;
-  }
-  return FALSE;
+function _taxonomy_menu_get_form_settings_defaults() {
+  $defaults = array(
+    'vocab_parent' => 0,
+    'vocab_menu' => 0,
+    'path' => 0,
+    'sync' => TRUE,
+    'rebuild' => FALSE,
+    'expanded' => TRUE,
+    'term_item_description' => FALSE,
+    'display_num' => FALSE,
+    'hide_empty_terms' => FALSE,
+    'flat' => FALSE,
+    'voc_item_description' => FALSE,
+    'voc_item' => FALSE,
+    'voc_name' => '',
+    'display_descendants' => FALSE,
+    'end_all' => FALSE,
+  );
+
+  return $defaults;
 }

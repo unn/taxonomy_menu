@@ -107,9 +107,13 @@ class TaxonomyMenuFunctionalTest extends TaxonomyMenuWebTestCase {
     $this->assertRaw(t('The Taxonomy Menu has been created.'));
 
     // Try to re-submit a vocabulary when an option has changed.
-    $edit['taxonomy_menu[options][voc_item_description]'] = TRUE;
+    $edit['taxonomy_menu[options][hide_empty_terms]'] = TRUE;
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
     $this->assertRaw(t('The Taxonomy Menu has been updated.'));
+
+    // Try to re-submit a vocabulary without changing any option.
+    $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
+    $this->assertRaw(t('The Taxonomy Menu was not updated. Nothing to update.'));
 
     // Try to submit a vocabulary removing the menu location.
     $edit['taxonomy_menu[vocab_parent]'] = '0';
@@ -380,7 +384,7 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
     // Set settings (no sync on main-menu).
     $edit = array(
       'taxonomy_menu[vocab_parent]' => 'main-menu:0',
-      'taxonomy_menu[options][sync]' => FALSE,
+      'taxonomy_menu[sync]' => FALSE,
     );
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
     $this->assertResponse(200);
@@ -397,7 +401,7 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
     $this->assertNotEqual($new_name, $menu_link['link_title']);
 
     // Switch to sync option on and save.
-    $edit['taxonomy_menu[options][sync]'] = TRUE;
+    $edit['taxonomy_menu[sync]'] = TRUE;
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
     $this->assertResponse(200);
     $mlid = _taxonomy_menu_get_mlid($test_term->tid, $this->vocabulary->vid);
