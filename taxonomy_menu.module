@@ -66,7 +66,7 @@ function _taxonomy_menu_insert_menu_links($vid) {
   // Let batch api take care of inserting the menu items.
   _taxonomy_menu_save_menu_links_batch($terms, $menu_name, 'creation');
   // Display a notification message.
-  drupal_set_message('The Taxonomy Menu has been created.', 'status');
+  drupal_set_message('The Taxonomy menu has been created.', 'status');
 }
 
 /**
@@ -85,7 +85,7 @@ function _taxonomy_menu_update_menu_links($vid) {
   // Let batch api take care of inserting the menu items.
   _taxonomy_menu_save_menu_links_batch($terms, $menu_name);
   // Display a notification message.
-  drupal_set_message('The Taxonomy Menu has been updated.', 'status');
+  drupal_set_message('The Taxonomy menu has been updated.', 'status');
 }
 
 /**
@@ -104,7 +104,7 @@ function _taxonomy_menu_delete_menu_links($vid) {
   // Delete all the database entries in {taxonomy_menu} table.
   _taxonomy_menu_delete_all($vid);
   // Display a notification message.
-  drupal_set_message(t('The Taxonomy Menu has been removed.'), 'status');
+  drupal_set_message(t('The Taxonomy menu has been removed.'), 'status');
 }
 
 /**
@@ -714,7 +714,7 @@ function _taxonomy_menu_build_variable($name, $vid) {
 }
 
 /**
- * Helper function to replace Drupal's variable_get() for Taxonomy Menu.
+ * Helper function to replace Drupal's variable_get() for Taxonomy menu.
  * Gets a value per vocabulary.
  */
 function taxonomy_menu_variable_get($key, $vid, $default) {
@@ -722,7 +722,7 @@ function taxonomy_menu_variable_get($key, $vid, $default) {
 }
 
 /**
- * Helper function to replace Drupal's variable_set() for Taxonomy Menu.
+ * Helper function to replace Drupal's variable_set() for Taxonomy menu.
  * Sets a value per vocabulary.
  */
 function taxonomy_menu_variable_set($key, $vid, $value) {

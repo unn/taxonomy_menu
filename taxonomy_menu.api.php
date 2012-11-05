@@ -2,6 +2,6 @@
 
 /**
  * @file
- * API documentation for the Taxonomy Menu module.
+ * API documentation for the Taxonomy menu module.
  */
 

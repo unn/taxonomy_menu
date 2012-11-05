@@ -19,11 +19,11 @@ function _taxonomy_menu_save_menu_links_batch($terms, $menu_name) {
       array('_taxonomy_menu_save_menu_links_process', array($terms, $menu_name)),
     ),
     'finished' => '_taxonomy_menu_save_menu_links_finished',
-    'title' => t('Rebuilding Taxonomy Menu'),
+    'title' => t('Rebuilding Taxonomy menu'),
     'init_message' => t('The menu items have been deleted, and are about to be regenerated.'),
     'progress_message' => t('Import progress: Completed @current of @total operations.'),
     'redirect' => 'admin/structure/taxonomy',
-    'error_message' => t('The Taxonomy Menu creation process has encountered an error.'),
+    'error_message' => t('The Taxonomy menu creation process has encountered an error.'),
   );
   batch_set($batch);
 }
@@ -82,7 +82,7 @@ function _taxonomy_menu_save_menu_links_process($terms, $menu_name, &$context) {
 function _taxonomy_menu_save_menu_links_finished($success, $results, $operations) {
   if ($success) {
     $message = count($results) .' taxonomy terms were processed.</br>';
-    $message .= t('The Taxonomy Menu has been created.');
+    $message .= t('The Taxonomy menu has been created.');
   }
   else {
     // An error occurred.

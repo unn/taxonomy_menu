@@ -6,7 +6,7 @@
  */
 
 /**
- * Provides common helper methods for Taxonomy Menu module tests.
+ * Provides common helper methods for Taxonomy menu module tests.
  */
 class TaxonomyMenuWebTestCase extends TaxonomyWebTestCase {
 
@@ -104,21 +104,21 @@ class TaxonomyMenuFunctionalTest extends TaxonomyMenuWebTestCase {
     // Try to submit a vocabulary when menu location is a root menu item.
     $edit['taxonomy_menu[vocab_parent]'] = $menu_name . ':0';
     $this->drupalPost(NULL, $edit, t('Save'));
-    $this->assertRaw(t('The Taxonomy Menu has been created.'));
+    $this->assertRaw(t('The Taxonomy menu has been created.'));
 
     // Try to re-submit a vocabulary when an option has changed.
     $edit['taxonomy_menu[options][hide_empty_terms]'] = TRUE;
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
-    $this->assertRaw(t('The Taxonomy Menu has been updated.'));
+    $this->assertRaw(t('The Taxonomy menu has been updated.'));
 
     // Try to re-submit a vocabulary without changing any option.
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
-    $this->assertRaw(t('The Taxonomy Menu was not updated. Nothing to update.'));
+    $this->assertRaw(t('The Taxonomy menu was not updated. Nothing to update.'));
 
     // Try to submit a vocabulary removing the menu location.
     $edit['taxonomy_menu[vocab_parent]'] = '0';
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
-    $this->assertRaw(t('The Taxonomy Menu has been removed.'));
+    $this->assertRaw(t('The Taxonomy menu has been removed.'));
   }
 
   /**
@@ -348,7 +348,7 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
 }
 
 /**
- * Tests Taxonomy Menu configuration options.
+ * Tests Taxonomy menu configuration options.
  *
  * @TODO Add tests for other configuration options:
  *   - Display children.

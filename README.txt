@@ -44,10 +44,10 @@ NEW
    folder, since that will cause problems and is bad practice in general. If
    "sites/all/modules" doesn't exist yet, just create it.
 
-2) Enable the Taxonomy Menu module in Drupal at:
+2) Enable the Taxonomy menu module in Drupal at:
    administration -> site configuration -> modules (admin/build/modules)
    The Drupal core taxonomy module is required.
-   The modules Taxonomy Menu Custom Path and Taxonomy Menu Hierarchy provide
+   The modules Taxonomy menu Custom Path and Taxonomy menu Hierarchy provide
    additional path configuration types (see the "INTEGRATION WITH VIEWS MODULE" section below). 
 
 3) Create a new vocabulary or edit an excisting one.
@@ -85,7 +85,7 @@ ADJUSTMENTS AND OPTIONS
  Syncronise changes to this vocabulary: If selected, the menu will auto update when you
   change a node or term. Recommened to always have this selected.
   When you change the generated menu with the core menu function, i.e. move it or change the structure, 
-  these changes most probably get lost when adding a new taxonomy term because Taxonomy Menu rebuilds
+  these changes most probably get lost when adding a new taxonomy term because Taxonomy menu rebuilds
   the menu without knowing about the changes made elsewhere.
  
  Display Number of Nodes: Displays the number of nodes next to the term in the menu.
@@ -129,7 +129,7 @@ MENU PATH TYPE: CUSTOM
  'Term ID' and choose a title like "Terms". Other options should be left by default unless really 
  needs to change sth..
  Fields and filters can be added and options can be set according to ones needs.
- Back to Taxonomy Menu:
+ Back to Taxonomy menu:
  Enter your 'custom path' in the field "Base Path for Custom Path:" - leave out '/%'. 
  For example when your view path is 'interests/%' you enter only 'interests' here.   
  To use the 'Display Depth in Custom Path:' option, you need to have 'Taxonomy: Term ID depth modifier' 
@@ -193,24 +193,24 @@ INTEGRATION WITH OTHER MODULES
 ==============================
 
 TAXONOMY MANGAGER
-Helpful to organize taxonomy terms - Taxonomy Menu module does not interfere with it functions.
+Helpful to organize taxonomy terms - Taxonomy menu module does not interfere with it functions.
 (http://drupal.org/project/taxonomy_manager)
 
 TAXONOMY REDIRECT
-Changes the taxonomy default URL to match the custom Taxonomy Menu Path can be controlled 
+Changes the taxonomy default URL to match the custom Taxonomy menu Path can be controlled 
 by Taxonomy Redirect. 
 (http://drupal.org/project/taxonomy_redirect)
  
 CONTENT TAXONOMY
 It is a nice and very helpful module to link taxonomy terms to nodes. 
-Taxonomy Menu does not interface with the content taxonomy tables, so be sure to enable the option 
+Taxonomy menu does not interface with the content taxonomy tables, so be sure to enable the option 
 "Save values additionally to the core taxonomy system (into the 'term_node' table)" 
-otherwise the related taxonomy terms will not be accessable for Taxonomy Menu.
+otherwise the related taxonomy terms will not be accessable for Taxonomy menu.
 (http://drupal.org/project/content_taxonomy)
  
 HIERARCHICAL SELECT with submodule HS_TAXONOMY
 Supports the selection of terms in an hierarchical structured vocabulary. 
-For using "MENU PATH TYPE: HIERARCHY" within Taxonomy Menu the HS options "Save term lineage" 
+For using "MENU PATH TYPE: HIERARCHY" within Taxonomy menu the HS options "Save term lineage" 
 and "Force the user to choose a term from a deepest level" should be enabled.
 (http://drupal.org/project/hierarchical_select) 
  
@@ -224,7 +224,7 @@ when using Custom or Hierarchical path.
 (http://drupal.org/project/menu_breadcrumbs)
 
 i18n
-At the momement the multiple language support seems to work only when the Taxonomy Menu option 
+At the momement the multiple language support seems to work only when the Taxonomy menu option 
 "item for vocabulary" is disabled. 
 
 DOMAIN ACCESS
@@ -239,10 +239,10 @@ PATHAUTO
  
 ADDITIONAL NOTES
 ================
- * Taxonomy Menu does not handle the menu call backs. It only creates the links to the menus.
+ * Taxonomy menu does not handle the menu call backs. It only creates the links to the menus.
    This means that everythign that is displayed on the page (including title, content, breadcrumbs, etc)
    are not controled by Taxonony Menu.
- * The router item must be created before Taxonomy Menu creates the links.  Failure to so so 
+ * The router item must be created before Taxonomy menu creates the links.  Failure to so so 
    will cause the menu items to not be created.
  * Router items can be created by either a view or another modules hook_menu.
 

@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Administrative page callbacks for the Taxonomy Menu module.
+ * Administrative page callbacks for the Taxonomy menu module.
  */
 
 /**
@@ -237,7 +237,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
     }
     else {
       // Display a notification message. Nothing to update.
-      drupal_set_message('The Taxonomy Menu was not updated. Nothing to update.', 'status');
+      drupal_set_message('The Taxonomy menu was not updated. Nothing to update.', 'status');
     }
   }
 
@@ -377,7 +377,7 @@ function _taxonomy_menu_save_form_settings($options, $vid) {
 }
 
 /**
- * Get default values for Taxonomy Menu options.
+ * Get default values for Taxonomy menu options.
  * This is useful in order to check settings that have changed.
  *
  * @see _taxonomy_menu_get_changed_options()
