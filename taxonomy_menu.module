@@ -66,7 +66,7 @@ function _taxonomy_menu_insert_menu_links($vid) {
   // Let batch api take care of inserting the menu items.
   _taxonomy_menu_save_menu_links_batch($terms, $menu_name, 'creation');
   // Display a notification message.
-  drupal_set_message('The Taxonomy menu has been created.', 'status');
+  drupal_set_message(t('The Taxonomy menu has been created.'), 'status');
 }
 
 /**
@@ -85,7 +85,7 @@ function _taxonomy_menu_update_menu_links($vid) {
   // Let batch api take care of inserting the menu items.
   _taxonomy_menu_save_menu_links_batch($terms, $menu_name);
   // Display a notification message.
-  drupal_set_message('The Taxonomy menu has been updated.', 'status');
+  drupal_set_message(t('The Taxonomy menu has been updated.'), 'status');
 }
 
 /**
@@ -257,7 +257,7 @@ function _taxonomy_menu_is_term_empty($term) {
  * @return $plid
  *   The corresponding parent mlid.
  */
-function _taxonomy_menu_determine_plid($term, $langcode){
+function _taxonomy_menu_determine_plid($term, $langcode) {
   $plid = 0;
   $parents = taxonomy_get_parents($term->tid);
   if (empty($parents)) {
@@ -432,7 +432,7 @@ function _taxonomy_menu_nodeapi_helper($node, $operation) {
       }
     }
     // Report status.
-    drupal_set_message($message, 'status');
+    //drupal_set_message($message, 'status');
     // Rebuild the menu.
     variable_set('menu_rebuild_needed', TRUE);
   }
@@ -595,9 +595,9 @@ function taxonomy_menu_path_default($vid, $tid) {
   }
   else {
     $path = 'taxonomy/term/' . $tid;
-    if (taxonomy_menu_variable_get('display_decendants',$vid, FALSE)) {
+    if (taxonomy_menu_variable_get('display_decendants', $vid, FALSE)) {
       // Use 'all' at the end of the path
-      if (taxonomy_menu_variable_get('end_all',$vid, FALSE)) {
+      if (taxonomy_menu_variable_get('end_all', $vid, FALSE)) {
         $path .= '/all';
       }
       else {
@@ -638,7 +638,7 @@ function _taxonomy_menu_get_paths() {
  */
 function taxonomy_menu_create_path($vid, $tid) {
   // Get the path function for this vocabulary.
-  $function = taxonomy_menu_variable_get('path',$vid, 'taxonomy_menu_path_default');
+  $function = taxonomy_menu_variable_get('path', $vid, 'taxonomy_menu_path_default');
   // Run the function.
   return $function($vid, $tid);
 }

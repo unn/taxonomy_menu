@@ -81,7 +81,7 @@ function _taxonomy_menu_save_menu_links_process($terms, $menu_name, &$context) {
  */
 function _taxonomy_menu_save_menu_links_finished($success, $results, $operations) {
   if ($success) {
-    $message = count($results) .' taxonomy terms were processed.</br>';
+    $message = count($results) . ' taxonomy terms were processed.</br>';
     $message .= t('The Taxonomy menu has been created.');
   }
   else {

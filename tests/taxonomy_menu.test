@@ -181,7 +181,7 @@ class TaxonomyMenuFunctionalTest extends TaxonomyMenuWebTestCase {
     $this->assertRaw(t('Updated term %term in taxonomy menu %menu_name.', $options));
     // Delete an existing term from the interface.
     $this->drupalPost('taxonomy/term/' . $term->tid . '/edit', $edit, t('Delete'));
-    $this->drupalPost(null, null, t('Delete')); // Confirm deletion.
+    $this->drupalPost(NULL, NULL, t('Delete')); // Confirm deletion.
     $options = array('%term' => $edit['name'], '%menu_name' => $menu_name);
     $this->assertRaw(t('Deleted term %term from taxonomy menu %menu_name.', $options));
   }
@@ -497,7 +497,7 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
 
     // Assert that all of the menu links have no children with the root being
     // a menu item.
-    $item = array (
+    $item = array(
       'menu_name'  => 'main-menu',
       'weight'     => 0,
       'link_title' => 'test',

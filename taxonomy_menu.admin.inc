@@ -235,9 +235,9 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
         variable_set('menu_rebuild_needed', TRUE);
       }
     }
-    else if (!$flatten_options['rebuild']) {
+    elseif (!$flatten_options['rebuild']) {
       // Display a notification message. Nothing to update.
-      drupal_set_message('The Taxonomy menu was not updated. Nothing to update.', 'status');
+      drupal_set_message(t('The Taxonomy menu was not updated. Nothing to update.'), 'status');
     }
   }
 
@@ -263,6 +263,8 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
  * Additional submit handler for terms overview form.
  *
  * @see taxonomy_menu_form_taxonomy_overview_terms()
+ *
+ * @TODO Rewrite this function.
  */
 function taxonomy_menu_overview_submit(&$form, &$form_state) {
   // Only sync if taxonomy_menu is enabled for this vocab and the 'sync'
@@ -303,7 +305,7 @@ function taxonomy_menu_overview_submit(&$form, &$form_state) {
       if (isset($message)) {
         // Message is sanitized coming out of _taxonomy_menu_update_menu_links.
         // No need to reclean it here.
-        drupal_set_message($message, 'status');
+        //drupal_set_message($message, 'status');
       }
 
       // Rebuild the menu.
