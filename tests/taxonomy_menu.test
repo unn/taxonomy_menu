@@ -19,7 +19,7 @@ class TaxonomyMenuWebTestCase extends TaxonomyWebTestCase {
   function setUp() {
     parent::setUp('taxonomy_menu');
     // Create and login administrative user.
-    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu'));
+    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu', 'bypass node access'));
     $this->drupalLogin($admin_user);
     // Create a vocabulary and a hierarchy of taxonomy terms for it.
     $this->vocabulary = $this->createVocabulary();
@@ -80,6 +80,30 @@ class TaxonomyMenuWebTestCase extends TaxonomyWebTestCase {
     taxonomy_term_save($terms[7]);
 
     return $terms;
+  }
+
+  /**
+   * Fetch the menu item from the database and compare it to the specified
+   * array.
+   *
+   * @param $mlid
+   *   Menu item id.
+   * @param $item
+   *   Array containing properties to verify.
+   */
+  function assertMenuLink($mlid, array $expected_item) {
+    // Retrieve menu link.
+    $item = db_query('SELECT * FROM {menu_links} WHERE mlid = :mlid', array(':mlid' => $mlid))->fetchAssoc();
+    $options = unserialize($item['options']);
+    if (!empty($options['query'])) {
+      $item['link_path'] .= '?' . drupal_http_build_query($options['query']);
+    }
+    if (!empty($options['fragment'])) {
+      $item['link_path'] .= '#' . $options['fragment'];
+    }
+    foreach ($expected_item as $key => $value) {
+      $this->assertEqual($item[$key], $value, t('Parameter %key had expected value.', array('%key' => $key)));
+    }
   }
 
   /**
@@ -518,6 +542,92 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
     $this->assertEqual(count($this->hierarchy), $row_count);
   }
 
+  /**
+   * Tests Taxonommy Menu "Hide Empty terms" option.
+   */
+  function testTaxonomyMenuHideEmptyTerms() {
+    $voc_machine_name = $this->vocabulary->machine_name;
+
+    // Create several nodes and attach them to different terms of our hierarchy
+    // in order to match the following scheme.
+    /** terms[1]         | depth: 0 | 0 node  -> displayed
+     * -- terms[2]       | depth: 1 | 0 node  -> hidden
+     * -- terms[3]       | depth: 1 | 2 nodes -> displayed
+     * ---- terms[4]     | depth: 2 | 0 node  -> hidden
+     * -- terms[5]       | depth: 1 | 1 node  -> displayed
+     * terms[6]          | depth: 0 | 0 node  -> hidden
+     * -- terms[7]       | depth: 1 | 0 node  -> hidden   */
+
+    // Add a taxonomy reference to the "Article" content type.
+    $field = array(
+      'field_name' => 'taxonomy_' . $voc_machine_name,
+      'type' => 'taxonomy_term_reference',
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+      'settings' => array(
+        'allowed_values' => array(
+          array(
+            'vocabulary' => $voc_machine_name,
+            'parent' => 0,
+          ),
+        ),
+      ),
+    );
+    field_create_field($field);
+    $this->instance = array(
+      'field_name' => 'taxonomy_' . $voc_machine_name,
+      'bundle' => 'article',
+      'entity_type' => 'node',
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+      'display' => array(
+        'default' => array(
+          'type' => 'taxonomy_term_reference_link',
+        ),
+      ),
+    );
+    field_create_instance($this->instance);
+
+    // Create 3 articles respecting the previous scheme.
+    $terms_index = array(3, 3, 5);
+    foreach ($terms_index as $index) {
+      $edit = array();
+      $langcode = LANGUAGE_NONE;
+      $edit["title"] = $this->randomName();
+      $edit["body[$langcode][0][value]"] = $this->randomName();
+      $edit[$this->instance['field_name'] . '[' . $langcode . '][]'] = $this->hierarchy[$index]->tid;
+      $this->drupalPost('node/add/article', $edit, t('Save'));
+    }
+
+    // Set settings and save.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[options][hide_empty_terms]' => TRUE,
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $voc_machine_name . '/edit', $edit, t('Save'));
+
+    // Assert that the hidden property of the taxonomy menu's menu links are
+    // set according to the scheme.
+    $visible_terms_index = array(1, 3, 5);
+    $hidden_item = array('hidden' => TRUE);
+    $visible_item = array('hidden' => FALSE);
+    $index = 1;
+    foreach ($this->hierarchy as $term) {
+      $mlid = _taxonomy_menu_get_mlid($term->tid, $this->vocabulary->vid);
+      if ($mlid) {
+        if (in_array($index, $visible_terms_index)) {
+          $this->assertMenuLink($mlid, $visible_item);
+        }
+        else {
+          $this->assertMenuLink($mlid, $hidden_item);
+        }
+      }
+      else {
+        $this->fail('No mlid could be found for the term ' . $term->tid);
+      }
+      $index++;
+    }
+  }
 }
 
 /**

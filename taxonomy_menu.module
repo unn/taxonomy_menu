@@ -156,6 +156,7 @@ function _taxonomy_menu_prepare_menu_link($term, $menu_name) {
     // Only add/change a weight for newly created items. This is important for
     // menu links that have nodes as links.
     $menu_link['weight'] = $term->weight;
+    $menu_link['hidden'] = 0;
   }
 
   // Menu name, language, module ownership
@@ -531,20 +532,28 @@ function _taxonomy_menu_children_has_nodes($tid, $vid, $return = FALSE) {
  *
  * @return int
  *   The number of nodes attached to a term and optionally its children.
+ *
+ * @TODO Rewrite the function so that we don't have this code duplicates at the
+ * end.
  */
 function taxonomy_menu_term_count_nodes($tid, $vid, $count = 0, $recursive = TRUE) {
+  // Case of a vocabulary item. No nodes can be attached to this "false" taxonomy term.
+  if ($tid == 0) {
+    return FALSE;
+  }
+
   if ($recursive) {
     $children = taxonomy_get_children($tid, $vid);
     if (!empty($children)) {
+      $associated_nodes = taxonomy_select_nodes($tid);
+      $current_count = empty($associated_nodes) ? 0 : count($associated_nodes);
       foreach ($children as $term) {
-        $associated_nodes = taxonomy_select_nodes($term->tid);
-        $current_count = empty($associated_nodes) ? 0 : count($associated_nodes);
         $count += taxonomy_menu_term_count_nodes($term->tid, $term->vid, $current_count);
       }
     }
     else {
       $associated_nodes = taxonomy_select_nodes($tid);
-      $count = !empty($associated_nodes) ? count($associated_nodes) : 0;
+      $count += !empty($associated_nodes) ? count($associated_nodes) : 0;
     }
   }
   else {
