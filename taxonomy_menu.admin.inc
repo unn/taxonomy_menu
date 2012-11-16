@@ -235,7 +235,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
         variable_set('menu_rebuild_needed', TRUE);
       }
     }
-    else {
+    else if (!$flatten_options['rebuild']) {
       // Display a notification message. Nothing to update.
       drupal_set_message('The Taxonomy menu was not updated. Nothing to update.', 'status');
     }
