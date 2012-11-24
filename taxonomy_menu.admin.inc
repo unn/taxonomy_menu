@@ -59,7 +59,7 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
   $form['taxonomy_menu']['path'] = array(
     '#type' => 'select',
     '#title' => t('Menu path type'),
-    '#description' => t('The path will be taxonomy/term/tid if <em>Default</em> has been selected.<br />The menu path will be passed through drupal_get_path_alias() function so all aliases will be applied.'),
+    '#description' => t('<b>Warning:</b> Multi-terms path is not available in Drupal by default, which means that you will have to register it using a module like Views for example.'),
     '#default_value' => taxonomy_menu_variable_get('path', $vid, 0),
     '#options' => _taxonomy_menu_get_paths(),
   );
@@ -78,6 +78,27 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
     '#title' => t('Rebuild the menu on submit.'),
     '#description' => t('<strong>Warning</strong>: This will delete then re-create all of the menu items. Only use this option if you are experiencing issues like missing menu items or other inconsistencies.'),
     '#default_value' => taxonomy_menu_variable_get('rebuild', $vid, $defaults['rebuild']),
+  );
+
+  // Path options.
+  $form['taxonomy_menu']['options_paths'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Path options'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  /*$form['taxonomy_menu']['options_paths']['display_descendants'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display descendants'),
+    '#description' => t('Path will be changed to taxonomy/term/tid+tid+tid... for all terms that have child terms.'),
+    '#default_value' => taxonomy_menu_variable_get('display_descendants', $vid, $defaults['display_descendants']),
+  );*/
+  $form['taxonomy_menu']['options_paths']['end_all'] = array(
+    '#type' => 'checkbox',
+    '#title' => t("Use 'all' at the end of URL"),
+    '#description' => t('This changes tid+tid+tid to "All" in term when <em>Display descendants</em> has been selected.<br />Only used if <em>Menu path type</em> is "Default path".<br />Works with default taxonomy page.'),
+    '#default_value' => taxonomy_menu_variable_get('end_all', $vid, $defaults['end_all']),
+    '#disabled' => TRUE,
   );
 
   // Other options.
@@ -127,36 +148,6 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
     '#title' => t('Flatten the taxonomy\'s hierarchy in the menu'),
     '#description' => t('Add all menu items to the same level rather than hierarchically.'),
     '#default_value' => taxonomy_menu_variable_get('flat', $vid, $defaults['flat']),
-  );
-
-  // Disabled / Not tested options
-  $form['taxonomy_menu']['options']['voc_item'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Add item for vocabulary'),
-    '#description' => t('Shows the vocabulary name as the top level menu item of the taxonomy menu.'),
-    '#disabled' => TRUE,
-    '#default_value' => taxonomy_menu_variable_get('voc_item', $vid, $defaults['voc_item']),
-  );
-  $form['taxonomy_menu']['options']['voc_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Custom name for vocabulary item'),
-    '#description' => t('Changes the name of the vocabulary item (if enabled above). Leave blank to use the name of the vocabulary.'),
-    '#disabled' => TRUE,
-    '#default_value' => taxonomy_menu_variable_get('voc_name', $vid, $defaults['voc_name']),
-  );
-  $form['taxonomy_menu']['options']['display_descendants'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Display descendants'),
-    '#description' => t('Changes the default path to taxonomy/term/tid+tid+tid for all terms thave have child terms.'),
-    '#default_value' => taxonomy_menu_variable_get('display_descendants', $vid, $defaults['display_descendants']),
-    '#disabled' => TRUE,
-  );
-  $form['taxonomy_menu']['options']['end_all'] = array(
-    '#type' => 'checkbox',
-    '#title' => t("Use 'all' at the end of URL"),
-    '#description' => t('This changes tid+tid+tid to "All" in term when <em>Display descendants</em> has been selected.<br />Only used if <em>Menu path type</em> is "Default path".<br />Works with default taxonomy page.'),
-    '#disabled' => TRUE,
-    '#default_value' => taxonomy_menu_variable_get('end_all', $vid, $defaults['end_all']),
   );
 
   // Move the buttons to the bottom of the form.
@@ -375,7 +366,7 @@ function _taxonomy_menu_get_form_settings_defaults() {
     'voc_item_description' => FALSE,
     'voc_item' => FALSE,
     'voc_name' => '',
-    'display_descendants' => FALSE,
+    //'display_descendants' => FALSE,
     'end_all' => FALSE,
     'display_title_attr' => FALSE,
   );

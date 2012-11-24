@@ -567,6 +567,21 @@ function taxonomy_menu_term_count_nodes($tid, $vid, $count = 0, $recursive = TRU
 }
 
 /**
+ * Creates the path for the vid/tid combination.
+ *
+ * @param $vid
+ * @param $tid
+ *
+ * @return string
+ */
+function taxonomy_menu_create_path($vid, $tid) {
+  // Get the path function for this vocabulary.
+  $function = taxonomy_menu_variable_get('path', $vid, 'taxonomy_menu_path_default');
+  // Run the function.
+  return $function($vid, $tid);
+}
+
+/**
  * Implements hook_taxonomy_menu_path().
  *
  * Invoked from _taxonomy_menu_get_paths.
@@ -577,7 +592,8 @@ function taxonomy_menu_term_count_nodes($tid, $vid, $count = 0, $recursive = TRU
  */
 function taxonomy_menu_taxonomy_menu_path() {
   $output = array(
-    'taxonomy_menu_path_default' => t('Default'),
+    'taxonomy_menu_path_default' => t('Default (taxonomy/term/tid)'),
+    'taxonomy_menu_path_multiple_terms' => t('Multiple terms (taxonomy/term/tid1+tid2+tid3...)'),
   );
 
   return $output;
@@ -587,34 +603,40 @@ function taxonomy_menu_taxonomy_menu_path() {
  * Callback for hook_taxonomy_menu_path.
  */
 function taxonomy_menu_path_default($vid, $tid) {
-  // If tid = 0 then we are creating the vocab menu item format will be
-  // taxonomy/term/$tid+$tid+$tid+....
+  // When tid equals 0, we are dealing with a vocabulary item. We cannot use
+  // default path with vocabulary items.
   if ($tid == 0) {
-    // Get all of the terms for the vocab.
-    $vtids = _taxonomy_menu_get_terms($vid);
-    $end = implode(' ', $vtids);
-    $path = "taxonomy/term/$end";
+    return FALSE;
   }
   else {
     $path = 'taxonomy/term/' . $tid;
-    if (taxonomy_menu_variable_get('display_decendants', $vid, FALSE)) {
-      // Use 'all' at the end of the path
-      if (taxonomy_menu_variable_get('end_all', $vid, FALSE)) {
-        $path .= '/all';
-      }
-      else {
-        // We wait to run this instead of during the if above because we only
-        // want to run it once.
-        $terms = taxonomy_get_tree($vid, $tid);
-        foreach ($terms as $term) {
-          $tids[] = $term->tid;
-        }
-        if ($tids) {
-          $end = implode(' ', $tids);
-          $path .= ' ' . $end;
-        }
-      }
+  }
+
+  return $path;
+}
+
+/**
+ * Callback for hook_taxonomy_menu_path.
+ */
+function taxonomy_menu_path_multiple_terms($vid, $tid) {
+  // When tid equals 0, we are dealing with a vocabulary item. We want the path
+  // to be a mulitple term path.
+  if ($tid == 0) {
+    $tids = _taxonomy_menu_get_tids($vid);
+  }
+  else {
+    $tids = array($tid);
+    $terms = taxonomy_get_tree($vid, $tid);
+    foreach ($terms as $term) {
+      $tids[] = $term->tid;
     }
+  }
+  // Build the path.
+  if ($tids) {
+    $path = 'taxonomy/term/' . implode('+', $tids);
+  }
+  else {
+    $path = 'taxonomy/term/' . $tid;
   }
 
   return $path;
@@ -628,21 +650,6 @@ function taxonomy_menu_path_default($vid, $tid) {
  */
 function _taxonomy_menu_get_paths() {
   return module_invoke_all('taxonomy_menu_path');
-}
-
-/**
- * Creates the path for the vid/tid combination.
- *
- * @param $vid
- * @param $tid
- *
- * @return string
- */
-function taxonomy_menu_create_path($vid, $tid) {
-  // Get the path function for this vocabulary.
-  $function = taxonomy_menu_variable_get('path', $vid, 'taxonomy_menu_path_default');
-  // Run the function.
-  return $function($vid, $tid);
 }
 
 /**

@@ -150,17 +150,21 @@ function _taxonomy_menu_delete_item($vid, $tid) {
 }
 
 /**
- * Get all of the tid for a given vid
+ * Get all of the tid for a given vocabulary id.
+ * Used to build path (tid1+tid2+...)
  *
  * @param $vid
- * @return array of $tid
+ *   The vocabulary id.
+ *
+ * @return
+ *   A list of terms id for this vocabulary.
  */
-function _taxonomy_menu_get_terms($vid) {
+function _taxonomy_menu_get_tids($vid) {
   $result = db_select('taxonomy_term_data', 'td')
-    ->condition('vid', $vid)
-    ->fields('td', array('tid'))
-    ->execute();
-  return $result->fetchAll();
+  ->condition('vid', $vid)
+  ->fields('td', array('tid'))
+  ->execute();
+  return $result->fetchCol();
 }
 
 /**
