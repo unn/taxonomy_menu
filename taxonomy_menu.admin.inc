@@ -168,19 +168,6 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
 }
 
 /**
- * Form constructor for the terms overview form.
- * We provide an additional callback.
- *
- * @see taxonomy_menu_overview_submit()
- */
-function taxonomy_menu_form_taxonomy_overview_terms(&$form, &$form_state) {
-  // Add an extra submit handler to sync the rearranged terms with menu
-  // @TODO: using hook_taxonomy_vocabulary_update is nicer then callback,
-  // but gives less info and does not always fire.
-  $form['#submit'][] = 'taxonomy_menu_overview_submit';
-}
-
-/**
  * Form submission handler for taxonomy_form_vocabulary().
  *
  * Check to see if the user has selected a different menu, and only rebuild
@@ -260,56 +247,45 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
 }
 
 /**
+ * Form constructor for the terms overview form. We provide an additional callback.
+ *
+ * Using hook_taxonomy_vocabulary_update is nicer then callback, but gives less
+ * info and does not always fire.
+ *
+ * @see taxonomy_menu_overview_terms_submit()
+ */
+function taxonomy_menu_form_taxonomy_overview_terms(&$form, &$form_state) {
+  $form['#submit'][] = 'taxonomy_menu_overview_terms_submit';
+}
+
+/**
  * Additional submit handler for terms overview form.
  *
  * @see taxonomy_menu_form_taxonomy_overview_terms()
- *
- * @TODO Rewrite this function.
  */
-function taxonomy_menu_overview_submit(&$form, &$form_state) {
-  // Only sync if taxonomy_menu is enabled for this vocab and the 'sync'
-  // option has been checked.
-
+function taxonomy_menu_overview_terms_submit(&$form, &$form_state) {
   // This form has the following flow of buttons:
-  // 1. [Save] --> rebuild taxonomy_menu
-  // 2. [Reset to alphabetical] --> no rebuild yet
-  // 3. [Reset to alphabetical][Reset to alphabetical] --> rebuild
-  // 4. [Reset to alphabetical][Cancel] --> no rebuild
-  // The code below avoids rebuilding after situation 2.
-
-  if ($form_state['rebuild'] == FALSE && isset($form['#vocabulary']->vid) ) {
-    // Try to catch the 'Save' button.
-    $vid = $form['#vocabulary']->vid;
+  // 1. [Save] --> update taxonomy menu
+  // 2. [Reset to alphabetical] --> do nothing, wait for confirmation page
+  // 3. [Reset to alphabetical][Reset to alphabetical] --> update taxonomy menu
+  // 4. [Reset to alphabetical][Cancel] --> do nothing
+  $update = FALSE;
+  if (isset($form_state['confirm_reset_alphabetical']) && $form_state['confirm_reset_alphabetical'] === TRUE) {
+    if ($form_state['values']['reset_alphabetical'] === TRUE) {
+      $update = TRUE;
+    }
   }
-  elseif ($form_state['rebuild'] == TRUE && isset($form['#vocabulary']->vid) ) {
-    // Try to catch the 'Reset to alphabetical' button.
-    $vid = NULL;
+  else if ($form_state['clicked_button']['#value'] == t('Save')){
+    $update = TRUE;
   }
-  elseif ($form_state['rebuild'] == FALSE && isset($form['vid']['#value']) ) {
-    // Try to catch the second (confirming) 'Reset to alphabetical' button.
-    $vid = $form['vid']['#value'];
-  }
-  else {
-    // The button [Reset to alphabetical] [Cancel] does not call this page.
-    $vid = NULL;
-  }
-
-  if (isset($vid)) {
-    $menu_name = taxonomy_menu_variable_get('vocab_menu', $vid, '0');
-    $sync = variable_get(_taxonomy_menu_build_variable('sync', $vid), 0);
-    if ($menu_name && $sync) {
-      // Update all menu items (do not rebuild the menu).
-      $message = _taxonomy_menu_update_menu_links($vid);
-
-      // Report status.
-      if (isset($message)) {
-        // Message is sanitized coming out of _taxonomy_menu_update_menu_links.
-        // No need to reclean it here.
-        //drupal_set_message($message, 'status');
+  if ($update === TRUE) {
+    $vid = isset($form['vid']['#value']) ? $form['vid']['#value'] : $form['#vocabulary']->vid;
+    if ($vid) {
+      $menu_name = taxonomy_menu_variable_get('vocab_menu', $vid, '0');
+      $sync = taxonomy_menu_variable_get('sync', $vid, 0);
+      if ($menu_name && $sync) {
+        _taxonomy_menu_update_menu_links($vid);
       }
-
-      // Rebuild the menu.
-      menu_cache_clear($menu_name);
     }
   }
 }

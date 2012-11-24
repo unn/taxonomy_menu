@@ -11,6 +11,10 @@ module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.database');
 // Include the batch functions.
 module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.batch');
 
+// Include the admin functions. Submit function on the confirmation page of the
+// taxonomy overview page cannot be found if inc file is included on form alter
+// only.
+module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.admin');
 
 /**
  * Implements hook_help().
@@ -23,7 +27,6 @@ function taxonomy_menu_help($path, $arg) {
  * Implements hook_form_FORM_ID_alter().
  */
 function taxonomy_menu_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
-  module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.admin');
   taxonomy_menu_form_taxonomy_form_vocabulary($form, $form_state);
 }
 
@@ -31,7 +34,6 @@ function taxonomy_menu_form_taxonomy_form_vocabulary_alter(&$form, &$form_state)
  * Implements hook_form_FORM_ID_alter().
  */
 function taxonomy_menu_form_taxonomy_overview_terms_alter(&$form, &$form_state) {
-  module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.admin');
   taxonomy_menu_form_taxonomy_overview_terms($form, $form_state);
 }
 
