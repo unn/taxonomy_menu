@@ -61,7 +61,7 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
     '#title' => t('Menu path type'),
     '#description' => t('<b>Warning:</b> Multi-terms path is not available in Drupal by default, which means that you will have to register it using a module like Views for example.'),
     '#default_value' => taxonomy_menu_variable_get('path', $vid, 0),
-    '#options' => _taxonomy_menu_get_paths(),
+    '#options' => taxonomy_menu_get_paths(),
   );
   // Sync
   $variable_name = _taxonomy_menu_build_variable('sync', $vid);
@@ -198,7 +198,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
         // Menu location has changed.
         if ($menu_disabled) {
           // Menu was disabled, delete all existing menu links.
-          _taxonomy_menu_delete_menu_links($vid);
+          taxonomy_menu_menu_links_delete($vid);
         }
         else {
           // Menu location has been changed and is not disabled.
@@ -225,15 +225,15 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
   // We don't need to check for the disabled menu location because the rebuild
   // function will delete the taxonomy menu in all cases.
   if ($flatten_options['rebuild']) {
-    _taxonomy_menu_rebuild($vid);
+    taxonomy_menu_rebuild($vid);
   }
   elseif ($insert) {
     // Update only menu links that are available in taxonomy_menu table.
-    _taxonomy_menu_insert_menu_links($vid);
+    taxonomy_menu_menu_links_insert($vid);
   }
   elseif ($update) {
     // Update only menu links that are available in taxonomy_menu table.
-    _taxonomy_menu_update_menu_links($vid);
+    taxonomy_menu_menu_links_update($vid);
   }
 }
 
@@ -275,7 +275,7 @@ function taxonomy_menu_overview_terms_submit(&$form, &$form_state) {
       $menu_name = taxonomy_menu_variable_get('vocab_menu', $vid, '0');
       $sync = taxonomy_menu_variable_get('sync', $vid, 0);
       if ($menu_name && $sync) {
-        _taxonomy_menu_update_menu_links($vid);
+        taxonomy_menu_menu_links_update($vid);
       }
     }
   }

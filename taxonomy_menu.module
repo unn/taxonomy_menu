@@ -43,14 +43,14 @@ function taxonomy_menu_form_taxonomy_overview_terms_alter(&$form, &$form_state) 
  * @param $vid
  *   The vocabulary ID of the taxonomy terms from which to rebuild the menu links.
  */
-function _taxonomy_menu_rebuild($vid) {
+function taxonomy_menu_rebuild($vid) {
   // Get the name of the menu from the administration settings.
   $menu_exists = taxonomy_menu_variable_get('vocab_menu', $vid, FALSE);
   // Delete the menu links associated to this vocabulary.
-  _taxonomy_menu_delete_menu_links($vid);
+  taxonomy_menu_menu_links_delete($vid);
   // Re-create the menu links if a menu is set.
   if ($menu_exists) {
-    _taxonomy_menu_insert_menu_links($vid);
+    taxonomy_menu_menu_links_insert($vid);
   }
 }
 
@@ -60,7 +60,7 @@ function _taxonomy_menu_rebuild($vid) {
  * @param $vid
  *   The ID of the vocabulary.
  */
-function _taxonomy_menu_insert_menu_links($vid) {
+function taxonomy_menu_menu_links_insert($vid) {
   // Get the name of the menu from the administration settings.
   $menu_name = taxonomy_menu_variable_get('vocab_menu', $vid, FALSE);
   // Get a list of all the taxonomy terms for that vocabulary.
@@ -77,7 +77,7 @@ function _taxonomy_menu_insert_menu_links($vid) {
  * @param $vid
  *   The ID of the vocabulary.
  */
-function _taxonomy_menu_update_menu_links($vid) {
+function taxonomy_menu_menu_links_update($vid) {
   // Get the name of the menu from the administration settings.
   $menu_name = taxonomy_menu_variable_get('vocab_menu', $vid, FALSE);
   // Get a list of all the terms to update.
@@ -96,7 +96,7 @@ function _taxonomy_menu_update_menu_links($vid) {
  * @param $vid
  *   The vocabulary ID from which to delete the menu items.
  */
-function _taxonomy_menu_delete_menu_links($vid) {
+function taxonomy_menu_menu_links_delete($vid) {
   $menu_items = _taxonomy_menu_get_menu_items($vid);
   $mlids = array_keys($menu_items);
   // Deletes all the menu items.
@@ -133,7 +133,7 @@ function _taxonomy_menu_delete_menu_links($vid) {
  *
  * @TODO Deal with paths validation.
  */
-function _taxonomy_menu_prepare_menu_link($term, $menu_name) {
+function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   static $weight = 0;
   $children_count = 0;
   $nodes_attached_count = 0;
@@ -215,12 +215,12 @@ function _taxonomy_menu_prepare_menu_link($term, $menu_name) {
 
   // Path.
   // Create the path of the menu item and normalize it.
-  $link_path = taxonomy_menu_create_path($term->vid, $term->tid);
+  $link_path = taxonomy_menu_path_get($term->vid, $term->tid);
   $menu_link['link_path'] = drupal_get_normal_path($link_path, $langcode);
 
   // Set the mlid of its parent. Flatten option has already been processed.
   if (!$flatten_menu) {
-    $menu_link['plid'] = _taxonomy_menu_determine_plid($term, $langcode);
+    $menu_link['plid'] = taxonomy_menu_term_get_plid($term, $langcode);
   }
 
   // Set the taxonomy menu options.
@@ -259,7 +259,7 @@ function _taxonomy_menu_is_term_empty($term) {
  * @return $plid
  *   The corresponding parent mlid.
  */
-function _taxonomy_menu_determine_plid($term, $langcode) {
+function taxonomy_menu_term_get_plid($term, $langcode) {
   $plid = 0;
   $parents = taxonomy_get_parents($term->tid);
   if (empty($parents)) {
@@ -306,11 +306,11 @@ function _taxonomy_menu_determine_plid($term, $langcode) {
  *   The menu link ID of the menu item that has been saved. FALSE, if no item
  *   could be saved.
  */
-function taxonomy_menu_save_menu_link($term, $menu_name) {
+function taxonomy_menu_menu_link_save($term, $menu_name) {
   $hook = 'taxonomy_menu';
 
   // Prepare a menu link based on the settings of the vocabulary edit page.
-  $menu_link = _taxonomy_menu_prepare_menu_link($term, $menu_name);
+  $menu_link = taxonomy_menu_menu_link_prepare($term, $menu_name);
 
   // Save the resulting menu item.
   $mlid = menu_link_save($menu_link);
@@ -341,7 +341,7 @@ function taxonomy_menu_taxonomy_menu_save($term, $menu_link, $mlid) {
 function taxonomy_menu_taxonomy_vocabulary_delete($vocabulary) {
   // When a vocabulary is deleted, remove all the menu items associated with it
   // and rebuild the menu they were inserted into.
-  _taxonomy_menu_delete_menu_links($vocabulary->vid);
+  taxonomy_menu_menu_links_delete($vocabulary->vid);
 }
 
 /**
@@ -473,7 +473,7 @@ function _taxonomy_menu_termapi_helper($term, $operation) {
       menu_link_delete($mlid);
     }
     else {
-      taxonomy_menu_save_menu_link($term, $menu_name);
+      taxonomy_menu_menu_link_save($term, $menu_name);
     }
     // Report status.
     drupal_set_message($message, 'status');
@@ -574,7 +574,7 @@ function taxonomy_menu_term_count_nodes($tid, $vid, $count = 0, $recursive = TRU
  *
  * @return string
  */
-function taxonomy_menu_create_path($vid, $tid) {
+function taxonomy_menu_path_get($vid, $tid) {
   // Get the path function for this vocabulary.
   $function = taxonomy_menu_variable_get('path', $vid, 'taxonomy_menu_path_default');
   // Run the function.
@@ -584,7 +584,7 @@ function taxonomy_menu_create_path($vid, $tid) {
 /**
  * Implements hook_taxonomy_menu_path().
  *
- * Invoked from _taxonomy_menu_get_paths.
+ * Invoked from taxonomy_menu_get_paths.
  *
  * @return array
  *   function name => Display Title
@@ -648,7 +648,7 @@ function taxonomy_menu_path_multiple_terms($vid, $tid) {
  * @return array
  *   An array of paths' selections.
  */
-function _taxonomy_menu_get_paths() {
+function taxonomy_menu_get_paths() {
   return module_invoke_all('taxonomy_menu_path');
 }
 

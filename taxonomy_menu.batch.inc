@@ -54,7 +54,7 @@ function _taxonomy_menu_save_menu_links_process($terms, $menu_name, &$context) {
   foreach ($context['sandbox']['chunks'] as $chunk) {
     foreach ($chunk as $term) {
       // Save the menu link for this taxonomy term.
-      $mlid = taxonomy_menu_save_menu_link($term, $menu_name);
+      $mlid = taxonomy_menu_menu_link_save($term, $menu_name);
 
       // Store some result for post-processing in the finished callback.
       $context['results'][] = check_plain($term->name);
