@@ -7,7 +7,6 @@
  * @TODO Add tests for other configuration options:
  *   - Display children.
  *   - Display number of children.
- *   - Empty terms.
  *   - Edition of nodes.
  */
 
