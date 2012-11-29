@@ -4,6 +4,7 @@ dependencies[] = menu
 description   = "Adds links to taxonomy terms to a menu."
 name          = "Taxonomy menu"
 package       = Taxonomy menu
+php           = 5.3
 
 ; Tests
 files[] = tests/taxonomy_menu.test
