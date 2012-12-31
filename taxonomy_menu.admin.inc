@@ -7,7 +7,7 @@
 
 /**
  * Form constructor for the vocabulary editing form. We add our taxonomy_menu
- * options in here on a per-vocabulary basis.
+ * settings in here on a per-vocabulary basis.
  *
  * @see taxonomy_menu_vocab_submit()
  */
@@ -18,7 +18,7 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
   }
 
   // Build options.
-  $defaults = _taxonomy_menu_get_form_settings_defaults();
+  $defaults = taxonomy_menu_taxonomy_menu_vocabulary_settings();
   $form['taxonomy_menu'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
@@ -170,30 +170,27 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
   // Initialize flag variables for updating/rebuilding the taxonomy menu.
   $update = FALSE;
   $insert = FALSE;
-  $menu_disabled = $form_state['values']['taxonomy_menu']['vocab_parent'] == '0';
-  // Get the vid of the submitted vocabulary.
-  $vid = $form_state['values']['vid'];
 
-  // Submitted taxonomy menu's options. Split the menu location into menu name
-  // and mlid to save menu and parent separately.
-  // Options array is flattened.
-  $flatten_options = _taxonomy_menu_flatten_form_settings($form_state['values']['taxonomy_menu']);
+  $menu_disabled = $form_state['values']['taxonomy_menu']['vocab_parent'] == '0';
+  $vid = $form_state['values']['vid'];
+  // Flatten array of submitted settings so we can save them more easily.
+  $flatten_settings = _taxonomy_menu_flatten_form_settings($form_state['values']['taxonomy_menu']);
 
   // If menu location has been set to disabled, don't throw notices by trying to
   // explode 0 with ':' .
-  $vocab_parent =  $flatten_options['vocab_parent'];
+  $vocab_parent =  $flatten_settings['vocab_parent'];
   $menu_location = ($vocab_parent == '0') ? '0:0' : $vocab_parent;
-  list($flatten_options['vocab_menu'], $flatten_options['vocab_parent']) = explode(':', $menu_location);
+  list($flatten_settings['vocab_menu'], $flatten_settings['vocab_parent']) = explode(':', $menu_location);
 
-  // Get all the options that changed since last submit. If some values have
-  // changed, then update the taxonomy menu.
-  $changed_options = array();
+  // Get all the settings that have changed since the last submit. If some of
+  // them have changed, then update the taxonomy menu.
+  $changed_settings = array();
   if ($vid != 0) {
-    $changed_options = _taxonomy_menu_get_changed_options($flatten_options, $vid);
-    if (!empty($changed_options)) {
+    $changed_settings = _taxonomy_menu_get_changed_settings($flatten_settings, $vid);
+    if (!empty($changed_settings)) {
       $update = TRUE;
       // Options have changed, save/update the menu.
-      $menu_change = in_array('vocab_parent', $changed_options) || in_array('vocab_menu', $changed_options);
+      $menu_change = in_array('vocab_parent', $changed_settings) || in_array('vocab_menu', $changed_settings);
       if ($menu_change) {
         // Menu location has changed.
         if ($menu_disabled) {
@@ -213,18 +210,18 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
         variable_set('menu_rebuild_needed', TRUE);
       }
     }
-    elseif (!$flatten_options['rebuild']) {
+    elseif (!$flatten_settings['rebuild']) {
       // Display a notification message. Nothing to update.
       drupal_set_message(t('The Taxonomy menu was not updated. Nothing to update.'), 'status');
     }
   }
 
   // Save all the submitted values.
-  _taxonomy_menu_save_form_settings($flatten_options, $vid);
+  _taxonomy_menu_save_form_settings($flatten_settings, $vid);
 
   // We don't need to check for the disabled menu location because the rebuild
   // function will delete the taxonomy menu in all cases.
-  if ($flatten_options['rebuild']) {
+  if ($flatten_settings['rebuild']) {
     taxonomy_menu_rebuild($vid);
   }
   elseif ($insert) {
@@ -282,76 +279,22 @@ function taxonomy_menu_overview_terms_submit(&$form, &$form_state) {
 }
 
 /**
- * Helper function to find which submitted values have changed upon submission
- * of a vocabulary's creation/updating form.
+ * Get all the taxonomy vocabulary settings available in modules implementing
+ * the hook.
  *
- * @param $form
- *   the submitted taxonomy menu options, includes values that are not in the
- *   'extended options' fieldset like path or menu location.
- * @param
- *   the vid of the vocabulary.
+ * This is useful in order to process the different settings altogether.
  *
- * @return $changed_options
- *   an array of options, which have changed since the last submit.
+ * @return array
+ *   An array of available Taxonomy Menu settings and their respective defaults.
  */
-function _taxonomy_menu_get_changed_options($submitted_options, $vid) {
-  $saved_options = array();
-  $defaults = _taxonomy_menu_get_form_settings_defaults();
-  // Build an array of all saved values of options from taxonomy menu and
-  // other modules.
-  foreach ($submitted_options as $key => $option) {
-    $value = taxonomy_menu_variable_get($key, $vid, $defaults[$key]);
-    $saved_options[$key] = $value;
-  }
-
-  // Keep only the values that changed.
-  $changed_options = array_keys(array_diff_assoc($saved_options, $submitted_options));
-
-  return $changed_options;
+function taxonomy_menu_get_vocabulary_settings() {
+  return module_invoke_all('taxonomy_menu_vocabulary_settings');
 }
 
 /**
- * Flatten an array of submitted values.
- *
- * @param $options
- *   An array of options to be flattened.
- *
- * @return
- *   An flattened array of options.
- *
- * @TODO Compatible with PHP 5.3 and more only. Find a way for 5.2 compatibility.
+ * Implements hook_taxonomy_menu_vocabulary_settings()
  */
-function _taxonomy_menu_flatten_form_settings($options) {
-  $flatten = array();
-  array_walk_recursive($options, function($a, $b) use (&$flatten) { $flatten[$b] = $a; });
-
-  return $flatten;
-}
-
-/**
- * Recursively saves all the submitted values of a form.
- *
- * @param $options
- *   An array of all the settings to be saved.
- */
-function _taxonomy_menu_save_form_settings($options, $vid) {
-  foreach ($options as $key => $value) {
-    if (is_array($value)) {
-      _taxonomy_menu_save_form_settings($value, $vid);
-    }
-    else {
-      taxonomy_menu_variable_set($key, $vid, $value);
-    }
-  }
-}
-
-/**
- * Get default values for Taxonomy menu options.
- * This is useful in order to check settings that have changed.
- *
- * @see _taxonomy_menu_get_changed_options()
- */
-function _taxonomy_menu_get_form_settings_defaults() {
+function taxonomy_menu_taxonomy_menu_vocabulary_settings() {
   $defaults = array(
     'vocab_parent' => 0,
     'vocab_menu' => 0,
@@ -372,4 +315,68 @@ function _taxonomy_menu_get_form_settings_defaults() {
   );
 
   return $defaults;
+}
+
+/**
+ * Helper function to find which submitted values have changed upon submission
+ * of a vocabulary's creation/updating form.
+ *
+ * @param array $submitted_settings
+ *   The submitted taxonomy menu settings, includes values that are not in the
+ *   'extended options' fieldset like path or menu location.
+ * @param int $vid
+ *   The vid of the vocabulary.
+ *
+ * @return $changed_settings
+ *   an array of options, which have changed since the last submit.
+ */
+function _taxonomy_menu_get_changed_settings($submitted_settings, $vid) {
+  $saved_settings = array();
+  $defaults = taxonomy_menu_get_vocabulary_settings();
+  // Build an array of all saved values of settings from taxonomy menu and
+  // other modules.
+  foreach ($submitted_settings as $key => $option) {
+    $value = taxonomy_menu_variable_get($key, $vid, $defaults[$key]);
+    $saved_settings[$key] = $value;
+  }
+  // Keep only the values that changed.
+  $changed_settings = array_keys(array_diff_assoc($saved_settings, $submitted_settings));
+
+  return $changed_settings;
+}
+
+/**
+ * Helper function, which recursively saves all the submitted settings values
+ * of a form.
+ *
+ * @param $settings
+ *   An array of all the settings' values to be saved.
+ */
+function _taxonomy_menu_save_form_settings($settings, $vid) {
+  foreach ($settings as $key => $value) {
+    if (is_array($value)) {
+      _taxonomy_menu_save_form_settings($value, $vid);
+    }
+    else {
+      taxonomy_menu_variable_set($key, $vid, $value);
+    }
+  }
+}
+
+/**
+ * Flatten an array of submitted values.
+ *
+ * @param array $settings
+ *   An array of settings to be flattened.
+ *
+ * @return array
+ *   A flattened array of settings.
+ *
+ * @TODO Compatible with PHP 5.3 and more only. Find a way for 5.2 compatibility.
+ */
+function _taxonomy_menu_flatten_form_settings($settings) {
+  $flatten = array();
+  array_walk_recursive($settings, function($a, $b) use (&$flatten) { $flatten[$b] = $a; });
+
+  return $flatten;
 }
