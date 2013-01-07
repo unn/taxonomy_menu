@@ -380,3 +380,20 @@ function _taxonomy_menu_flatten_form_settings($settings) {
 
   return $flatten;
 }
+
+/**
+ * Checks a path exists.
+ *
+ * @param string $path
+ *   The path to check.
+ *
+ * @return
+ *   TRUE if it is a valid path, FALSE otherwise.
+ *
+ * Directly inspired by drupal_valid_path function from core but this function
+ * throws notices. cf. http://drupal.org/node/876580
+ * @TODO Use the core drupal_valid_path function instead when fixed.
+ */
+function _taxonomy_menu_valid_path($path) {
+  return db_query("SELECT * FROM {menu_router} where path = :path", array(':path' => $path))->fetchAssoc();
+}

@@ -26,21 +26,6 @@ abstract class TaxonomyMenuWebTestCase extends TaxonomyWebTestCase {
   public $terms_hierarchy;
 
   /**
-   * setUp() performs any pre-requisite tasks that need to happen.
-   */
-  public function setUp() {
-    parent::setUp('taxonomy_menu');
-
-    // Create and login an admin user.
-    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu', 'bypass node access'));
-    $this->drupalLogin($admin_user);
-
-    // Create a vocabulary and a hierarchy of taxonomy terms for it.
-    $this->vocabulary = $this->createVocabulary();
-    $this->terms_hierarchy = $this->createTermsHierarchy();
-  }
-
-  /**
    * Asserts that the number of menu links is equal to the number of taxonomy
    * terms for a given menu name.
    *
@@ -144,7 +129,15 @@ class TaxonomyMenuFunctionalTest extends TaxonomyMenuWebTestCase {
    * Implementation of setUp().
    */
   function setUp() {
-    parent::setUp('taxonomy_menu');
+    parent::setUp(array('taxonomy_menu'));
+
+    // Create and login an admin user.
+    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu', 'bypass node access'));
+    $this->drupalLogin($admin_user);
+
+    // Create a vocabulary and a hierarchy of taxonomy terms for it.
+    $this->vocabulary = $this->createVocabulary();
+    $this->terms_hierarchy = $this->createTermsHierarchy();
   }
 
   /**
@@ -258,7 +251,15 @@ class TaxonomyMenuUnitTest extends TaxonomyMenuWebTestCase {
    * Implementation of setUp().
    */
   function setUp() {
-    parent::setUp('taxonomy_menu');
+    parent::setUp(array('taxonomy_menu'));
+
+    // Create and login an admin user.
+    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu', 'bypass node access'));
+    $this->drupalLogin($admin_user);
+
+    // Create a vocabulary and a hierarchy of taxonomy terms for it.
+    $this->vocabulary = $this->createVocabulary();
+    $this->terms_hierarchy = $this->createTermsHierarchy();
   }
 
   /**
@@ -409,7 +410,15 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
    * Implementation of setUp().
    */
   function setUp() {
-    parent::setUp('taxonomy_menu');
+    parent::setUp(array('taxonomy_menu'));
+
+    // Create and login an admin user.
+    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu', 'bypass node access'));
+    $this->drupalLogin($admin_user);
+
+    // Create a vocabulary and a hierarchy of taxonomy terms for it.
+    $this->vocabulary = $this->createVocabulary();
+    $this->terms_hierarchy = $this->createTermsHierarchy();
   }
 
   /**
