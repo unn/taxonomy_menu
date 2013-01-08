@@ -102,52 +102,59 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
   );
 
   // Other options.
-  $form['taxonomy_menu']['options'] = array(
+  $form['taxonomy_menu']['options_structure'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Extended options'),
+    '#title' => t('Structure options'),
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  $form['taxonomy_menu']['options']['expanded'] = array(
+  $form['taxonomy_menu']['options_structure']['expanded'] = array(
     '#type' => 'checkbox',
     '#title' => t('Auto expand menu items'),
     '#description' => t('Automatically show all menu items as expanded.'),
     '#default_value' => taxonomy_menu_variable_get('expanded', $vid, $defaults['expanded']),
   );
-  $form['taxonomy_menu']['options']['display_title_attr'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Display HTML title attributes on menu links.'),
-    '#description' => t('Extra information, like the description of the term, is shown as a tooltip text when the mouse moves over the menu link.'),
-    '#default_value' => taxonomy_menu_variable_get('display_title_attr', $vid, $defaults['display_title_attr']),
-  );
-  $form['taxonomy_menu']['options']['term_item_description'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Add description for terms'),
-    '#description' => t('Add the term description to the term menu item.'),
-    '#default_value' => taxonomy_menu_variable_get('term_item_description', $vid, $defaults['term_item_description']),
-  );
-  $form['taxonomy_menu']['options']['display_num'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Display number of items'),
-    '#description' => t('Display the number of items per taxonomy terms. Will not show up for vocabulary menu items.'),
-    '#default_value' => taxonomy_menu_variable_get('display_num', $vid, $defaults['display_num']),
-  );
-  $form['taxonomy_menu']['options']['hide_empty_terms'] = array(
+  $form['taxonomy_menu']['options_structure']['hide_empty_terms'] = array(
     '#type' => 'checkbox',
     '#title' => t('Hide empty terms'),
     '#description' => t('Hide terms with no items attached to them.'),
     '#default_value' => taxonomy_menu_variable_get('hide_empty_terms', $vid, $defaults['hide_empty_terms']),
   );
-  $form['taxonomy_menu']['options']['voc_item_description'] = array(
-    '#title' => t('Add description for vocabulary'),
-    '#description' => t('Add the vocabulary description to the vocabulary menu item.'),
-    '#default_value' => taxonomy_menu_variable_get('voc_item_description', $vid, $defaults['voc_item_description']),
-  );
-  $form['taxonomy_menu']['options']['flat'] = array(
+  $form['taxonomy_menu']['options_structure']['flat'] = array(
     '#type' => 'checkbox',
     '#title' => t('Flatten the taxonomy\'s hierarchy in the menu'),
     '#description' => t('Add all menu items to the same level rather than hierarchically.'),
     '#default_value' => taxonomy_menu_variable_get('flat', $vid, $defaults['flat']),
+  );
+
+  $form['taxonomy_menu']['options_markup'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Markup options'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+  );
+  $form['taxonomy_menu']['options_markup']['display_title_attr'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display HTML title attributes on menu links.'),
+    '#description' => t('Extra information, like the description of the term, is shown as a tooltip text when the mouse moves over the menu link.'),
+    '#default_value' => taxonomy_menu_variable_get('display_title_attr', $vid, $defaults['display_title_attr']),
+  );
+  $form['taxonomy_menu']['options_markup']['display_num'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display number of items'),
+    '#description' => t('Display the number of items per taxonomy terms. Will not show up for vocabulary menu items.'),
+    '#default_value' => taxonomy_menu_variable_get('display_num', $vid, $defaults['display_num']),
+  );
+  $form['taxonomy_menu']['options_markup']['voc_item_description'] = array(
+    '#title' => t('Add description for vocabulary'),
+    '#description' => t('Add the vocabulary description to the vocabulary menu item.'),
+    '#default_value' => taxonomy_menu_variable_get('voc_item_description', $vid, $defaults['voc_item_description']),
+  );
+  $form['taxonomy_menu']['options_markup']['term_item_description'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Add description for terms'),
+    '#description' => t('Add the term description to the term menu item.'),
+    '#default_value' => taxonomy_menu_variable_get('term_item_description', $vid, $defaults['term_item_description']),
   );
 
   // Move the buttons to the bottom of the form.
