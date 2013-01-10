@@ -5,8 +5,6 @@
  * Defines abstract base test class for the Taxonomy menu module tests.
  *
  * @TODO Add tests for other configuration options:
- *   - Display children.
- *   - Display number of children.
  *   - Edition of nodes.
  */
 
@@ -105,6 +103,58 @@ abstract class TaxonomyMenuWebTestCase extends TaxonomyWebTestCase {
     }
     foreach ($expected_item as $key => $value) {
       $this->assertEqual($item[$key], $value, t('Parameter %key had expected value.', array('%key' => $key)));
+    }
+  }
+
+  /**
+   * Adds a taxonomy reference field to a content type and creates a number of
+   * nodes that references different taxonomy terms
+   *
+   * @param $type string
+   *   The content type's machine name to add a term reference field to.
+   * @param $terms_index array
+   *   An array of term indexes from the terms hierarchy of this class. Each
+   *   index will be used to attach a node to this term. Indexes can be duplicated
+   *   in order to attach several nodes to the same term.
+   */
+  public function setUpTermReferenceAndNodes($type, $terms_index) {
+    $field = array(
+      'field_name' => 'taxonomy_' . $this->vocabulary->machine_name,
+      'type' => 'taxonomy_term_reference',
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
+      'settings' => array(
+        'allowed_values' => array(
+          array(
+            'vocabulary' => $this->vocabulary->machine_name,
+            'parent' => 0,
+          ),
+        ),
+      ),
+    );
+    field_create_field($field);
+    $this->instance = array(
+      'field_name' => 'taxonomy_' . $this->vocabulary->machine_name,
+      'bundle' => $type,
+      'entity_type' => 'node',
+      'widget' => array(
+        'type' => 'options_select',
+      ),
+      'display' => array(
+        'default' => array(
+          'type' => 'taxonomy_term_reference_link',
+        ),
+      ),
+    );
+    field_create_instance($this->instance);
+
+    // Create nodes that reference each term represented by their indexes.
+    foreach ($terms_index as $index) {
+      $edit = array();
+      $langcode = LANGUAGE_NONE;
+      $edit["title"] = $this->randomName();
+      $edit["body[$langcode][0][value]"] = $this->randomName();
+      $edit[$this->instance['field_name'] . '[' . $langcode . '][]'] = $this->terms_hierarchy[$index]->tid;
+      $this->drupalPost('node/add/article', $edit, t('Save'));
     }
   }
 }
@@ -605,7 +655,7 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
 
     // Create several nodes and attach them to different terms of our hierarchy
     // in order to match the following scheme.
-    /** terms[1]         | depth: 0 | 0 node  -> displayed
+    /** terms[1]         | depth: 0 | 0 node  -> hidden
      * -- terms[2]       | depth: 1 | 0 node  -> hidden
      * -- terms[3]       | depth: 1 | 2 nodes -> displayed
      * ---- terms[4]     | depth: 2 | 0 node  -> hidden
@@ -613,46 +663,7 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
      * terms[6]          | depth: 0 | 0 node  -> hidden
      * -- terms[7]       | depth: 1 | 0 node  -> hidden   */
 
-    // Add a taxonomy reference to the "Article" content type.
-    $field = array(
-      'field_name' => 'taxonomy_' . $voc_machine_name,
-      'type' => 'taxonomy_term_reference',
-      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
-      'settings' => array(
-        'allowed_values' => array(
-          array(
-            'vocabulary' => $voc_machine_name,
-            'parent' => 0,
-          ),
-        ),
-      ),
-    );
-    field_create_field($field);
-    $this->instance = array(
-      'field_name' => 'taxonomy_' . $voc_machine_name,
-      'bundle' => 'article',
-      'entity_type' => 'node',
-      'widget' => array(
-        'type' => 'options_select',
-      ),
-      'display' => array(
-        'default' => array(
-          'type' => 'taxonomy_term_reference_link',
-        ),
-      ),
-    );
-    field_create_instance($this->instance);
-
-    // Create 3 articles respecting the previous scheme.
-    $terms_index = array(3, 3, 5);
-    foreach ($terms_index as $index) {
-      $edit = array();
-      $langcode = LANGUAGE_NONE;
-      $edit["title"] = $this->randomName();
-      $edit["body[$langcode][0][value]"] = $this->randomName();
-      $edit[$this->instance['field_name'] . '[' . $langcode . '][]'] = $this->terms_hierarchy[$index]->tid;
-      $this->drupalPost('node/add/article', $edit, t('Save'));
-    }
+    $this->setUpTermReferenceAndNodes('article', array(3, 3, 5));
 
     // Set settings and save.
     $edit = array(
@@ -663,18 +674,16 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
 
     // Assert that the hidden property of the taxonomy menu's menu links are
     // set according to the scheme.
-    $visible_terms_index = array(1, 3, 5);
-    $hidden_item = array('hidden' => TRUE);
-    $visible_item = array('hidden' => FALSE);
+    $visible_terms_index = array(3, 5);
     $index = 1;
     foreach ($this->terms_hierarchy as $term) {
       $mlid = _taxonomy_menu_get_mlid($term->tid, $this->vocabulary->vid);
       if ($mlid) {
         if (in_array($index, $visible_terms_index)) {
-          $this->assertMenuLink($mlid, $visible_item);
+          $this->assertMenuLink($mlid, array('hidden' => FALSE));
         }
         else {
-          $this->assertMenuLink($mlid, $hidden_item);
+          $this->assertMenuLink($mlid, array('hidden' => TRUE));
         }
       }
       else {
@@ -682,5 +691,81 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
       }
       $index++;
     }
+  }
+
+  /**
+   * Tests Taxonommy Menu "Node count" option.
+   *
+   * @TODO Add a test for recursive count.
+   */
+  public function testTaxonomyMenuCountNodes() {
+    $voc_machine_name = $this->vocabulary->machine_name;
+
+    /*
+      Create several nodes and attach them to different terms of our hierarchy
+      in order to match the following scheme. We don't use "hide empty terms".
+      option.
+
+      terms[1]          | depth: 0 | 0 node attached
+      -- terms[2]       | depth: 1 | 0 node attached
+      -- terms[3]       | depth: 1 | 2 nodes attached
+      ---- terms[4]     | depth: 2 | 2 nodes attached
+      -- terms[5]       | depth: 1 | 1 node attached
+      terms[6]          | depth: 0 | 1 node attached
+      -- terms[7]       | depth: 1 | 0 node attached
+
+      We expect the following result for number of items:
+      - terms[1]: count is 0
+      - terms[3]: count is 2
+      - terms[4]: count is 2
+      - terms[5]: count is 1
+      - terms[6]: count is 1
+      - Others  : count is 0
+    */
+
+    $this->setUpTermReferenceAndNodes('article', array(3, 3, 4, 4, 5, 6));
+
+    // Set settings and save.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[options_structure][hide_empty_terms]' => FALSE,
+      'taxonomy_menu[options_markup][display_num]' => TRUE,
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $voc_machine_name . '/edit', $edit, t('Save'));
+
+    // Assert that the count is correct in the menu links according to the scheme.
+    $index = 1;
+    $positive_count_terms_index = array(3, 4, 5, 6);
+    $visible_item = array('hidden' => FALSE);
+    foreach ($this->terms_hierarchy as $term) {
+      $mlid = _taxonomy_menu_get_mlid($term->tid, $this->vocabulary->vid);
+      $menu_link = menu_link_load($mlid);
+      if ($mlid) {
+        switch ($index) {
+          case '3':
+          case '4':
+            $count = 2;
+            break;
+          case '5':
+          case '6':
+            $count = 1;
+            break;
+          default:
+            $count = 0;
+            break;
+        }
+        if (in_array($index, $positive_count_terms_index)) {
+          $this->assertMenuLink($mlid, array('link_title' => $term->name . ' (' . $count . ')'));
+        }
+        else {
+          $this->assertMenuLink($mlid, array('link_title' => $term->name));
+        }
+      }
+      else {
+        $this->fail('No mlid could be found for the term ' . $term->tid);
+      }
+      $index++;
+    }
+
   }
 }

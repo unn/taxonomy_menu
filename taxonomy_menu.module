@@ -174,7 +174,6 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   $children = taxonomy_get_children($term->tid, $term->vid);
   if (!empty($children)) {
     $menu_link['has_children'] = 1;
-    $children_count = count($children);
   }
 
   // Expanded.
@@ -191,10 +190,14 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
 
   // Empty terms.
   // Hide all terms that are not associated to a node.
+  // @TODO Make the recursivity of the function optional.
   $hide_empty_terms = taxonomy_menu_variable_get('hide_empty_terms', $term->vid, FALSE);
   if ($hide_empty_terms) {
-    $result = taxonomy_menu_term_count_nodes($term->tid, $term->vid);
-    $menu_link['hidden'] = ($result == 0) ? 1 : 0;
+    $node_count = taxonomy_menu_term_count_nodes($term->tid, FALSE);
+    $menu_link['hidden'] = ($node_count > 0) ? 0 : 1;
+  }
+  else {
+    $menu_link['hidden'] = 0;
   }
 
   // Title.
@@ -202,9 +205,14 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   // if selected, else give it the name of the taxonomy term.
   $menu_link['link_title'] = $term->name;
   $display_number = taxonomy_menu_variable_get('display_num', $term->vid, FALSE);
-  if ($display_number && !$flatten_menu && $children_count != 0) {
-    $node_count = taxonomy_menu_term_count_nodes($term->tid, $term->vid);
-    $menu_link['link_title'] .= " (" . $children_count . ")";
+  if ($display_number && !$flatten_menu) {
+    // If the node count has already been calculated, use it.
+    if (!isset($node_count)) {
+      $node_count = taxonomy_menu_term_count_nodes($term->tid, FALSE);
+    }
+    if ($node_count > 0) {
+      $menu_link['link_title'] .= " (" . $node_count . ")";
+    }
   }
 
   // HTML Title attribute.
@@ -231,24 +239,6 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   $menu_link['taxonomy_menu'] = $taxonomy_menu_options;
 
   return $menu_link;
-}
-
-/**
- * Helper function to check if a taxonomy term is empty.
- *
- * A taxonomy term is empty if there is no nodes attached to it. For now, the
- * function is not recursive.
- *
- * @param $term
- *   The taxonomy term to be checked.
- *
- * @TODO Make the function recursive if necessary.
- */
-function _taxonomy_menu_is_term_empty($term) {
-  $nodes = taxonomy_select_nodes($term);
-  $is_term_empty = empty($nodes);
-
-  return $is_term_empty;
 }
 
 /**
@@ -527,44 +517,31 @@ function _taxonomy_menu_children_has_nodes($tid, $vid, $return = FALSE) {
  * Calculates the number of nodes linked to a term. It can be either recursive
  * and process all the children or just for this very term.
  *
+ * This is inspired by taxonomy_select_nodes from taxonomy.module.
+ *
  * @param $tid
  *   The term ID.
- * @param $vid
- *   The vocabulary ID.
- * @param $count
- *   The current node count.
  * @param $recursive
- *   Process all the children or not. Default is TRUE.
+ *   Process all the children or not. Default is FALSE according to Drupal standard.
  *
  * @return int
  *   The number of nodes attached to a term and optionally its children.
  *
- * @TODO Rewrite the function so that we don't have this code duplicates at the
- * end.
+ * @TODO Make function recursive.
  */
-function taxonomy_menu_term_count_nodes($tid, $vid, $count = 0, $recursive = TRUE) {
-  // Case of a vocabulary item. No nodes can be attached to this "false" taxonomy term.
-  if ($tid == 0) {
+function taxonomy_menu_term_count_nodes($tid, $recursive = FALSE) {
+  if ($tid == 0 || !variable_get('taxonomy_maintain_index_table', TRUE)) {
     return FALSE;
   }
-
   if ($recursive) {
-    $children = taxonomy_get_children($tid, $vid);
-    if (!empty($children)) {
-      $associated_nodes = taxonomy_select_nodes($tid);
-      $current_count = empty($associated_nodes) ? 0 : count($associated_nodes);
-      foreach ($children as $term) {
-        $count += taxonomy_menu_term_count_nodes($term->tid, $term->vid, $current_count);
-      }
-    }
-    else {
-      $associated_nodes = taxonomy_select_nodes($tid);
-      $count += !empty($associated_nodes) ? count($associated_nodes) : 0;
-    }
+    //@TODO Make it recursive.
   }
   else {
-    $associated_nodes = taxonomy_select_nodes($tid);
-    $count = !empty($associated_nodes) ? count($associated_nodes) : 0;
+    $query = db_select('taxonomy_index', 't');
+    $query->condition('tid', $tid);
+    $query->addField('t', 'nid');
+    $query->addField('t', 'tid');
+    $count = $query->countQuery()->execute()->fetchField();
   }
 
   return $count;
@@ -684,7 +661,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
             elseif (taxonomy_menu_variable_get('display_num', $t->vid, FALSE)) {
               // if number > 0 and display decendants, then count all of the children
               if (taxonomy_menu_variable_get('display_descendants', $t->vid, FALSE)) {
-                $num = taxonomy_menu_term_count_nodes($t->tid, $t->vid);
+                $num = taxonomy_menu_term_count_nodes($t->tid);
               }
               $display_num = " ($num)";
             }

@@ -117,7 +117,7 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
   $form['taxonomy_menu']['options_structure']['hide_empty_terms'] = array(
     '#type' => 'checkbox',
     '#title' => t('Hide empty terms'),
-    '#description' => t('Hide terms with no items attached to them.'),
+    '#description' => t('Hide terms with no items attached to them. This is not recursive by default.'),
     '#default_value' => taxonomy_menu_variable_get('hide_empty_terms', $vid, $defaults['hide_empty_terms']),
   );
   $form['taxonomy_menu']['options_structure']['flat'] = array(
@@ -152,8 +152,8 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
   );
   $form['taxonomy_menu']['options_markup']['display_num'] = array(
     '#type' => 'checkbox',
-    '#title' => t('Display number of items'),
-    '#description' => t('Display the number of items per taxonomy terms. Will not show up for vocabulary menu items.'),
+    '#title' => t('Display the count of nodes referencing a term in the menu link title.'),
+    '#description' => t('Number of nodes is calculated the Drupal Core way. This is not recursive by default.'),
     '#default_value' => taxonomy_menu_variable_get('display_num', $vid, $defaults['display_num']),
   );
   /*$form['taxonomy_menu']['options_markup']['voc_item_description'] = array(
