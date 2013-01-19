@@ -574,7 +574,7 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
     $this->drupalPost('admin/structure/taxonomy/' . $vocab . '/edit', $edit, t('Save'));
     $menu_link = menu_link_load($mlid);
     $menu_link_title = $menu_link['options']['attributes']['title'];
-    $this->assertEqual($menu_link_title, $term->description);
+    $this->assertEqual($menu_link_title, trim($term->description));
 
     // Assert that menu links does not have the term description, when the option
     // for displaying a description is on but the display title option is off.

@@ -114,18 +114,18 @@ function taxonomy_menu_menu_links_delete($vid) {
 }
 
 /**
- * Prepares a taxonomy item $item to be saved as a menu link.
+ * Prepares a taxonomy item to be saved as a menu link.
  *
  * A menu item has the following properties:
  *  - link_path: (required)
  *  - link_title: (required)
+ *  - router_path: (required)
  *  - menu_name: (optional)
  *  - weight: (optional)
  *  - expanded: (optional)
  *  - options: (optional)
  *  - mlid: (optional)
  *  - plid: (optional)
- *  - router_path:
  *
  * @param $term
  *   A taxonomy term used to save a respective menu item.
@@ -133,52 +133,32 @@ function taxonomy_menu_menu_links_delete($vid) {
  *   The machine name of the menu in which the menu link should be saved.
  *
  * @return
- *   A menu link to be saved in the menu.
- *
- * @TODO Deal with paths validation.
+ *   A menu link built upon a taxonomy term, to be saved in the menu.
  */
 function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   static $weight = 0;
-  $children_count = 0;
-  $nodes_attached_count = 0;
   $langcode = isset($term->language) ? $term->language : LANGUAGE_NONE;
+  // TODO Allow the user to decide if the counting the nodes should be recursive
+  // of not.
+  $recursive_count = FALSE;
 
-  // Options related to taxonomy menu and not the menu item in itself.
-  $taxonomy_menu_options = array(
-    'update' => TRUE,
-  );
-
-  // If a taxonomy term has already been saved as a menu item, load the menu
-  // item. Else, we build it from scratch.
-  $mlid = _taxonomy_menu_get_mlid($term->tid, $term->vid, $langcode);
-  if ($mlid) {
-    $menu_link = menu_link_load($mlid);
-  }
-  else {
-    // Flag a menu item creation for later use.
-    $taxonomy_menu_options['update'] = FALSE;
-    $menu_link = array();
-
-    // Only add/change a weight for newly created items. This is important for
-    // menu links that have nodes as links.
-    $menu_link['weight'] = $term->weight;
-    $menu_link['hidden'] = 0;
+  // Count nodes attached to a taxonomy term if the settings require it.
+  $display_count = taxonomy_menu_variable_get('display_num', $term->vid, FALSE);
+  $hide_term = taxonomy_menu_variable_get('hide_empty_terms', $term->vid, FALSE);
+  if ($hide_term || $display_count) {
+    $nodes_count = taxonomy_menu_term_count_nodes($term->tid, $recursive_count);
   }
 
-  // Menu name, language, module ownership
-  $menu_link['module'] = 'taxonomy_menu';
+  // Load or create a menu link corresponding the taxonomy term being processed.
+  $menu_link = taxonomy_menu_menu_link_load($term, $langcode);
+
+  // Menu to be attached to.
   $menu_link['menu_name'] = $menu_name;
-  $menu_link['language'] = $langcode;
-
-  // Has children.
-  $children = taxonomy_get_children($term->tid, $term->vid);
-  if (!empty($children)) {
-    $menu_link['has_children'] = 1;
-  }
-
   // Expanded.
   $menu_link['expanded'] = taxonomy_menu_variable_get('expanded', $term->vid, 0);
-
+  // Has children.
+  $has_children = taxonomy_get_children($term->tid, $term->vid);
+  $menu_link['has_children'] = empty($has_children) ? 0 : 1;
   // Flatten.
   $flatten_menu = taxonomy_menu_variable_get('flat', $term->vid, 0);
   if ($flatten_menu) {
@@ -187,56 +167,61 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
     $menu_link['plid'] = taxonomy_menu_variable_get('vocab_parent', $term->vid, NULL);
     $menu_link['expanded'] = 0;
   }
-
-  // Empty terms.
-  // Hide all terms that are not associated to a node.
-  // @TODO Make the recursivity of the function optional.
-  $hide_empty_terms = taxonomy_menu_variable_get('hide_empty_terms', $term->vid, FALSE);
-  if ($hide_empty_terms) {
-    $node_count = taxonomy_menu_term_count_nodes($term->tid, FALSE);
-    $menu_link['hidden'] = ($node_count > 0) ? 0 : 1;
-  }
   else {
-    $menu_link['hidden'] = 0;
+    $menu_link['plid'] = taxonomy_menu_term_get_plid($term, $langcode);
   }
+  // Empty terms. @TODO Make the recursivity of node count optional.
+  $menu_link['hidden'] = ($hide_term && isset($nodes_count) && $nodes_count > 0) ? 0 : 1;
 
-  // Title.
-  // Append the number of children per taxonomy terms to the menu link's title
-  // if selected, else give it the name of the taxonomy term.
+  // Menu link title.
   $menu_link['link_title'] = $term->name;
-  $display_number = taxonomy_menu_variable_get('display_num', $term->vid, FALSE);
-  if ($display_number && !$flatten_menu) {
-    // If the node count has already been calculated, use it.
-    if (!isset($node_count)) {
-      $node_count = taxonomy_menu_term_count_nodes($term->tid, FALSE);
-    }
-    if ($node_count > 0) {
-      $menu_link['link_title'] .= " (" . $node_count . ")";
-    }
+  if ($display_count && $nodes_count > 0) {
+    $menu_link['link_title'] .= " (" . $nodes_count . ")";
   }
-
-  // HTML Title attribute.
-  $display_title_att = taxonomy_menu_variable_get('display_title_attr', $term->vid, TRUE);
-  if ($display_title_att) {
+  // HTML title attribute.
+  if (taxonomy_menu_variable_get('display_title_attr', $term->vid, TRUE)) {
     $term_description = taxonomy_menu_variable_get('term_item_description', $term->vid, 0);
-    $menu_link['options']['attributes']['title'] = $term_description ? $term->description : '';
   }
-  else {
-    $menu_link['options']['attributes']['title'] = '';
-  }
-
+  $menu_link['options']['attributes']['title'] = (isset($term_description) && $term_description == 1) ? trim($term->description) : '';
   // Path.
-  // Create the path of the menu item and normalize it.
   $link_path = taxonomy_menu_path_get($term->vid, $term->tid);
   $menu_link['link_path'] = drupal_get_normal_path($link_path, $langcode);
 
-  // Set the mlid of its parent. Flatten option has already been processed.
-  if (!$flatten_menu) {
-    $menu_link['plid'] = taxonomy_menu_term_get_plid($term, $langcode);
-  }
+  return $menu_link;
+}
 
-  // Set the taxonomy menu options.
-  $menu_link['taxonomy_menu'] = $taxonomy_menu_options;
+/**
+ *  Loads an existing menu link or creates an initialized one from a taxonomy
+ *  term.
+ *
+ *  @param array $term
+ *   A taxonomy term to be used to load or create its corresponding menu link.
+ *
+ *  @param array
+ *    A menu link corresponding to the taxonomy term.
+ */
+function taxonomy_menu_menu_link_load($term, $langcode){
+  $menu_link = array();
+
+  // Try to get an existing menu link, else initialize a new one with the right
+  // settings.
+  $mlid = _taxonomy_menu_get_mlid($term->tid, $term->vid, $langcode);
+  if ($mlid) {
+    $menu_link = menu_link_load($mlid);
+    // Flag that we want to update a reference in {taxonomy_menu} table later.
+    $menu_link['taxonomy_menu']['update'] = TRUE;
+  }
+  else {
+    // Only use the term's weight for menu links to be created, else you will
+    // reset weights that may have been changed by other processes than
+    // Taxonomy Menu.
+    $menu_link['module'] = 'taxonomy_menu';
+    $menu_link['hidden'] = 0;
+    $menu_link['weight'] = $term->weight;
+    $menu_link['has_children'] = 1;
+    $menu_link['language'] = $langcode;
+    $menu_link['taxonomy_menu']['update'] = FALSE;
+  }
 
   return $menu_link;
 }
