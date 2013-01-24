@@ -10,16 +10,16 @@
  *
  * Registers paths that are used in the tests.
  */
-function taxonomy_menu_custom_path_dummy_paths_menu() {
+function taxonomy_menu_dummy_paths_menu() {
   $items['custom_base_path/%'] = array(
     'title' => 'Dummy taxonomy menu path',
-    'page callback' => 'taxonomy_menu_custom_path_dummy_paths',
+    'page callback' => 'taxonomy_menu_dummy_paths_callback',
     'page arguments' => array(1),
     'access arguments' => array('access content'),
   );
   $items['custom_base_path/%/%'] = array(
     'title' => 'Dummy taxonomy menu path with depth',
-    'page callback' => 'taxonomy_menu_custom_path_dummy_paths',
+    'page callback' => 'taxonomy_menu_dummy_paths_callback',
     'page arguments' => array(1, 2),
     'access arguments' => array('access content'),
   );
@@ -33,7 +33,7 @@ function taxonomy_menu_custom_path_dummy_paths_menu() {
  * @param $user_id
  *   The user id of the user whose profile page will be loaded.
  */
-function taxonomy_menu_custom_path_dummy_paths($tid = 1, $depth = 2) {
+function taxonomy_menu_dummy_paths_callback($tid = 1, $depth = 2) {
   // We don't want to do anything in particular here.
   return;
 }
