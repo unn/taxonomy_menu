@@ -61,15 +61,13 @@ function taxonomy_menu_rebuild($vid) {
  *   The ID of the vocabulary.
  */
 function taxonomy_menu_menu_links_insert($vid) {
-  // Get the name of the menu from the administration settings.
+  // Get a list of all the taxonomy terms for that vocabulary and process them
+  // using the bacth API.
   $menu_name = taxonomy_menu_variable_get('vocab_menu', $vid, FALSE);
-  // Get a list of all the taxonomy terms for that vocabulary.
   $terms = taxonomy_get_tree($vid);
-  // Let batch api take care of inserting the menu items.
-  _taxonomy_menu_save_menu_links_batch($terms, $menu_name, 'creation');
-  // Clear cache
+  _taxonomy_menu_save_menu_links_batch($terms, $menu_name);
+
   menu_cache_clear($menu_name);
-  // Display a notification message.
   drupal_set_message(t('The Taxonomy menu has been created.'), 'status');
 }
 
@@ -80,17 +78,15 @@ function taxonomy_menu_menu_links_insert($vid) {
  *   The ID of the vocabulary.
  */
 function taxonomy_menu_menu_links_update($vid) {
-  // Get the name of the menu from the administration settings.
+  // Get a list of all the existing taxonomy terms for that vocabulary and
+  // process them using the bacth API.
   $menu_name = taxonomy_menu_variable_get('vocab_menu', $vid, FALSE);
-  // Get a list of all the terms to update.
   $tm_menu_links = _taxonomy_menu_get_menu_items($vid);
   $term_ids = array_values($tm_menu_links);
   $terms = taxonomy_term_load_multiple($term_ids);
-  // Let batch api take care of inserting the menu items.
   _taxonomy_menu_save_menu_links_batch($terms, $menu_name);
-  // Clear cache
+
   menu_cache_clear($menu_name);
-  // Display a notification message.
   drupal_set_message(t('The Taxonomy menu has been updated.'), 'status');
 }
 
@@ -101,15 +97,16 @@ function taxonomy_menu_menu_links_update($vid) {
  *   The vocabulary ID from which to delete the menu items.
  */
 function taxonomy_menu_menu_links_delete($vid) {
+  // Get a list of all the taxonomy terms for this vocabulary and delete them.
+  // Deleting means that the menu links are deleted and their respective
+  // associations in {taxonomy_menu} table as well.
   $menu_items = _taxonomy_menu_get_menu_items($vid);
   $mlids = array_keys($menu_items);
-  // Deletes all the menu items.
   foreach ($mlids as $mlid) {
     menu_link_delete($mlid);
   }
-  // Delete all the database entries in {taxonomy_menu} table.
   _taxonomy_menu_delete_all($vid);
-  // Display a notification message.
+
   drupal_set_message(t('The Taxonomy menu has been removed.'), 'status');
 }
 
@@ -138,8 +135,6 @@ function taxonomy_menu_menu_links_delete($vid) {
 function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   static $weight = 0;
   $langcode = isset($term->language) ? $term->language : LANGUAGE_NONE;
-  // TODO Allow the user to decide if the counting the nodes should be recursive
-  // of not.
   $recursive_count = FALSE;
 
   // Count nodes attached to a taxonomy term if the settings require it.
@@ -193,13 +188,15 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
 }
 
 /**
- *  Loads an existing menu link or creates an initialized one from a taxonomy
- *  term.
+ * Loads an existing menu link or creates an initialized one from a taxonomy
+ * term.
  *
- *  @param array $term
+ * @param array $term
  *   A taxonomy term to be used to load or create its corresponding menu link.
+ * @param string $langcode
+ *   The language code corresponding to the menu link to be loaded.
  *
- *  @param array
+ * @return array
  *    A menu link corresponding to the taxonomy term.
  */
 function taxonomy_menu_menu_link_load($term, $langcode){
@@ -288,17 +285,14 @@ function taxonomy_menu_term_get_plid($term, $langcode) {
  *   could be saved.
  */
 function taxonomy_menu_menu_link_save($term, $menu_name) {
-  $hook = 'taxonomy_menu';
-
-  // Prepare a menu link based on the settings of the vocabulary edit page.
+  // Prepare a menu link based on the settings of the vocabulary edit page and
+  // save it.
   $menu_link = taxonomy_menu_menu_link_prepare($term, $menu_name);
-
-  // Save the resulting menu item.
   $mlid = menu_link_save($menu_link);
 
   // Let other modules perform actions after the menu item has been saved.
-  foreach (module_implements($hook . '_save') as $module) {
-    $function = $module . '_' . $hook . '_save';
+  foreach (module_implements('taxonomy_menu_save') as $module) {
+    $function = $module . '_taxonomy_menu_save';
     $function($term, $menu_link, $mlid);
   }
 
@@ -320,8 +314,6 @@ function taxonomy_menu_taxonomy_menu_save($term, $menu_link, $mlid) {
  * Implements hook_taxonomy_vocabulary_delete().
  */
 function taxonomy_menu_taxonomy_vocabulary_delete($vocabulary) {
-  // When a vocabulary is deleted, remove all the menu items associated with it
-  // and rebuild the menu they were inserted into.
   taxonomy_menu_menu_links_delete($vocabulary->vid);
 }
 
@@ -447,7 +439,7 @@ function _taxonomy_menu_termapi_helper($term, $operation) {
         break;
     }
     $message = t($text, array('%term' => $term->name, '%menu_name' => $menu_name));
-    // Delete the association in the {taxonomy_menu} table, else save the menu link.
+
     if ($operation == 'delete') {
       $mlid = _taxonomy_menu_get_mlid($term->tid, $term->vid);
       _taxonomy_menu_delete_item($term->vid, $term->tid);
@@ -456,9 +448,8 @@ function _taxonomy_menu_termapi_helper($term, $operation) {
     else {
       taxonomy_menu_menu_link_save($term, $menu_name);
     }
-    // Report status.
+
     drupal_set_message($message, 'status');
-    // Rebuild the menu.
     variable_set('menu_rebuild_needed', TRUE);
   }
 }
@@ -474,7 +465,6 @@ function _taxonomy_menu_termapi_helper($term, $operation) {
 function _taxonomy_menu_update_all_parents($term, $menu_name) {
   $parents = taxonomy_get_parents($term->tid);
   if ($parents) {
-    // Let batch api take care of updating the menu items.
     _taxonomy_menu_save_menu_links_batch($parents, $menu_name);
   }
 }
@@ -543,9 +533,8 @@ function taxonomy_menu_term_count_nodes($tid, $recursive = FALSE) {
  * @return string
  */
 function taxonomy_menu_path_get($vid, $tid) {
-  // Get the path function for this vocabulary.
+  // Get the path function for this vocabulary and run it.
   $function = taxonomy_menu_variable_get('path', $vid, 'taxonomy_menu_path_default');
-  // Run the function.
   return $function($vid, $tid);
 }
 
@@ -555,8 +544,8 @@ function taxonomy_menu_path_get($vid, $tid) {
  * Invoked from taxonomy_menu_get_paths.
  *
  * @return array
- *   function name => Display Title
- *   a list of the path options.
+ *   An array composed of the name of the function to be run to  build the path
+ *   (key) and a description (value).
  */
 function taxonomy_menu_taxonomy_menu_path() {
   $output = array(
@@ -683,11 +672,12 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
  * Builds a variable from the supplied name and machine name of the vocabulary.
  *
  * @param $name
- *   String to be added to the returned variable.
+ *   The name of the variable.
  * @param $vid
- *   vid of the vocabulary from which the machine name will be taken.
+ *   The vocabulary id from which the machine name will be taken.
  *
- * @return bool|string
+ * @return
+ *   A variable name if a vocabulary could be found from the vid, FALSE otherwise.
  */
 function _taxonomy_menu_build_variable($name, $vid) {
   $vocabulary = taxonomy_vocabulary_load($vid);
