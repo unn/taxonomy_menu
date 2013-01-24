@@ -665,11 +665,26 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
 
     $this->setUpTermReferenceAndNodes('article', array(3, 3, 5));
 
-    // Set settings and save.
+    // Set settings (don't hide empty terms) and save.
     $edit = array(
       'taxonomy_menu[vocab_parent]' => 'main-menu:0',
-      'taxonomy_menu[options_structure][hide_empty_terms]' => TRUE,
+      'taxonomy_menu[options_structure][hide_empty_terms]' => FALSE,
     );
+    $this->drupalPost('admin/structure/taxonomy/' . $voc_machine_name . '/edit', $edit, t('Save'));
+
+    // Assert that all links are displayed.
+    foreach ($this->terms_hierarchy as $term) {
+      $mlid = _taxonomy_menu_get_mlid($term->tid, $this->vocabulary->vid);
+      if ($mlid) {
+        $this->assertMenuLink($mlid, array('hidden' => FALSE));
+      }
+      else {
+        $this->fail('No mlid could be found for the term ' . $term->tid);
+      }
+    }
+
+    // Set settings (hide empty terms) and save.
+    $edit['taxonomy_menu[options_structure][hide_empty_terms]'] = TRUE;
     $this->drupalPost('admin/structure/taxonomy/' . $voc_machine_name . '/edit', $edit, t('Save'));
 
     // Assert that the hidden property of the taxonomy menu's menu links are
@@ -691,6 +706,7 @@ class TaxonomyMenuConfigurationTest extends TaxonomyMenuWebTestCase {
       }
       $index++;
     }
+
   }
 
   /**

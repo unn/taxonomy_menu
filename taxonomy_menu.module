@@ -143,10 +143,12 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   $recursive_count = FALSE;
 
   // Count nodes attached to a taxonomy term if the settings require it.
+  // TODO Make the recursivity of node count optional.
   $display_count = taxonomy_menu_variable_get('display_num', $term->vid, FALSE);
   $hide_term = taxonomy_menu_variable_get('hide_empty_terms', $term->vid, FALSE);
   if ($hide_term || $display_count) {
     $nodes_count = taxonomy_menu_term_count_nodes($term->tid, $recursive_count);
+    $is_hidden = ($nodes_count && $nodes_count > 0) ? 0 : 1;
   }
 
   // Load or create a menu link corresponding the taxonomy term being processed.
@@ -170,8 +172,8 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   else {
     $menu_link['plid'] = taxonomy_menu_term_get_plid($term, $langcode);
   }
-  // Empty terms. @TODO Make the recursivity of node count optional.
-  $menu_link['hidden'] = ($hide_term && isset($nodes_count) && $nodes_count > 0) ? 0 : 1;
+  // Empty terms.
+  $menu_link['hidden'] = isset($is_hidden) ? $is_hidden : 0;
 
   // Menu link title.
   $menu_link['link_title'] = $term->name;
