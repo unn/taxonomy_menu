@@ -1,0 +1,160 @@
+<?php
+
+/**
+ * @file
+ * Tests for tm_custom_paths.module.
+ */
+
+/**
+ * Tests the taxonomy vocabulary interface.
+ */
+class TaxonomyMenuCustomPathFunctionalTest extends TaxonomyMenuWebTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Custom path - Vocabulary interface',
+      'description' => 'Test taxonomy menu custom path interface.',
+      'group' => 'Taxonomy menu',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  function setUp() {
+    parent::setUp(array('tm_custom_paths', 'taxonomy_menu_dummy_paths'));
+
+    // Create and login an admin user.
+    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu', 'bypass node access'));
+    $this->drupalLogin($admin_user);
+
+    // Create a vocabulary and a hierarchy of taxonomy terms for it.
+    $this->vocabulary = $this->createVocabulary();
+    $this->terms_hierarchy = $this->createTermsHierarchy();
+  }
+
+  /**
+   * Saves, edits and deletes a taxonomy vocabulary using the user interface.
+   *
+   * All the required router paths are already in the database, provided by the
+   * helper module taxonomy_menu_dummy_paths.
+   */
+  public function testTaxonomyMenuCustomPathVocabularyInterface() {
+    // Submit without a base path.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[path]' => 'taxonomy_menu_path_custom',
+      'taxonomy_menu[options_custom_path][custom_path_base]' => '',
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, t('Save'));
+    $this->assertRaw(t('A base path must be provided when using a custom path.'));
+
+    // Submit with the base path and its respective path being registered.
+    $edit['taxonomy_menu[options_custom_path][custom_path_base]'] = 'custom_base_path';
+    $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, t('Save'));
+    $this->assertRaw(t('The Taxonomy menu has been created.'));
+
+    // Submit with the base path and the depth and its respective path not being registered.
+    $edit['taxonomy_menu[options_custom_path][custom_path_depth]'] = '5';
+    $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, t('Save'));
+    $this->assertRaw(t('The Taxonomy menu has been updated.'));
+
+    // Submit with the base path and the depth and its respective path not being registered.
+    db_delete('menu_router')
+      ->condition('path', 'custom_base_path/%/%')
+      ->execute();
+    $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, t('Save'));
+    $this->assertRaw(t('The path custom_base_path/%/% is not available in Drupal. This is required to use custom paths.'));
+
+    // Submit with the base path and the depth and its respective path not being registered.
+    db_delete('menu_router')
+      ->condition('path', 'custom_base_path/%')
+      ->execute();
+    $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, t('Save'));
+    $this->assertRaw(t('The path custom_base_path/%/% is not available in Drupal. This is required to use custom paths.'));
+  }
+
+}
+/**
+ * Tests Taxonomy Menu Custom Path configuration options.
+ *
+ * @TODO Improve the tests by not hardcoding the path to test and generate it
+ * instead.
+ */
+class TaxonomyMenuCustomPathConfigurationTest extends TaxonomyMenuWebTestCase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Custom path - Configuration',
+      'description' => 'Test custom paths configuration.',
+      'group' => 'Taxonomy menu',
+    );
+  }
+
+  /**
+   * Implementation of setUp().
+   */
+  function setUp() {
+    parent::setUp(array('tm_custom_paths', 'taxonomy_menu_dummy_paths'));
+
+    // Create and login an admin user.
+    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu', 'bypass node access'));
+    $this->drupalLogin($admin_user);
+
+    // Create a vocabulary and a hierarchy of taxonomy terms for it.
+    $this->vocabulary = $this->createVocabulary();
+    $this->terms_hierarchy = $this->createTermsHierarchy();
+  }
+
+  /**
+   * Tests if the path is correct without the depth option.
+   */
+  public function testTaxonomyMenuCustomPathBasePathOption() {
+    // Set a base path and submit the vocabulary interface form.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[path]' => 'taxonomy_menu_path_custom',
+      'taxonomy_menu[options_custom_path][custom_path_base]' => 'custom_base_path',
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, t('Save'));
+    $this->assertResponse(200);
+
+    // Assert that the base path is in URLs of menu links.
+    $mlid = _taxonomy_menu_get_mlid($this->terms_hierarchy[3]->tid, $this->vocabulary->vid);
+    $menu_link_parent = menu_link_load($mlid);
+    $this->assertEqual("custom_base_path/3+4", $menu_link_parent['link_path']);
+    $mlid = _taxonomy_menu_get_mlid($this->terms_hierarchy[4]->tid, $this->vocabulary->vid);
+    $menu_link_leaf = menu_link_load($mlid);
+    $this->assertEqual("custom_base_path/4", $menu_link_leaf['link_path']);
+  }
+
+  /**
+   * Tests if the path is correct with both the base path and the depth option.
+   */
+  public function testTaxonomyMenuCustomPathDepthOption() {
+    // Set a base path and submit the vocabulary interface form.
+    $edit = array(
+      'taxonomy_menu[vocab_parent]' => 'main-menu:0',
+      'taxonomy_menu[path]' => 'taxonomy_menu_path_custom',
+      'taxonomy_menu[options_custom_path][custom_path_base]' => 'custom_base_path',
+      'taxonomy_menu[options_custom_path][custom_path_depth]' => '2',
+    );
+    $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, t('Save'));
+    $this->assertResponse(200);
+
+    // Assert that the depth is used in URLs of menu links.
+    $mlid = _taxonomy_menu_get_mlid($this->terms_hierarchy[3]->tid, $this->vocabulary->vid);
+    $menu_link_parent = menu_link_load($mlid);
+    $this->assertEqual("custom_base_path/3+4/2", $menu_link_parent['link_path']);
+    $mlid = _taxonomy_menu_get_mlid($this->terms_hierarchy[4]->tid, $this->vocabulary->vid);
+    $menu_link_leaf = menu_link_load($mlid);
+    $this->assertEqual("custom_base_path/4/2", $menu_link_leaf['link_path']);
+  }
+
+}

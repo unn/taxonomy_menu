@@ -1,0 +1,8 @@
+core           = 7.x
+dependencies[] = taxonomy_menu
+description    = Enables custom paths to Taxonomy Menu.
+name           = Taxonomy menu - Custom Paths
+package        = Taxonomy menu
+
+; Tests
+files[] = tests/tm_custom_paths.test
