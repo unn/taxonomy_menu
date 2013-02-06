@@ -392,7 +392,7 @@ function _taxonomy_menu_save_form_settings($settings, $vid) {
  */
 function _taxonomy_menu_flatten_form_settings($settings) {
   $flatten = array();
-  foreach (array_keys($settings) AS $index => $key) {
+  foreach (array_keys($settings) as $index => $key) {
     if (is_array($settings[$key])) {
       $flatten += _taxonomy_menu_flatten_form_settings($settings[$key]);
     }
