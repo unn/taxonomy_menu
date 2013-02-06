@@ -143,7 +143,7 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   $hide_term = taxonomy_menu_variable_get('hide_empty_terms', $term->vid, FALSE);
   if ($hide_term || $display_count) {
     $nodes_count = taxonomy_menu_term_count_nodes($term->tid, $recursive_count);
-    $is_hidden = ($nodes_count && $nodes_count > 0) ? 0 : 1;
+    $is_hidden = ($hide_term && (!$nodes_count || $nodes_count == 0)) ? 1 : 0;
   }
 
   // Load or create a menu link corresponding the taxonomy term being processed.
