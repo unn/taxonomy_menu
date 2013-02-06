@@ -385,11 +385,21 @@ function _taxonomy_menu_save_form_settings($settings, $vid) {
  * @return array
  *   A flattened array of settings.
  *
- * @TODO Compatible with PHP 5.3 and more only. Find a way for 5.2 compatibility.
+ * @TODO Replace by more concise, PHP 5.3 compatible, function in Drupal 8.
+ * @code
+ * array_walk_recursive($settings, function($a, $b) use (&$flatten) { $flatten[$b] = $a; } );
+ * @endcode
  */
 function _taxonomy_menu_flatten_form_settings($settings) {
   $flatten = array();
-  array_walk_recursive($settings, function($a, $b) use (&$flatten) { $flatten[$b] = $a; });
+  foreach (array_keys($settings) AS $index => $key) {
+    if (is_array($settings[$key])) {
+      $flatten += _taxonomy_menu_flatten_form_settings($settings[$key]);
+    }
+    else {
+      $flatten[$key] = $settings[$key];
+    }
+  }
 
   return $flatten;
 }
