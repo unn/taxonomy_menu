@@ -64,7 +64,7 @@ function taxonomy_menu_menu_links_insert($vid) {
   // Get a list of all the taxonomy terms for that vocabulary and process them
   // using the bacth API.
   $menu_name = taxonomy_menu_variable_get('vocab_menu', $vid, FALSE);
-  $terms = taxonomy_get_tree($vid);
+  $terms = taxonomy_get_tree($vid, 0, NULL, TRUE);
   _taxonomy_menu_save_menu_links_batch($terms, $menu_name);
 
   menu_cache_clear($menu_name);
@@ -181,7 +181,7 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   }
   $menu_link['options']['attributes']['title'] = (isset($term_description) && $term_description == 1) ? trim($term->description) : '';
   // Path.
-  $link_path = taxonomy_menu_path_get($term->vid, $term->tid);
+  $link_path = taxonomy_menu_path_get($term);
   $menu_link['link_path'] = drupal_get_normal_path($link_path, $langcode);
 
   return $menu_link;
@@ -532,10 +532,10 @@ function taxonomy_menu_term_count_nodes($tid, $recursive = FALSE) {
  *
  * @return string
  */
-function taxonomy_menu_path_get($vid, $tid) {
+function taxonomy_menu_path_get($term) {
   // Get the path function for this vocabulary and run it.
-  $function = taxonomy_menu_variable_get('path', $vid, 'taxonomy_menu_path_default');
-  return $function($vid, $tid);
+  $function = taxonomy_menu_variable_get('path', $term->vid, 'taxonomy_menu_path_default');
+  return $function($term);
 }
 
 /**
@@ -559,31 +559,31 @@ function taxonomy_menu_taxonomy_menu_path() {
 /**
  * Callback for hook_taxonomy_menu_path.
  */
-function taxonomy_menu_path_default($vid, $tid) {
+function taxonomy_menu_path_default($term) {
   // When tid equals 0, we are dealing with a vocabulary item. We cannot use
   // default path with vocabulary items.
-  if ($tid == 0) {
+  if ($term->tid == 0) {
     return FALSE;
   }
   else {
-    $path = 'taxonomy/term/' . $tid;
+    $uri = entity_uri('taxonomy_term', $term);
+    $path = !empty($uri['path']) ? $uri['path'] : 'taxonomy/term/' . $term->tid;
   }
-
   return $path;
 }
 
 /**
  * Callback for hook_taxonomy_menu_path.
  */
-function taxonomy_menu_path_multiple_terms($vid, $tid) {
+function taxonomy_menu_path_multiple_terms($term) {
   // When tid equals 0, we are dealing with a vocabulary item. We want the path
   // to be a mulitple term path.
-  if ($tid == 0) {
-    $tids = _taxonomy_menu_get_tids($vid);
+  if ($term->tid == 0) {
+    $tids = _taxonomy_menu_get_tids($term->vid);
   }
   else {
-    $tids = array($tid);
-    $terms = taxonomy_get_tree($vid, $tid);
+    $tids = array($term->tid);
+    $terms = taxonomy_get_tree($term->vid, $term->tid);
     foreach ($terms as $term) {
       $tids[] = $term->tid;
     }
@@ -593,7 +593,8 @@ function taxonomy_menu_path_multiple_terms($vid, $tid) {
     $path = 'taxonomy/term/' . implode('+', $tids);
   }
   else {
-    $path = 'taxonomy/term/' . $tid;
+    $uri = entity_uri('taxonomy_term', $term);
+    $path = !empty($uri['path']) ? $uri['path'] : 'taxonomy/term/' . $term->tid;
   }
 
   return $path;
