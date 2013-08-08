@@ -24,11 +24,15 @@ class TaxonomyMenuCustomPathFunctionalTest extends TaxonomyMenuWebTestCase {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp(array('tm_custom_paths', 'taxonomy_menu_dummy_paths'));
 
     // Create and login an admin user.
-    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu', 'bypass node access'));
+    $admin_user = $this->drupalCreateUser(array(
+      'administer taxonomy',
+      'administer menu',
+      'bypass node access',
+    ));
     $this->drupalLogin($admin_user);
 
     // Create a vocabulary and a hierarchy of taxonomy terms for it.
@@ -57,19 +61,19 @@ class TaxonomyMenuCustomPathFunctionalTest extends TaxonomyMenuWebTestCase {
     $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, t('Save'));
     $this->assertRaw(t('The Taxonomy menu has been created.'));
 
-    // Submit with the base path and the depth and its respective path not being registered.
+    // Submit with base path, depth and respective path not being registered.
     $edit['taxonomy_menu[options_custom_path][custom_path_depth]'] = '5';
     $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, t('Save'));
     $this->assertRaw(t('The Taxonomy menu has been updated.'));
 
-    // Submit with the base path and the depth and its respective path not being registered.
+    // Submit with base path, depth and respective path not being registered.
     db_delete('menu_router')
       ->condition('path', 'custom_base_path/%/%')
       ->execute();
     $this->drupalPost('admin/structure/taxonomy/' . $this->vocabulary->machine_name . '/edit', $edit, t('Save'));
     $this->assertRaw(t('The path custom_base_path/%/% is not available in Drupal. This is required to use custom paths.'));
 
-    // Submit with the base path and the depth and its respective path not being registered.
+    // Submit with base path, depth and respective path not being registered.
     db_delete('menu_router')
       ->condition('path', 'custom_base_path/%')
       ->execute();
@@ -100,11 +104,15 @@ class TaxonomyMenuCustomPathConfigurationTest extends TaxonomyMenuWebTestCase {
   /**
    * Implementation of setUp().
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp(array('tm_custom_paths', 'taxonomy_menu_dummy_paths'));
 
     // Create and login an admin user.
-    $admin_user = $this->drupalCreateUser(array('administer taxonomy', 'administer menu', 'bypass node access'));
+    $admin_user = $this->drupalCreateUser(array(
+      'administer taxonomy',
+      'administer menu',
+      'bypass node access',
+    ));
     $this->drupalLogin($admin_user);
 
     // Create a vocabulary and a hierarchy of taxonomy terms for it.
