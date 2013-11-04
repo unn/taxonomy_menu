@@ -107,6 +107,15 @@ function taxonomy_menu_menu_links_delete($vid) {
   }
   _taxonomy_menu_delete_all($vid);
 
+  // Remove orphaned links.
+  $menu_items = _taxonomy_menu_get_orphaned_menu_items($vid);
+  if (!empty($menu_items)) {
+    $mlids = array_values($menu_items);
+    foreach ($mlids as $mlid) {
+      menu_link_delete($mlid);
+    }
+  }
+
   drupal_set_message(t('The Taxonomy menu has been removed.'), 'status');
 }
 

@@ -78,6 +78,29 @@ function _taxonomy_menu_get_menu_items($vid) {
 }
 
 /**
+ * Get orphaned menu relations for a vocab.
+ *
+ * @param int $vid
+ *    The vocabulary's ID.
+ * @return array
+ *    An array of orphaned menu links' ID.
+ */
+function _taxonomy_menu_get_orphaned_menu_items($vid) {
+  $voc = taxonomy_vocabulary_load($vid);
+  $menu_name = variable_get('taxonomy_menu_vocab_menu_' . $voc->machine_name, FALSE);
+
+  if (!empty($menu_name)) {
+    $query = db_select('menu_links', 'ml')
+      ->fields('ml', array('mlid'))
+      ->condition('ml.menu_name', $menu_name)
+      ->condition('ml.router_path', 'taxonomy/term/%');
+    $result = $query->execute();
+    return $result->fetchCol();
+  }
+  return FALSE;
+}
+
+/**
  * Deletes all links associated with this vocab from {taxonomy_menu} table.
  *
  * @param $vid
