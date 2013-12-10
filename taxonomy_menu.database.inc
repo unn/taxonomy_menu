@@ -198,8 +198,17 @@ function _taxonomy_menu_get_tids($vid) {
  * @param $tid
  */
 function _taxonomy_menu_term_count($tid) {
+  global $language;
   $result = db_select('taxonomy_index', 'tn');
-  $result->condition('tid', $tid);
+  $result->condition(
+    db_and()
+      ->condition('tid', $tid)
+      ->condition(
+        db_or()
+          ->condition('n.language', $language->language)
+          ->condition('n.language', LANGUAGE_NONE)
+      )
+    );
   $result->join('node', 'n', 'n.nid = tn.nid AND n.status = 1');
   $result->addExpression('COUNT(n.nid)', 'term_count');
   $temp = $result->execute();
