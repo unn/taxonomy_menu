@@ -6,10 +6,10 @@
  */
 
 //include the database layer
-require_once(drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.database.inc');
+require_once(DRUPAL_ROOT . '/' . drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.database.inc');
 
 //include the batch functions
-require_once(drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.batch.inc');
+require_once(DRUPAL_ROOT . '/' . drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.batch.inc');
 
 /**
  * Implements hook_form_alter().
