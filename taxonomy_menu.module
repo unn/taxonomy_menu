@@ -402,6 +402,13 @@ function _taxonomy_menu_nodeapi_helper($node, $operation) {
     $display_num = taxonomy_menu_variable_get('display_num', $term->vid, TRUE);
     $hide_empty_terms = taxonomy_menu_variable_get('hide_empty_terms', $term->vid, FALSE);
     $term = taxonomy_term_load($tid);
+
+    // taxonomy_term_load($tid) return FALSE if the term was not found
+    // if taxonomy $term is false, then go to the next $term
+    if (!$term = taxonomy_term_load($tid)) {
+      continue;
+    }
+
     if ($term  && $menu_name && $sync && ($display_num || $hide_empty)) {
       switch ($operation) {
         case 'insert':
