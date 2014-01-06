@@ -481,7 +481,12 @@ function _taxonomy_menu_taxonomy_termapi_helper($term, $operation) {
  */
 function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
   foreach ($terms as $key => $tid) {
-    $term = taxonomy_term_load($tid);
+
+    // taxonomy_term_load($tid) return FALSE if the term was not found
+    // if taxonomy $term is false, then go to the next $term
+    if (!$term = taxonomy_term_load($tid)) {
+      continue;
+    }
 
     // update the menu for each term if necessary
     $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $term->vid), FALSE);
