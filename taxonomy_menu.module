@@ -297,6 +297,7 @@ function taxonomy_menu_menu_link_save($term, $menu_name) {
   // Prepare a menu link based on the settings of the vocabulary edit page and
   // save it.
   $menu_link = taxonomy_menu_menu_link_prepare($term, $menu_name);
+  drupal_alter('taxonomy_menu_link', $menu_link, $term, $menu_name);
   $mlid = menu_link_save($menu_link);
 
   // Let other modules perform actions after the menu item has been saved.
