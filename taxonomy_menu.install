@@ -5,31 +5,17 @@
  * Install and uninstall all required databases. Also do incremental database updates.
  */
 
+use Drupal\Core\Language\Language;
+
 /**
  * Implements hook_uninstall().
  */
 function taxonomy_menu_uninstall() {
+  // Remove menu items.
+  db_delete('menu_links')->condition('module', 'taxonomy_menu')->execute();
 
-  //remove menu items
-  db_delete('menu_links')->condition('module', 'taxonomy_menu', '=')->execute();
-
-  //rebuild the menus
-  variable_set('menu_rebuild_needed', TRUE);
-
-  // Delete variables
-  $query = db_select('variable', 'v')->fields('v')->execute();
-  $variables = $query->fetchAll();
-  foreach ($variables as $variable) {
-    if (strpos($variable->name, 'taxonomy_menu') !== FALSE) {
-      variable_del($variable->name);
-    }
-  }
-}
-
-/**
- * Implements hook_install().
- */
-function taxonomy_menu_install() {
+  // Rebuild the menus.
+  \Drupal::state()->set('menu_rebuild_needed', TRUE);
 }
 
 /**
@@ -66,7 +52,7 @@ function taxonomy_menu_schema() {
         'type' => 'varchar',
         'length' => 12,
         'not null' => TRUE,
-        'default' => LANGUAGE_NONE,
+        'default' => Language::LANGCODE_NOT_SPECIFIED,
       ),
     ),
     'primary key' => array('mlid', 'tid', 'language'),
@@ -81,7 +67,7 @@ function taxonomy_menu_schema() {
 /**
  * Convert vocabulary ids into vocabulary machine names.
  */
-function taxonomy_menu_update_7000() {
+function taxonomy_menu_update_8000() {
   $variable_prefixes = array(
     'vocab_menu',
     'vocab_parent',
@@ -97,14 +83,13 @@ function taxonomy_menu_update_7000() {
     'sync',
   );
 
-  $vocabularies = taxonomy_get_vocabularies();
-  foreach ($vocabularies as $vocabulary) {
-    foreach ($variable_prefixes as $prefix) {
+  foreach (entity_load_multiple('taxonomy_vocabulary') as $vocabulary) {
+    foreach ($config_prefixes as $prefix) {
       $old_name = 'taxonomy_menu_' . $prefix . '_' . $vocabulary->vid;
       $new_name = 'taxonomy_menu_' . $prefix . '_' . $vocabulary->machine_name;
-      if (($value = variable_get($old_name)) !== NULL) {
-        variable_set($new_name, $value);
-        variable_del($old_name);
+      if (($value = \Drupal::config('taxonomy_menu.settings')->get($old_name)) !== NULL) {
+        \Drupal::config('taxonomy_menu.settings')->set($new_name, $value)->save();
+        \Drupal::config('taxonomy_menu.settings')->clear($old_name)->save();
       }
     }
   }
@@ -113,7 +98,7 @@ function taxonomy_menu_update_7000() {
 /**
  * Update database schema to handle languages.
  */
-function taxonomy_menu_update_7200() {
+function taxonomy_menu_update_8200() {
   $schema = taxonomy_menu_schema();
   db_add_field('taxonomy_menu', 'language', $schema['taxonomy_menu']['fields']['language']);
   db_drop_primary_key('taxonomy_menu');

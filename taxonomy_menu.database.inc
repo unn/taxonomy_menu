@@ -87,9 +87,9 @@ function _taxonomy_menu_get_menu_items($vid) {
  */
 function _taxonomy_menu_get_orphaned_menu_items($vid) {
   $voc = taxonomy_vocabulary_load($vid);
-  $menu_name = variable_get('taxonomy_menu_vocab_menu_' . $voc->machine_name, FALSE);
+  $menu_name = \Drupal::config('taxonomy_menu.settings')->get('taxonomy_menu_vocab_menu_' . $voc->machine_name);
 
-  if (!empty($menu_name)) {
+  if ($menu_name) {
     $query = db_select('menu_links', 'ml')
       ->fields('ml', array('mlid'))
       ->condition('ml.menu_name', $menu_name)

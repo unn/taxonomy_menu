@@ -220,7 +220,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
           }
         }
         // Do a full menu rebuild in case we have removed or moved the menu.
-        variable_set('menu_rebuild_needed', TRUE);
+        \Drupal::state()->set('menu_rebuild_needed', TRUE);
       }
     }
     elseif (!$flatten_settings['rebuild']) {
@@ -235,7 +235,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
   // We don't need to check for the disabled menu location because the rebuild
   // function will delete the taxonomy menu in all cases.
   if ($flatten_settings['rebuild']) {
-    taxonomy_menu_rebuild($vid);
+    taxonomy_menu_items_rebuild($vid);
   }
   elseif ($insert) {
     // Update only menu links that are available in taxonomy_menu table.

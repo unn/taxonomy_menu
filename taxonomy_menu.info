@@ -1,9 +1,0 @@
-core          = "7.x"
-dependencies[] = taxonomy
-dependencies[] = menu
-description   = "Adds links to taxonomy terms to a menu."
-name          = "Taxonomy menu"
-package       = Taxonomy menu
-
-; Tests
-files[] = tests/taxonomy_menu.test
