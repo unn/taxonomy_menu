@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Tests for tm_custom_paths.module.
+ * Tests for taxonomy_menu_custom_paths.module.
  */
 
 /**
@@ -25,7 +25,7 @@ class TaxonomyMenuCustomPathFunctionalTest extends TaxonomyMenuWebTestCase {
    * Implementation of setUp().
    */
   public function setUp() {
-    parent::setUp(array('tm_custom_paths', 'taxonomy_menu_dummy_paths'));
+    parent::setUp(array('taxonomy_menu_custom_paths', 'taxonomy_menu_dummy_paths'));
 
     // Create and login an admin user.
     $admin_user = $this->drupalCreateUser(array(
@@ -105,7 +105,7 @@ class TaxonomyMenuCustomPathConfigurationTest extends TaxonomyMenuWebTestCase {
    * Implementation of setUp().
    */
   public function setUp() {
-    parent::setUp(array('tm_custom_paths', 'taxonomy_menu_dummy_paths'));
+    parent::setUp(array('taxonomy_menu_custom_paths', 'taxonomy_menu_dummy_paths'));
 
     // Create and login an admin user.
     $admin_user = $this->drupalCreateUser(array(
