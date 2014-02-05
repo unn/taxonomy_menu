@@ -179,6 +179,7 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
     $menu_link['expanded'] = 0;
   }
   else {
+    $menu_link['weight'] = $term->weight;
     $menu_link['plid'] = taxonomy_menu_term_get_plid($term, $langcode);
   }
   // Empty terms.
