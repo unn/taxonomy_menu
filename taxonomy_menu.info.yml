@@ -1,0 +1,9 @@
+name: Taxonomy menu
+type: module
+description: Adds links to taxonomy terms to a menu.
+core: 8.x
+version: VERSION
+package: Taxonomy menu
+dependencies:
+  - taxonomy
+  - menu

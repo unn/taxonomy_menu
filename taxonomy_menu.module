@@ -5,6 +5,11 @@
  * Generates menu links for all selected taxonomy terms.
  */
 
+use Drupal\Core\Language\Language;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\taxonomy\Entity\Term;
+use Drupal\taxonomy\Entity\Vocabulary;
+
 // Include the database layer.
 module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.database');
 
@@ -15,11 +20,6 @@ module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.batch');
 // taxonomy overview page cannot be found if inc file is included on form alter
 // only.
 module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.admin');
-
-use Drupal\Core\Language\Language;
-use Drupal\Core\Entity\EntityInterface;
-use Drupal\taxonomy\Entity\Term;
-use Drupal\taxonomy\Entity\Vocabulary;
 
 /**
  * Implements hook_help().
@@ -33,13 +33,6 @@ function taxonomy_menu_help($path, $arg) {
  */
 function taxonomy_menu_form_taxonomy_vocabulary_form_alter(&$form, &$form_state) {
   taxonomy_menu_form_taxonomy_form_vocabulary($form, $form_state);
-}
-
-/**
- * Implements hook_form_FORM_ID_alter().
- */
-function taxonomy_menu_form_taxonomy_overview_terms_alter(&$form, &$form_state) {
-  taxonomy_menu_form_taxonomy_overview_terms($form, $form_state);
 }
 
 /**
@@ -72,7 +65,7 @@ function taxonomy_menu_menu_links_insert($vid) {
   $terms = taxonomy_get_tree($vid, 0, NULL, TRUE);
   _taxonomy_menu_save_menu_links_batch($terms, $menu_name);
 
-  menu_cache_clear($menu_name);
+  menu_cache_clear_all($menu_name);
   drupal_set_message(t('The Taxonomy menu has been created.'), 'status');
 }
 
@@ -91,7 +84,7 @@ function taxonomy_menu_menu_links_update($vid) {
   $terms = entity_load_multiple('taxonomy_term', $term_ids);
   _taxonomy_menu_save_menu_links_batch($terms, $menu_name);
 
-  menu_cache_clear($menu_name);
+  menu_cache_clear_all($menu_name);
   drupal_set_message(t('The Taxonomy menu has been updated.'), 'status');
 }
 
@@ -148,15 +141,16 @@ function taxonomy_menu_menu_links_delete($vid) {
  */
 function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   static $weight = 0;
-  $langcode = isset($term->language) ? $term->language : Language::LANGCODE_NOT_SPECIFIED;
+
+  $langcode = isset($term->language()->id) ? $term->language()->id : Language::LANGCODE_NOT_SPECIFIED;
   $recursive_count = FALSE;
 
   // Count nodes attached to a taxonomy term if the settings require it.
   // TODO Make the recursivity of node count optional.
-  $display_count = taxonomy_menu_variable_get('display_num', $term->vid, FALSE);
-  $hide_term = taxonomy_menu_variable_get('hide_empty_terms', $term->vid, FALSE);
+  $display_count = taxonomy_menu_variable_get('display_num', $term->bundle(), FALSE);
+  $hide_term = taxonomy_menu_variable_get('hide_empty_terms', $term->bundle(), FALSE);
   if ($hide_term || $display_count) {
-    $nodes_count = taxonomy_menu_term_count_nodes($term->tid, $recursive_count);
+    $nodes_count = taxonomy_menu_term_count_nodes($term->id(), $recursive_count);
     $is_hidden = ($hide_term && (!$nodes_count || $nodes_count == 0)) ? 1 : 0;
   }
 
@@ -166,35 +160,35 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
   // Menu to be attached to.
   $menu_link['menu_name'] = $menu_name;
   // Expanded.
-  $menu_link['expanded'] = taxonomy_menu_variable_get('expanded', $term->vid, 0);
+  $menu_link['expanded'] = taxonomy_menu_variable_get('expanded', $term->bundle(), 0);
   // Has children.
-  $has_children = taxonomy_term_load_children($term->tid, $term->vid);
+  $has_children = taxonomy_term_load_children($term->id(), $term->bundle());
   $menu_link['has_children'] = empty($has_children) ? 0 : 1;
   // Flatten.
-  $flatten_menu = taxonomy_menu_variable_get('flat', $term->vid, 0);
+  $flatten_menu = taxonomy_menu_variable_get('flat', $term->bundle(), 0);
   if ($flatten_menu) {
     $menu_link['weight'] = $weight++;
     $menu_link['has_children'] = 0;
-    $menu_link['plid'] = taxonomy_menu_variable_get('vocab_parent', $term->vid, NULL);
+    $menu_link['plid'] = taxonomy_menu_variable_get('vocab_parent', $term->bundle(), NULL);
     $menu_link['expanded'] = 0;
   }
   else {
-    $menu_link['weight'] = $term->weight;
+    $menu_link['weight'] = $term->weight->value;
     $menu_link['plid'] = taxonomy_menu_term_get_plid($term, $langcode);
   }
   // Empty terms.
   $menu_link['hidden'] = isset($is_hidden) ? $is_hidden : 0;
 
   // Menu link title.
-  $menu_link['link_title'] = $term->name;
+  $menu_link['link_title'] = $term->name->value;
   if ($display_count && $nodes_count > 0) {
     $menu_link['link_title'] .= " (" . $nodes_count . ")";
   }
   // HTML title attribute.
-  if (taxonomy_menu_variable_get('display_title_attr', $term->vid, TRUE)) {
-    $term_description = taxonomy_menu_variable_get('term_item_description', $term->vid, 0);
+  if (taxonomy_menu_variable_get('display_title_attr', $term->bundle(), TRUE)) {
+    $term_description = taxonomy_menu_variable_get('term_item_description', $term->bundle(), 0);
   }
-  $menu_link['options']['attributes']['title'] = (isset($term_description) && $term_description == 1) ? trim($term->description) : '';
+  $menu_link['options']['attributes']['title'] = (isset($term_description) && $term_description == 1) ? trim($term->description->value) : '';
   // Path.
   $link_path = taxonomy_menu_path_get($term);
   $menu_link['link_path'] = \Drupal::service('path.alias_manager.cached')->getSystemPath($link_path, $langcode);
@@ -219,7 +213,7 @@ function taxonomy_menu_existing_menu_link_load($term, $langcode) {
 
   // Try to get an existing menu link, else initialize a new one with the right
   // settings.
-  $mlid = _taxonomy_menu_get_mlid($term->tid, $term->vid, $langcode);
+  $mlid = _taxonomy_menu_get_mlid($term->id(), $term->bundle(), $langcode);
   if ($mlid) {
     $menu_link = menu_link_load($mlid);
     // Flag that we want to update a reference in {taxonomy_menu} table later.
@@ -229,12 +223,14 @@ function taxonomy_menu_existing_menu_link_load($term, $langcode) {
     // Only use the term's weight for menu links to be created, else you will
     // reset weights that may have been changed by other processes than
     // Taxonomy Menu.
-    $menu_link['module'] = 'taxonomy_menu';
-    $menu_link['hidden'] = 0;
-    $menu_link['weight'] = $term->weight;
-    $menu_link['has_children'] = 1;
-    $menu_link['language'] = $langcode;
-    $menu_link['taxonomy_menu']['update'] = FALSE;
+    $menu_link = entity_create('menu_link', array(
+      'module' => 'taxonomy_menu',
+      'hidden' => 0,
+      'weight' => $term->weight->value,
+      'has_children' => 1,
+      'language' => $langcode,
+      'taxonomy_menu' => array('update' => FALSE),
+    ));
   }
 
   return $menu_link;
@@ -254,14 +250,14 @@ function taxonomy_menu_existing_menu_link_load($term, $langcode) {
  */
 function taxonomy_menu_term_get_plid($term, $langcode) {
   $plid = 0;
-  $parents = taxonomy_term_load_parents($term->tid);
+  $parents = taxonomy_term_load_parents($term->id());
   if (empty($parents)) {
     // Try to get the vocabulary parent from the settings
     // Returns for example:
     //  - "0:0" : DISABLED
     //  - "main-menu:0" : MENU ROOT
     //  - "main-menu:123" : MENU ITEM ROOT
-    $vocab_parent = taxonomy_menu_variable_get('vocab_parent', $term->vid, NULL);
+    $vocab_parent = taxonomy_menu_variable_get('vocab_parent', $term->bundle(), NULL);
     if ($vocab_parent) {
       // "main-menu:123" case
       $plid = $vocab_parent;
@@ -276,7 +272,7 @@ function taxonomy_menu_term_get_plid($term, $langcode) {
     // support multiple parents yet.
     // @TODO Support multiple parents.
     foreach ($parents as $parent) {
-      $plid = _taxonomy_menu_get_mlid($parent->tid, $term->vid, $langcode);
+      $plid = _taxonomy_menu_get_mlid($parent->id(), $term->bundle(), $langcode);
       break;
     }
     if ($plid == FALSE) {
@@ -300,16 +296,21 @@ function taxonomy_menu_term_get_plid($term, $langcode) {
  *   could be saved.
  */
 function taxonomy_menu_menu_link_save($term, $menu_name) {
+  $mlid = FALSE;
+
   // Prepare a menu link based on the settings of the vocabulary edit page and
   // save it.
   $menu_link = taxonomy_menu_menu_link_prepare($term, $menu_name);
   drupal_alter('taxonomy_menu_link', $menu_link, $term, $menu_name);
-  $mlid = menu_link_save($menu_link);
 
-  // Let other modules perform actions after the menu item has been saved.
-  foreach (\Drupal::moduleHandler()->getImplementations('taxonomy_menu_save') as $module) {
-    $function = $module . '_taxonomy_menu_save';
-    $function($term, $menu_link, $mlid);
+  if (menu_link_save($menu_link)) {
+    $mlid = entity_load_by_uuid('menu_link', $menu_link->uuid)->mlid;
+
+    // Let other modules perform actions after the menu item has been saved.
+    foreach (\Drupal::moduleHandler()->getImplementations('taxonomy_menu_save') as $module) {
+      $function = $module . '_taxonomy_menu_save';
+      $function($term, $menu_link, $mlid);
+    }
   }
 
   return $mlid;
@@ -321,8 +322,8 @@ function taxonomy_menu_menu_link_save($term, $menu_name) {
  * Updates {taxonomy_menu} table using the newly created menu item.
  */
 function taxonomy_menu_taxonomy_menu_save($term, $menu_link, $mlid) {
-  if ($menu_link['taxonomy_menu']['update'] == FALSE) {
-    _taxonomy_menu_insert_menu_item($mlid, $term->tid, $term->vid, $menu_link['language']);
+  if ($menu_link->taxonomy_menu['update'] == FALSE) {
+    _taxonomy_menu_insert_menu_item($mlid, $term->id(), $term->bundle(), $menu_link->language);
   }
 }
 
@@ -444,25 +445,29 @@ function _taxonomy_menu_nodeapi_helper($node, $operation) {
 function _taxonomy_menu_termapi_helper($term, $operation) {
   // Only sync if taxonomy_menu is enabled for this vocab and the 'sync'
   // option has been checked.
-  $menu_name = taxonomy_menu_variable_get('vocab_menu', $term->vid, 0);
-  $sync = taxonomy_menu_variable_get('sync', $term->vid, 0);
+  $menu_name = taxonomy_menu_variable_get('vocab_menu', $term->bundle(), 0);
+  $sync = taxonomy_menu_variable_get('sync', $term->bundle(), 0);
+
   if ($menu_name && $sync) {
     switch ($operation) {
       case 'insert':
         $text = 'Added term %term to taxonomy menu %menu_name.';
         break;
+
       case 'update':
         $text = 'Updated term %term in taxonomy menu %menu_name.';
         break;
+
       case 'delete':
         $text = 'Deleted term %term from taxonomy menu %menu_name.';
         break;
     }
-    $message = t($text, array('%term' => $term->name, '%menu_name' => $menu_name));
+
+    $message = t($text, array('%term' => $term->name->value, '%menu_name' => $menu_name));
 
     if ($operation == 'delete') {
-      $mlid = _taxonomy_menu_get_mlid($term->tid, $term->vid);
-      _taxonomy_menu_delete_item($term->vid, $term->tid);
+      $mlid = _taxonomy_menu_get_mlid($term->id(), $term->bundle());
+      _taxonomy_menu_delete_item($term->bundle(), $term->id());
       menu_link_delete($mlid);
     }
     else {
@@ -483,7 +488,7 @@ function _taxonomy_menu_termapi_helper($term, $operation) {
  *   The menu name of the resulting menu links.
  */
 function _taxonomy_menu_update_all_parents($term, $menu_name) {
-  $parents = taxonomy_term_load_parents($term->tid);
+  $parents = taxonomy_term_load_parents($term->id());
   if ($parents) {
     _taxonomy_menu_save_menu_links_batch($parents, $menu_name);
   }
@@ -554,7 +559,7 @@ function taxonomy_menu_term_count_nodes($tid, $recursive = FALSE) {
  */
 function taxonomy_menu_path_get($term) {
   // Get the path function for this vocabulary and run it.
-  $function = taxonomy_menu_variable_get('path', $term->vid, 'taxonomy_menu_path_default');
+  $function = taxonomy_menu_variable_get('path', $term->bundle(), 'taxonomy_menu_path_default');
   return $function($term);
 }
 
@@ -582,12 +587,11 @@ function taxonomy_menu_taxonomy_menu_path() {
 function taxonomy_menu_path_default($term) {
   // When tid equals 0, we are dealing with a vocabulary item. We cannot use
   // default path with vocabulary items.
-  if ($term->tid == 0) {
+  if ($term->id() == 0) {
     return FALSE;
   }
   else {
-    $uri = $term->uri();
-    $path = !empty($uri['path']) ? $uri['path'] : 'taxonomy/term/' . $term->tid;
+    $path = 'taxonomy/term/' . $term->id();
   }
   return $path;
 }
@@ -598,16 +602,17 @@ function taxonomy_menu_path_default($term) {
 function taxonomy_menu_path_multiple_terms($term) {
   // When tid equals 0, we are dealing with a vocabulary item. We want the path
   // to be a mulitple term path.
-  if ($term->tid == 0) {
-    $tids = _taxonomy_menu_get_tids($term->vid);
+  if ($term->id() == 0) {
+    $tids = _taxonomy_menu_get_tids($term->bundle());
   }
   else {
-    $tids = array($term->tid);
-    $terms = taxonomy_get_tree($term->vid, $term->tid);
+    $tids = array($term->id());
+    $terms = taxonomy_get_tree($term->bundle(), $term->id());
     foreach ($terms as $term) {
       $tids[] = $term->tid;
     }
   }
+
   // Build the path.
   if ($tids) {
     $path = 'taxonomy/term/' . implode('+', $tids);
@@ -616,7 +621,6 @@ function taxonomy_menu_path_multiple_terms($term) {
     $uri = $term->uri();
     $path = !empty($uri['path']) ? $uri['path'] : 'taxonomy/term/' . $term->tid;
   }
-
   return $path;
 }
 
@@ -702,7 +706,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
  */
 function _taxonomy_menu_build_variable($name, $vid) {
   if ($vocabulary = entity_load('taxonomy_vocabulary', $vid)) {
-    return 'taxonomy_menu_' . $name . '_' . $vocabulary->machine_name;
+    return 'taxonomy_menu_' . $name . '_' . $vocabulary->vid;
   }
   else {
     return FALSE;
@@ -710,15 +714,20 @@ function _taxonomy_menu_build_variable($name, $vid) {
 }
 
 /**
- * Helper function to replace Drupal's variable_get() for Taxonomy menu.
+ * Helper function to replace Drupal's config for Taxonomy menu.
  * Gets a value per vocabulary.
  */
 function taxonomy_menu_variable_get($key, $vid, $default) {
-  return \Drupal::config('taxonomy_menu.settings')->get(_taxonomy_menu_build_variable($key, $vid)) ?: $default;
+  $config = \Drupal::config('taxonomy_menu.settings')->get(_taxonomy_menu_build_variable($key, $vid));
+
+  if (isset($config)) {
+    return $config;
+  }
+  return $default;
 }
 
 /**
- * Helper function to replace Drupal's variable_set() for Taxonomy menu.
+ * Helper function to replace Drupal's config for Taxonomy menu.
  * Sets a value per vocabulary.
  */
 function taxonomy_menu_variable_set($key, $vid, $value) {

@@ -5,6 +5,8 @@
  * Database functions.
  */
 
+use Drupal\Core\Language\Language;
+
 /**
  * Inserts a taxonomy term/menu item association in {taxonomy_menu} table.
  *
@@ -15,10 +17,10 @@
  * @param $vid
  *   the vocabulary's ID.
  * @param $langcode
- *   (optional) Defaults to LANGUAGE_NONE.
+ *   (optional) Defaults to Language::LANGCODE_NOT_SPECIFIED.
  *   The language code associated to the menu link's ID.
  */
-function _taxonomy_menu_insert_menu_item($mlid, $tid, $vid, $langcode = LANGUAGE_NONE) {
+function _taxonomy_menu_insert_menu_item($mlid, $tid, $vid, $langcode = Language::LANGCODE_NOT_SPECIFIED) {
   $fields = array(
     'mlid' => $mlid,
     'tid' => $tid,
@@ -40,14 +42,14 @@ function _taxonomy_menu_insert_menu_item($mlid, $tid, $vid, $langcode = LANGUAGE
  * @param $vid
  *   the vocabulary's ID.
  * @param $langcode
- *   (optional) Defaults to LANGUAGE_NONE.
+ *   (optional) Defaults to Language::LANGCODE_NOT_SPECIFIED.
  *   The language code associated to the menu link's ID.
  *
  * @return
  *   the menu link ID associated to the $tid and $vid. If not found, returns
  *   FALSE.
  */
-function _taxonomy_menu_get_mlid($tid, $vid, $langcode = LANGUAGE_NONE) {
+function _taxonomy_menu_get_mlid($tid, $vid, $langcode = Language::LANGCODE_NOT_SPECIFIED) {
   $query = db_select('taxonomy_menu', 'tm')
     ->fields('tm', array('mlid'))
     ->condition('tid', $tid)
@@ -82,18 +84,19 @@ function _taxonomy_menu_get_menu_items($vid) {
  *
  * @param int $vid
  *    The vocabulary's ID.
+ *
  * @return array
  *    An array of orphaned menu links' ID.
  */
 function _taxonomy_menu_get_orphaned_menu_items($vid) {
-  $voc = taxonomy_vocabulary_load($vid);
-  $menu_name = \Drupal::config('taxonomy_menu.settings')->get('taxonomy_menu_vocab_menu_' . $voc->machine_name);
+  $vocabulary = entity_load('taxonomy_vocabulary', $vid);
+  $menu_name = \Drupal::config('taxonomy_menu.settings')->get('taxonomy_menu_vocab_menu_' . $vocabulary->vid);
 
   if ($menu_name) {
     $query = db_select('menu_links', 'ml')
       ->fields('ml', array('mlid'))
       ->condition('ml.menu_name', $menu_name)
-      ->condition('ml.router_path', 'taxonomy/term/%');
+      ->condition('ml.link_path', 'taxonomy/term/%');
     $result = $query->execute();
     return $result->fetchCol();
   }

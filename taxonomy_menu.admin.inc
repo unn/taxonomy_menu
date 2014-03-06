@@ -20,20 +20,21 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
   // Build options.
   $defaults = taxonomy_menu_taxonomy_menu_vocabulary_settings();
   $form['taxonomy_menu'] = array(
-    '#type' => 'fieldset',
-    '#collapsible' => TRUE,
+    '#type' => 'details',
     '#title' => t('Taxonomy menu'),
     '#weight' => 10,
     '#tree' => TRUE,
   );
 
   // Get the vocabulary ID.
-  $vid = (isset($form['vid']) && $form['vid']['#value']) ? $form['vid']['#value'] : 0;
+  $vid = $form_state['controller']->getEntity()->vid ?: 0;
 
   // Turn the vocab terms into menu items and add an option at the top for
   // disabling the menu.
-  $menu_items = menu_parent_options(menu_get_menus(), array('mlid' => 0));
-  array_unshift($menu_items, '= NONE =');
+  $menu_link = entity_create('menu_link', array('mlid' => 0));
+  $menu_items = menu_parent_options(menu_get_menus(), $menu_link);
+  array_unshift($menu_items, t('- Not selected -'));
+
   // Try to get the current menu location value if the vocabulary has already
   // been created.
   if ($vid) {
@@ -82,9 +83,8 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
 
   // Path options.
   $form['taxonomy_menu']['options_paths'] = array(
-    '#type' => 'fieldset',
+    '#type' => 'details',
     '#title' => t('Path options'),
-    '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
   /*$form['taxonomy_menu']['options_paths']['display_descendants'] = array(
@@ -103,9 +103,8 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
 
   // Other options.
   $form['taxonomy_menu']['options_structure'] = array(
-    '#type' => 'fieldset',
+    '#type' => 'details',
     '#title' => t('Structure options'),
-    '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
   $form['taxonomy_menu']['options_structure']['expanded'] = array(
@@ -127,10 +126,10 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
     '#default_value' => taxonomy_menu_variable_get('flat', $vid, $defaults['flat']),
   );
 
+  // Markup options.
   $form['taxonomy_menu']['options_markup'] = array(
-    '#type' => 'fieldset',
+    '#type' => 'details',
     '#title' => t('Markup options'),
-    '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
   $form['taxonomy_menu']['options_markup']['display_title_attr'] = array(
@@ -163,12 +162,8 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
     '#default_value' => taxonomy_menu_variable_get('voc_item_description', $vid, $defaults['voc_item_description']),
   );*/
 
-  // Move the buttons to the bottom of the form.
-  $form['submit']['#weight'] = 49;
-  $form['delete']['#weight'] = 50;
-
   // Add an extra submit handler to save these settings.
-  $form['#submit'][] = 'taxonomy_menu_vocab_submit';
+  $form['actions']['submit']['#submit'][] = 'taxonomy_menu_vocab_submit';
 }
 
 /**
@@ -181,52 +176,52 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
  */
 function taxonomy_menu_vocab_submit($form, &$form_state) {
   // Initialize flag variables for updating/rebuilding the taxonomy menu.
-  $update = FALSE;
-  $insert = FALSE;
+  $update = $insert = FALSE;
 
   $menu_disabled = $form_state['values']['taxonomy_menu']['vocab_parent'] == '0';
   $vid = $form_state['values']['vid'];
+
   // Flatten array of submitted settings so we can save them more easily.
   $flatten_settings = _taxonomy_menu_flatten_form_settings($form_state['values']['taxonomy_menu']);
 
   // If menu location has been set to disabled, don't throw notices by trying to
-  // explode 0 with ':' .
+  // explode 0 with ':'.
   $vocab_parent =  $flatten_settings['vocab_parent'];
   $menu_location = ($vocab_parent == '0') ? '0:0' : $vocab_parent;
   list($flatten_settings['vocab_menu'], $flatten_settings['vocab_parent']) = explode(':', $menu_location);
 
   // Get all the settings that have changed since the last submit. If some of
   // them have changed, then update the taxonomy menu.
-  $changed_settings = array();
-  if ($vid != 0) {
-    $changed_settings = _taxonomy_menu_get_changed_settings($flatten_settings, $vid);
-    if (!empty($changed_settings)) {
-      $update = TRUE;
-      // Options have changed, save/update the menu.
-      $menu_change = in_array('vocab_parent', $changed_settings) || in_array('vocab_menu', $changed_settings);
-      if ($menu_change) {
-        // Menu location has changed.
-        if ($menu_disabled) {
-          // Menu was disabled, delete all existing menu links.
-          taxonomy_menu_menu_links_delete($vid);
-        }
-        else {
-          // Menu location has been changed and is not disabled.
-          $old_vocab_parent = taxonomy_menu_variable_get('vocab_parent', $vid, '0');
-          $old_vocab_menu = taxonomy_menu_variable_get('vocab_menu', $vid, '0');
-          if ($old_vocab_menu == '0' && $old_vocab_parent == '0') {
-            // Menu was disabled before, create new links.
-            $insert = TRUE;
-          }
-        }
-        // Do a full menu rebuild in case we have removed or moved the menu.
-        \Drupal::state()->set('menu_rebuild_needed', TRUE);
+  $changed_settings = _taxonomy_menu_get_changed_settings($flatten_settings, $vid);
+  if (!empty($changed_settings)) {
+    $update = TRUE;
+
+    // Options have changed, save/update the menu.
+    $menu_change = in_array('vocab_parent', $changed_settings) || in_array('vocab_menu', $changed_settings);
+    if ($menu_change) {
+      // Menu location has changed.
+      if ($menu_disabled) {
+        // Menu was disabled, delete all existing menu links.
+        taxonomy_menu_menu_links_delete($vid);
       }
+      else {
+        // Menu location has been changed and is not disabled.
+        $old_vocab_parent = taxonomy_menu_variable_get('vocab_parent', $vid, 0);
+        $old_vocab_menu = taxonomy_menu_variable_get('vocab_menu', $vid, 0);
+
+        if ($old_vocab_menu == 0 && $old_vocab_parent == 0) {
+          // Menu was disabled before, create new links.
+          $insert = TRUE;
+        }
+      }
+
+      // Do a full menu rebuild in case we have removed or moved the menu.
+      \Drupal::state()->set('menu_rebuild_needed', TRUE);
     }
-    elseif (!$flatten_settings['rebuild']) {
-      // Display a notification message. Nothing to update.
-      drupal_set_message(t('The Taxonomy menu was not updated. Nothing to update.'), 'status');
-    }
+  }
+  elseif (!$flatten_settings['rebuild']) {
+    // Display a notification message. Nothing to update.
+    drupal_set_message(t('The Taxonomy menu was not updated. Nothing to update.'), 'status');
   }
 
   // Save all the submitted values.
@@ -244,50 +239,6 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
   elseif ($update) {
     // Update only menu links that are available in taxonomy_menu table.
     taxonomy_menu_menu_links_update($vid);
-  }
-}
-
-/**
- * Form constructor for the terms overview form. We provide an additional callback.
- *
- * Using hook_taxonomy_vocabulary_update is nicer then callback, but gives less
- * info and does not always fire.
- *
- * @see taxonomy_menu_overview_terms_submit()
- */
-function taxonomy_menu_form_taxonomy_overview_terms(&$form, &$form_state) {
-  $form['#submit'][] = 'taxonomy_menu_overview_terms_submit';
-}
-
-/**
- * Additional submit handler for terms overview form.
- *
- * @see taxonomy_menu_form_taxonomy_overview_terms()
- */
-function taxonomy_menu_overview_terms_submit(&$form, &$form_state) {
-  // This form has the following flow of buttons:
-  // 1. [Save] --> update taxonomy menu
-  // 2. [Reset to alphabetical] --> do nothing, wait for confirmation page
-  // 3. [Reset to alphabetical][Reset to alphabetical] --> update taxonomy menu
-  // 4. [Reset to alphabetical][Cancel] --> do nothing
-  $update = FALSE;
-  if (isset($form_state['confirm_reset_alphabetical']) && $form_state['confirm_reset_alphabetical'] === TRUE) {
-    if ($form_state['values']['reset_alphabetical'] === TRUE) {
-      $update = TRUE;
-    }
-  }
-  else if ($form_state['clicked_button']['#value'] == t('Save')){
-    $update = TRUE;
-  }
-  if ($update === TRUE) {
-    $vid = isset($form['vid']['#value']) ? $form['vid']['#value'] : $form['#vocabulary']->vid;
-    if ($vid) {
-      $menu_name = taxonomy_menu_variable_get('vocab_menu', $vid, '0');
-      $sync = taxonomy_menu_variable_get('sync', $vid, 0);
-      if ($menu_name && $sync) {
-        taxonomy_menu_menu_links_update($vid);
-      }
-    }
   }
 }
 
@@ -384,22 +335,9 @@ function _taxonomy_menu_save_form_settings($settings, $vid) {
  *
  * @return array
  *   A flattened array of settings.
- *
- * @TODO Replace by more concise, PHP 5.3 compatible, function in Drupal 8.
- * @code
- * array_walk_recursive($settings, function($a, $b) use (&$flatten) { $flatten[$b] = $a; } );
- * @endcode
  */
 function _taxonomy_menu_flatten_form_settings($settings) {
-  $flatten = array();
-  foreach (array_keys($settings) as $index => $key) {
-    if (is_array($settings[$key])) {
-      $flatten += _taxonomy_menu_flatten_form_settings($settings[$key]);
-    }
-    else {
-      $flatten[$key] = $settings[$key];
-    }
-  }
+  array_walk_recursive($settings, function($a, $b) use (&$flatten) { $flatten[$b] = $a; } );
 
   return $flatten;
 }

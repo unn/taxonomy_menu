@@ -41,10 +41,10 @@ function taxonomy_menu_schema() {
         'description' => 'Tid that is linked to the mlid.',
       ),
       'vid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
+        'type' => 'varchar',
+        'length' => 255,
         'not null' => TRUE,
-        'default' => 0,
+        'default' => '',
         'description' => 'Vid for the tid.',
       ),
       'language' => array(
@@ -62,45 +62,4 @@ function taxonomy_menu_schema() {
   );
 
   return $schema;
-}
-
-/**
- * Convert vocabulary ids into vocabulary machine names.
- */
-function taxonomy_menu_update_8000() {
-  $variable_prefixes = array(
-    'vocab_menu',
-    'vocab_parent',
-    'voc_item',
-    'display_num',
-    'hide_empty_terms',
-    'expanded',
-    'rebuild',
-    'path',
-    'menu_end_all',
-    'display_descendants',
-    'voc_name',
-    'sync',
-  );
-
-  foreach (entity_load_multiple('taxonomy_vocabulary') as $vocabulary) {
-    foreach ($config_prefixes as $prefix) {
-      $old_name = 'taxonomy_menu_' . $prefix . '_' . $vocabulary->vid;
-      $new_name = 'taxonomy_menu_' . $prefix . '_' . $vocabulary->machine_name;
-      if (($value = \Drupal::config('taxonomy_menu.settings')->get($old_name)) !== NULL) {
-        \Drupal::config('taxonomy_menu.settings')->set($new_name, $value)->save();
-        \Drupal::config('taxonomy_menu.settings')->clear($old_name)->save();
-      }
-    }
-  }
-}
-
-/**
- * Update database schema to handle languages.
- */
-function taxonomy_menu_update_8200() {
-  $schema = taxonomy_menu_schema();
-  db_add_field('taxonomy_menu', 'language', $schema['taxonomy_menu']['fields']['language']);
-  db_drop_primary_key('taxonomy_menu');
-  db_add_primary_key('taxonomy_menu', $schema['taxonomy_menu']['primary key']);
 }
