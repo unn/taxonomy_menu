@@ -178,7 +178,7 @@ function taxonomy_menu_menu_link_prepare($term, $menu_name) {
     $menu_link['plid'] = taxonomy_menu_term_get_plid($term, $langcode);
   }
   // Empty terms.
-  $menu_link['hidden'] = isset($is_hidden) ? $is_hidden : 0;
+  $menu_link['hidden'] = isset($is_hidden) ? $is_hidden :  $menu_link['hidden'];
 
   // Menu link title.
   $menu_link['link_title'] = $term->name;
