@@ -1,19 +1,17 @@
 <?php
 /**
  * @file
- * taxonomy_menu_custom_paths module
+ * Enables custom paths to Taxonomy Menu.
  */
 
 /**
  * Implements hook_taxonomy_menu_vocabulary_settings().
  */
 function taxonomy_menu_custom_paths_taxonomy_menu_vocabulary_settings() {
-  $defaults = array(
+  return array(
     'custom_path_base' => '',
     'custom_path_depth' => '',
   );
-
-  return $defaults;
 }
 
 /**
@@ -23,13 +21,13 @@ function taxonomy_menu_custom_paths_taxonomy_menu_vocabulary_settings() {
  *
  * @see taxonomy_menu_custom_paths_vocabulary_validate()
  */
-function taxonomy_menu_custom_paths_form_taxonomy_form_vocabulary_alter(&$form, &$form_state) {
-  $vid = (isset($form['vid']) && $form['vid']['#value']) ? $form['vid']['#value'] : 0;
+function taxonomy_menu_custom_paths_form_taxonomy_vocabulary_form_alter(&$form, &$form_state) {
+  // Get the vocabulary ID.
+  $vid = $form_state['controller']->getEntity()->vid ?: 0;
 
   $form['taxonomy_menu']['options_custom_path'] = array(
-    '#type' => 'fieldset',
+    '#type' => 'details',
     '#title' => t('Custom path options'),
-    '#collapsible' => TRUE,
     '#collapsed' => TRUE,
     '#description' => t("<strong>Warning:</strong> These settings uses custom paths that are not registered in Drupal by default. You need to register them <strong>before</strong> you create the taxonomy menu. For example, you could use a view in order to do that."),
     '#states' => array(
@@ -40,14 +38,12 @@ function taxonomy_menu_custom_paths_form_taxonomy_form_vocabulary_alter(&$form, 
   );
   $form['taxonomy_menu']['options_custom_path']['custom_path_base'] = array(
     '#title' => t('Base path'),
-    '#weight' => 0,
     '#type' => 'textfield',
     '#default_value' => taxonomy_menu_variable_get('custom_path_base', $vid, ''),
     '#description' => t("Path 'base_path/%' must be available, where the argument is a Term ID (tid)."),
   );
   $form['taxonomy_menu']['options_custom_path']['custom_path_depth'] = array(
     '#title' => t('Depth modifier'),
-    '#weight' => 1,
     '#description' => t("Path 'base_path/%/%' must be available, where the arguments are respectively a Term ID (tid) and a Depth Modifier."),
     '#default_value' => taxonomy_menu_variable_get('custom_path_depth', $vid, ''),
     '#type' => 'textfield',
@@ -68,22 +64,23 @@ function taxonomy_menu_custom_paths_vocabulary_validate($form, $form_state) {
   $options = $form_state['values']['taxonomy_menu'];
   $base = $options['options_custom_path']['custom_path_base'];
   $depth = $options['options_custom_path']['custom_path_depth'];
+
   // Don't allow base path value to be empty when a custom path is selected.
   // Check that the required path are registered in Drupal before processing.
   if ($options['path'] == 'taxonomy_menu_path_custom') {
     if (empty($base)) {
-      form_set_error('custom_path_base', 'A base path must be provided when using a custom path.');
+      \Drupal::formBuilder()->setErrorByName('custom_path_base', $form_state, 'A base path must be provided when using a custom path.');
     }
     elseif (empty($depth)) {
-      $path = drupal_get_normal_path($base . '/%');
-      if (!_taxonomy_menu_valid_path($path)) {
-        form_set_error('custom_path_base', 'The path ' . $path . ' is not available in Drupal. This is required to use custom paths.');
+      $path = \Drupal::service('path.alias_manager.cached')->getSystemPath($base . '/%');
+      if (!drupal_valid_path($path)) {
+        \Drupal::formBuilder()->setErrorByName('custom_path_base', $form_state, 'The path ' . $path . ' is not available in Drupal. This is required to use custom paths.');
       }
     }
     else {
-      $path = drupal_get_normal_path($base . '/%/%');
-      if (!_taxonomy_menu_valid_path($path)) {
-        form_set_error('custom_path_depth', 'The path ' . $path . ' is not available in Drupal. This is required to use custom paths.');
+      $path = \Drupal::service('path.alias_manager.cached')->getSystemPath($base . '/%/%');
+      if (!drupal_valid_path($path)) {
+        \Drupal::formBuilder()->setErrorByName('custom_path_depth', $form_state, 'The path ' . $path . ' is not available in Drupal. This is required to use custom paths.');
       }
     }
   }
@@ -93,11 +90,7 @@ function taxonomy_menu_custom_paths_vocabulary_validate($form, $form_state) {
  * Implements hook_taxonomy_menu_path().
  */
 function taxonomy_menu_custom_paths_taxonomy_menu_path() {
-  $output = array(
-    'taxonomy_menu_path_custom' => t('Custom (<base_path>/%)'),
-  );
-
-  return $output;
+  return array('taxonomy_menu_path_custom' => t('Custom (<base_path>/%)'));
 }
 
 /**
@@ -106,19 +99,19 @@ function taxonomy_menu_custom_paths_taxonomy_menu_path() {
 function taxonomy_menu_path_custom($term) {
   $path = '';
   $tids = array();
-  $base_path = taxonomy_menu_variable_get('custom_path_base', $term->vid, '');
-  $depth = taxonomy_menu_variable_get('custom_path_depth', $term->vid, '');
+  $base_path = taxonomy_menu_variable_get('custom_path_base', $term->bundle(), '');
+  $depth = taxonomy_menu_variable_get('custom_path_depth', $term->bundle(), '');
 
   // When tid equals 0, we are dealing with a vocabulary item. We want the path
   // to be a mulitple term path.
-  if ($term->tid == 0) {
-    $tids = _taxonomy_menu_get_tids($term->vid);
+  if ($term->id() == 0) {
+    $tids = _taxonomy_menu_get_tids($term->bundle());
   }
   else {
-    $tids[] = $term->tid;
-    $terms = taxonomy_get_tree($term->vid, $term->tid);
+    $tids[] = $term->id();
+    $terms = taxonomy_get_tree($term->bundle(), $term->id());
     foreach ($terms as $term) {
-      $tids[] = $term->tid;
+      $tids[] = $term->id();
     }
   }
 
@@ -127,11 +120,8 @@ function taxonomy_menu_path_custom($term) {
     $path = $base_path . '/' . implode('+', $tids);
   }
   else {
-    $path = $base_path . '/' . $term->tid;
-  }
-  if ($depth != '') {
-    $path .= '/' . $depth;
+    $path = $base_path . '/' . $term->id();
   }
 
-  return $path;
+  return $depth != '' ? $path . '/' . $depth : $path;
 }

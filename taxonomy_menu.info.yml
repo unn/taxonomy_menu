@@ -6,4 +6,4 @@ version: VERSION
 package: Taxonomy menu
 dependencies:
   - taxonomy
-  - menu
+  - menu_ui

@@ -1,0 +1,8 @@
+name: Taxonomy menu - Custom Paths
+type: module
+description: Enables custom paths to Taxonomy Menu.
+core: 8.x
+version: VERSION
+package: Taxonomy menu
+dependencies:
+  - taxonomy_menu

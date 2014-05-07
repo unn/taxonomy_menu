@@ -32,7 +32,7 @@ function taxonomy_menu_form_taxonomy_form_vocabulary(&$form, &$form_state) {
   // Turn the vocab terms into menu items and add an option at the top for
   // disabling the menu.
   $menu_link = entity_create('menu_link', array('mlid' => 0));
-  $menu_items = menu_parent_options(menu_get_menus(), $menu_link);
+  $menu_items = menu_ui_parent_options(menu_ui_get_menus(), $menu_link);
   array_unshift($menu_items, t('- Not selected -'));
 
   // Try to get the current menu location value if the vocabulary has already
@@ -340,21 +340,4 @@ function _taxonomy_menu_flatten_form_settings($settings) {
   array_walk_recursive($settings, function($a, $b) use (&$flatten) { $flatten[$b] = $a; } );
 
   return $flatten;
-}
-
-/**
- * Checks a path exists.
- *
- * @param string $path
- *   The path to check.
- *
- * @return
- *   TRUE if it is a valid path, FALSE otherwise.
- *
- * Directly inspired by drupal_valid_path function from core but this function
- * throws notices. cf. http://drupal.org/node/876580
- * @TODO Use the core drupal_valid_path function instead when fixed.
- */
-function _taxonomy_menu_valid_path($path) {
-  return db_query("SELECT * FROM {menu_router} where path = :path", array(':path' => $path))->fetchAssoc();
 }
