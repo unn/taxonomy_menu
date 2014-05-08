@@ -90,15 +90,15 @@ function _taxonomy_menu_get_menu_items($vid) {
  */
 function _taxonomy_menu_get_orphaned_menu_items($vid) {
   $vocabulary = entity_load('taxonomy_vocabulary', $vid);
-  $menu_name = \Drupal::config('taxonomy_menu.settings')->get('taxonomy_menu_vocab_menu_' . $vocabulary->vid);
+  $menu_name = \Drupal::config('taxonomy_menu.settings')->get('taxonomy_menu_vocab_menu_' . $vid);
 
   if ($menu_name) {
     $query = db_select('menu_links', 'ml')
       ->fields('ml', array('mlid'))
       ->condition('ml.menu_name', $menu_name)
       ->condition('ml.link_path', 'taxonomy/term/%');
-    $result = $query->execute();
-    return $result->fetchCol();
+
+    return $query->execute()->fetchCol();
   }
   return FALSE;
 }
@@ -209,7 +209,7 @@ function _taxonomy_menu_term_count($tid) {
       ->condition(
         db_or()
           ->condition('n.language', $language->language)
-          ->condition('n.language', LANGUAGE_NONE)
+          ->condition('n.language', Language::LANGCODE_NOT_SPECIFIED)
       )
     );
   $result->join('node', 'n', 'n.nid = tn.nid AND n.status = 1');

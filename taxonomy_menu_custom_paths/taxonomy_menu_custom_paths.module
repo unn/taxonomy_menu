@@ -111,7 +111,7 @@ function taxonomy_menu_path_custom($term) {
     $tids[] = $term->id();
     $terms = taxonomy_get_tree($term->bundle(), $term->id());
     foreach ($terms as $term) {
-      $tids[] = $term->id();
+      $tids[] = $term->tid;
     }
   }
 

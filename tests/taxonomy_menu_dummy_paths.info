@@ -1,6 +1,0 @@
-name = "Taxonomy Menu Dummy Paths"
-description = Registers dummy router paths to be used in the tests.
-package = Testing
-version = VERSION
-core = 7.x
-hidden = TRUE

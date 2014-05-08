@@ -331,7 +331,7 @@ function taxonomy_menu_taxonomy_menu_save($term, $menu_link, $mlid) {
  * Implements hook_taxonomy_vocabulary_delete().
  */
 function taxonomy_menu_taxonomy_vocabulary_delete(Vocabulary $vocabulary) {
-  taxonomy_menu_menu_links_delete($vocabulary->vid);
+  taxonomy_menu_menu_links_delete($vocabulary->id());
 }
 
 /**
@@ -632,65 +632,6 @@ function taxonomy_menu_path_multiple_terms($term) {
  */
 function taxonomy_menu_get_paths() {
   return \Drupal::moduleHandler()->invokeAll('taxonomy_menu_path');
-}
-
-/**
- * Implements hook_translated_menu_link_alter().
- *
- * Translate menu links on the fly by using term translations.
- */
-function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
-  if (module_exists('i18n_taxonomy')) {
-    // In case of localized terms, use term translation for menu title.
-    if ($item['module'] == 'taxonomy_menu') {
-      $t = _taxonomy_menu_get_item($item['mlid']);
-      // Only translate when term exist (may per example occur with stray menu item)
-      if ($t) {
-        // Only translate when translation mode is set to localize
-        if (i18n_taxonomy_vocabulary_mode($t->vid, I18N_MODE_LOCALIZE)) {
-          // this is a term
-          if ($t->tid > 0) {
-            $term = taxonomy_term_load($t->tid);
-            $display_num = '';
-            $num = _taxonomy_menu_term_count($t->tid);
-
-            // If hide menu is selected and the term count is 0 and the term has no children then do not create the menu item
-            if ($num == 0 && taxonomy_menu_variable_get('hide_empty_terms', $t->vid, FALSE) && !_taxonomy_menu_children_has_nodes($t->tid, $t->vid)) {
-              $display_num = '';
-            }
-            // if display number is selected and $num > 0 then change the title
-            elseif (taxonomy_menu_variable_get('display_num', $t->vid, FALSE)) {
-              // if number > 0 and display decendants, then count all of the children
-              if (taxonomy_menu_variable_get('display_descendants', $t->vid, FALSE)) {
-                $num = taxonomy_menu_term_count_nodes($t->tid);
-              }
-              $display_num = " ($num)";
-            }
-
-            if ($item['title'] != ($term->name . $display_num)) {
-              // Should not happen
-              watchdog('error', 'Menu and taxonomy name mismatch: @title != @name', array('@title' => $item['title'], '@name' => $term->name . $display_num));
-            }
-
-            $term = i18n_taxonomy_localize_terms($term);
-            $item['title'] = $item['link_title'] = $term->name . $display_num;
-            if ($term->description) {
-              $item['options']['attributes']['title'] = $term->description;
-            }
-          }
-          // is a vocabulary
-          else {
-            $vocab = taxonomy_vocabulary_load($t->vid);
-            $item['title'] = i18n_string('taxonomy:vocabulary:' . $vocab->vid . ':name', $vocab->name);
-          }
-        }
-      }
-      // no term, add a watchdog entry to help
-      else {
-        watchdog('taxonomy_menu', 'Error with menu entry "%me" in menu "%mt"', array('%me' => $item['title'], '%mt' => $item['menu_name']));
-      }
-    }
-  }
 }
 
 /**

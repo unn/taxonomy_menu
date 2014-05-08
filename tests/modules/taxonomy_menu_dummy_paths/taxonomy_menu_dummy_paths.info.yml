@@ -1,0 +1,7 @@
+name: Taxonomy Menu Dummy Paths
+type: module
+description: Registers dummy router paths to be used in the tests.
+core: 8.x
+version: VERSION
+package: Testing
+hidden: TRUE

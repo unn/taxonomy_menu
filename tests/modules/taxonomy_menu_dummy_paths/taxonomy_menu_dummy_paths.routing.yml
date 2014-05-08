@@ -1,0 +1,15 @@
+taxonomy_menu_dummy_paths.test:
+  path: 'custom_base_path/{tid}'
+  defaults:
+    _title: 'Dummy taxonomy menu path'
+    _content: '\Drupal\taxonomy_menu_dummy_paths\Controller\TaxonomyMenuDummyPathsController::TaxonomyMenuDummyPaths'
+  requirements:
+    _permission: 'access content'
+
+taxonomy_menu_dummy_paths.test_depth:
+  path: 'custom_base_path/{tid}/{depth}'
+  defaults:
+    _title: 'Dummy taxonomy menu path with depth'
+    _form: \Drupal\taxonomy_menu_dummy_paths\Controller\TaxonomyMenuDummyPathsController::TaxonomyMenuDummyPaths'
+  requirements:
+    _permission: 'access content'
