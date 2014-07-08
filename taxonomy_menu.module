@@ -771,7 +771,7 @@ function taxonomy_menu_path_default($vid, $tid) {
         foreach ($terms as $term) {
           $tids[] = $term->tid;
         }
-        if ($tids) {
+        if (isset($tids)) {
           $end = implode(' ', $tids);
           $path .= ' ' . $end;
         }
