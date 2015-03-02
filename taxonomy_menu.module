@@ -611,8 +611,7 @@ function taxonomy_menu_handler($op, $args = array(), $node = NULL, $item = array
 function _taxonomy_menu_save($item) {
   $insert = TRUE;
 
-  $flatten_menu = variable_get(_taxonomy_menu_build_variable('flat',
-$item['vid']));
+  $flatten_menu = variable_get(_taxonomy_menu_build_variable('flat', $item['vid']));
   // Child items should appear around the parent/root, so set their weight
   // equal to the root term's
   if ($flatten_menu) {
@@ -754,7 +753,7 @@ function taxonomy_menu_path_default($vid, $tid) {
   if ($tid == 0) {
     // get all of the terms for the vocab
     $vtids = _taxonomy_menu_get_terms($vid);
-    $end = implode(' ', $vtids);
+    $end = implode('/', $vtids);
     $path = "taxonomy/term/$end";
   }
   else {
@@ -772,8 +771,8 @@ function taxonomy_menu_path_default($vid, $tid) {
           $tids[] = $term->tid;
         }
         if (isset($tids)) {
-          $end = implode(' ', $tids);
-          $path .= ' ' . $end;
+          $end = implode('/', $tids);
+          $path .= '/ ' . $end;
         }
       }
     }
