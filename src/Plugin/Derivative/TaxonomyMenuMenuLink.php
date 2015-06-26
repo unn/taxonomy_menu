@@ -50,18 +50,10 @@ class ViewsMenuLink extends DeriverBase implements ContainerDeriverInterface {
    */
   public function getDerivativeDefinitions($base_plugin_definition) {
     $links = array();
-    $views = Views::getApplicableViews('uses_menu_links');
+    $taxonomy_menus = $this->taxonomyMenuStorage->loadMultiple();
 
-    foreach ($views as $data) {
-      list($view_id, $display_id) = $data;
-      /** @var \Drupal\views\ViewExecutable $executable */
-      $executable = $this->viewStorage->load($view_id)->getExecutable();
-
-      if ($result = $executable->getMenuLinks($display_id)) {
-        foreach ($result as $link_id => $link) {
-          $links[$link_id] = $link + $base_plugin_definition;
-        }
-      }
+    foreach ($taxonomy_menus as $taxonomy_menu) {
+      $links += $taxonomy_menu->generateTaxonomyLinks($base_plugin_definition);
     }
 
     return $links;

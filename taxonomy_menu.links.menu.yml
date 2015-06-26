@@ -1,7 +1,7 @@
 # TaxonomyMenu menu items definition
 entity.taxonomy_menu.collection:
-  title: 'TaxonomyMenu'
+  title: 'Taxonomy Menu'
   route_name: entity.taxonomy_menu.collection
-  description: 'List TaxonomyMenu'
+  description: 'List Taxonomy Menus'
   parent: system.admin_structure
 

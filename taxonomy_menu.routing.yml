@@ -1,5 +1,4 @@
-
-# TaxonomyMenu routing definition
+# TaxonomyMenu Entity routing definition
 entity.taxonomy_menu.collection:
   path: '/admin/config/system/taxonomy_menu'
   defaults:
@@ -31,4 +30,13 @@ entity.taxonomy_menu.delete_form:
     _title: 'Delete TaxonomyMenu'
   requirements:
     _permission: 'administer site configuration'
+
+
+taxonomy_menu.taxonomy_menu_renderTaxonomyLinks:
+  path: '/taxonomy-menu/render-taxonomy-links'
+  defaults:
+    _controller: '\Drupal\taxonomy_menu\Controller\TaxonomyMenu::renderTaxonomyLinks'
+    _title: 'taxonomy_menu Title'
+  requirements:
+    _permission: 'access content'
 
