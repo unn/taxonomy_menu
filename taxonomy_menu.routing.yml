@@ -1,0 +1,34 @@
+
+# TaxonomyMenu routing definition
+entity.taxonomy_menu.collection:
+  path: '/admin/config/system/taxonomy_menu'
+  defaults:
+    _entity_list: 'taxonomy_menu'
+    _title: 'TaxonomyMenu Configuration'
+  requirements:
+    _permission: 'administer site configuration'
+
+entity.taxonomy_menu.add_form:
+  path: '/admin/config/system/taxonomy_menu/add'
+  defaults:
+    _entity_form: 'taxonomy_menu.add'
+    _title: 'Add TaxonomyMenu'
+  requirements:
+    _permission: 'administer site configuration'
+
+entity.taxonomy_menu.edit_form:
+  path: '/admin/config/system/taxonomy_menu/{taxonomy_menu}'
+  defaults:
+    _entity_form: 'taxonomy_menu.edit'
+    _title: 'Edit TaxonomyMenu'
+  requirements:
+    _permission: 'administer site configuration'
+
+entity.taxonomy_menu.delete_form:
+  path: '/admin/config/system/taxonomy_menu/{taxonomy_menu}/delete'
+  defaults:
+    _entity_form: 'taxonomy_menu.delete'
+    _title: 'Delete TaxonomyMenu'
+  requirements:
+    _permission: 'administer site configuration'
+

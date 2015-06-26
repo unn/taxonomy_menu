@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @file
+ * Contains taxonomy_menu.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function taxonomy_menu_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    // Main module help for the taxonomy_menu module.
+    case 'help.page.taxonomy_menu':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('Embed a taxonomy tree into a menu') . '</p>';
+      return $output;
+
+    default:
+  }
+}
