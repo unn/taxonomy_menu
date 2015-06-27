@@ -17,7 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @see \Drupal\taxonomy_menu\Plugin\Menu\TaxonomyMenuMenuLink
  */
-class ViewsMenuLink extends DeriverBase implements ContainerDeriverInterface {
+class TaxonomyMenuMenuLink extends DeriverBase implements ContainerDeriverInterface {
 
   /**
    * The taxonomy menu storage.
@@ -27,10 +27,10 @@ class ViewsMenuLink extends DeriverBase implements ContainerDeriverInterface {
   protected $taxonomyMenuStorage;
 
   /**
-   * Constructs a \Drupal\views\Plugin\Derivative\ViewsLocalTask instance.
+   * Sets up the storage handler.
    *
-   * @param \Drupal\Core\Entity\EntityStorageInterface $view_storage
-   *   The view storage.
+   * @param \Drupal\Core\Entity\EntityStorageInterface $taxonomy_menu_storage
+   *   The taxonomy menu storage.
    */
   public function __construct(EntityStorageInterface $taxonomy_menu_storage) {
     $this->taxonomyMenuStorage = $taxonomy_menu_storage;
@@ -53,7 +53,7 @@ class ViewsMenuLink extends DeriverBase implements ContainerDeriverInterface {
     $taxonomy_menus = $this->taxonomyMenuStorage->loadMultiple();
 
     foreach ($taxonomy_menus as $taxonomy_menu) {
-      $links += $taxonomy_menu->generateTaxonomyLinks($base_plugin_definition);
+      $links = array_merge($links, $taxonomy_menu->generateTaxonomyLinks($base_plugin_definition));
     }
 
     return $links;

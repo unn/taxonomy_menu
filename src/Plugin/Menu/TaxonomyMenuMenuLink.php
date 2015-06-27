@@ -10,6 +10,7 @@ namespace Drupal\taxonomy_menu\Plugin\Menu;
 use Drupal\Core\Menu\MenuLinkBase;
 use Drupal\Core\Entity\EntityManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\taxonomy_menu\Entity\TaxonomyMenu;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -23,14 +24,14 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
    * {@inheritdoc}
    */
   protected $overrideAllowed = array(
-    'menu_name' => 1,
-    'parent' => 1,
+    //'menu_name' => 1,
+    //'parent' => 1,
     'weight' => 1,
     'expanded' => 1,
     'enabled' => 1,
-    'title' => 1,
-    'description' => 1,
-    'metadata' => 1,
+    //'title' => 1,
+    //'description' => 1,
+    //'metadata' => 1,
   );
 
   /**
@@ -48,7 +49,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
   protected $taxonomyMenu;
 
   /**
-   * Constructs a new ViewsMenuLink.
+   * Constructs a new TaxonomyMenuMenuLink.
    *
    * @param array $configuration
    *   A configuration array containing information about the plugin instance.
@@ -79,50 +80,14 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
       $plugin_id,
       $plugin_definition,
       $container->get('entity.manager'),
-      $container->get('views.executable')
+      $container->get('taxonomy_menu')
     );
   }
 
   /**
-   * Initializes the proper taxonomy menu.
-   *
-   * @return \Drupal\taxonomy_menu\TaxonomyMenu
-   *   The view executable.
-   */
-  public function loadTaxonomyMenu() {
-    if (empty($this->view)) {
-      $metadata = $this->getMetaData();
-      $view_id = $metadata['view_id'];
-      $display_id = $metadata['display_id'];
-      $view_entity = $this->entityManager->getStorage('view')->load($view_id);
-      $view = $this->viewExecutableFactory->get($view_entity);
-      $view->setDisplay($display_id);
-      $view->initDisplay();
-      $this->view = $view;
-    }
-    return $this->view;
-  }
-
-  /**
    * {@inheritdoc}
    */
-  public function getTitle() {
-    // @todo Get the translated value from the config without instantiating the
-    //   view. https://www.drupal.org/node/2310379
-    return $this->loadTaxonomyMenu()->display_handler->getOption('menu')['title'];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getDescription() {
-    return $this->loadTaxonomyMenu()->display_handler->getOption('menu')['description'];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function updateLink(array $new_definition_values, $persist) {
+  /*public function updateLink(array $new_definition_values, $persist) {
     $overrides = array_intersect_key($new_definition_values, $this->overrideAllowed);
     // Update the definition.
     $this->pluginDefinition = $overrides + $this->pluginDefinition;
@@ -144,7 +109,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
       }
     }
     return $this->pluginDefinition;
-  }
+  }*/
 
   /**
    * {@inheritdoc}

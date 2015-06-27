@@ -32,11 +32,3 @@ entity.taxonomy_menu.delete_form:
     _permission: 'administer site configuration'
 
 
-taxonomy_menu.taxonomy_menu_renderTaxonomyLinks:
-  path: '/taxonomy-menu/render-taxonomy-links'
-  defaults:
-    _controller: '\Drupal\taxonomy_menu\Controller\TaxonomyMenu::renderTaxonomyLinks'
-    _title: 'taxonomy_menu Title'
-  requirements:
-    _permission: 'access content'
-

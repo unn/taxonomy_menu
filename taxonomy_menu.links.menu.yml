@@ -5,3 +5,8 @@ entity.taxonomy_menu.collection:
   description: 'List Taxonomy Menus'
   parent: system.admin_structure
 
+taxonomy_menu.menu_link:
+  class: Drupal\taxonomy_menu\Plugin\Menu\TaxonomyMenuMenuLink
+  #form_class: Drupal\taxonomy_menu\Plugin\Menu\Form\ViewsMenuLinkForm
+  deriver: \Drupal\taxonomy_menu\Plugin\Derivative\TaxonomyMenuMenuLink
+

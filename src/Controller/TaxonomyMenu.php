@@ -16,7 +16,7 @@ use Drupal\Core\Controller\ControllerBase;
  */
 class TaxonomyMenu extends ControllerBase {
 
-
+ // TODO - REMOVE THIS
 
   /**
    * Render taxonomy links.
