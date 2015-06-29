@@ -8,6 +8,7 @@
 namespace Drupal\taxonomy_menu\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Menu\MenuTreeParameters;
 
 /**
  * Class TaxonomyMenu.
@@ -25,7 +26,16 @@ class TaxonomyMenu extends ControllerBase {
    *   Return Hello string.
    */
   public function renderTaxonomyLinks() {
+
     $markup = '';
+
+    /*
+    // Check current main menu.
+    $menu_tree = \Drupal::menuTree();
+    $parameters = new MenuTreeParameters();
+    $tree = $menu_tree->load('main', $parameters);
+    $markup .= var_export($tree, TRUE);
+    */
 
     // Load taxonomy menus.
     $storage = \Drupal::entityManager()->getStorage('taxonomy_menu');
@@ -37,7 +47,7 @@ class TaxonomyMenu extends ControllerBase {
       $links += $taxonomy_menu->generateTaxonomyLinks([]);
     }
 
-    $markup .= var_export($links, TRUE);
+    //$markup .= var_export($links, TRUE);
 
     return [
         '#type' => 'markup',

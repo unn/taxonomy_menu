@@ -114,6 +114,18 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
   /**
    * {@inheritdoc}
    */
+  public function getTitle() {
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDescription() {
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function isDeletable() {
     return FALSE;
   }
@@ -121,7 +133,21 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
   /**
    * {@inheritdoc}
    */
+  public function updateLink(array $new_definition_values, $persist) {
+    $overrides = array_intersect_key($new_definition_values, $this->overrideAllowed);
+    // Update the definition.
+    $this->pluginDefinition = $overrides + $this->pluginDefinition;
+    if ($persist) {
+      // TODO - Evaluate what to do if link gets updated
+    }
+    return $this->pluginDefinition;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function deleteLink() {
+    // TODO - Evaluate what to do if link gets deleted
   }
 
 }

@@ -130,6 +130,11 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
         'load arguments'  => $arguments,
         'parent' => $menu_parent_id,
       );
+
+      // KRIS - ADDING THIS LINE THROWS ERROR
+      $links[$menu_link_id] = $links[$menu_link_id] + $base_plugin_definition;
+
+      var_dump($links[$menu_link_id]);
     }
 
     return $links;
