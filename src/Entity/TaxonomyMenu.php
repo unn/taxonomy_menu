@@ -109,13 +109,12 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
       // TODO: Evaluate use case of multiple parents (should we make many menu items?)
       $menu_parent_id = NULL;
       if (is_array($term_data->parents) and $term_data->parents[0] != '0') {
-        $menu_parent_id = 'taxonomy_menu.menu_link.' . $taxonomy_menu_id . '.' . $term_data->parents[0];
+        $menu_parent_id = 'taxonomy_menu.menu_link:taxonomy_menu.menu_link.' . $taxonomy_menu_id . '.' . $term_data->parents[0];
       }
 
       // TODO: Consider implementing a forced weight based on taxonomy tree.
 
       // Generate link.
-      //$arguments = $term_url->getRouteParameters() + ['taxonomy_term' => $term_id];
       $arguments = ['taxonomy_term' => $term_id];
 
       $links[$menu_link_id] = $base_plugin_definition;

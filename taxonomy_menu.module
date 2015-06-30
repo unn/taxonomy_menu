@@ -23,4 +23,12 @@ function taxonomy_menu_help($route_name, RouteMatchInterface $route_match) {
   }
 }
 
-
+/**
+ * Implements hook_menu_links_discovered_alter.
+ *
+ * Used for debugging only.
+ * @param $links
+ */
+/*function taxonomy_menu_menu_links_discovered_alter(&$links) {
+  var_dump($links);
+}*/
