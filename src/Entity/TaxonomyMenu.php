@@ -117,7 +117,10 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
       // Generate link.
       //$arguments = $term_url->getRouteParameters() + ['taxonomy_term' => $term_id];
       $arguments = ['taxonomy_term' => $term_id];
-      $links[$menu_link_id] = array(
+
+      $links[$menu_link_id] = $base_plugin_definition;
+
+      $links[$menu_link_id] += array(
         'id' => $menu_link_id,
         'title' => $term->label(),
         'description' => $term->getDescription(),
@@ -131,10 +134,6 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
         'parent' => $menu_parent_id,
       );
 
-      // KRIS - ADDING THIS LINE THROWS ERROR
-      $links[$menu_link_id] = $links[$menu_link_id] + $base_plugin_definition;
-
-      var_dump($links[$menu_link_id]);
     }
 
     return $links;

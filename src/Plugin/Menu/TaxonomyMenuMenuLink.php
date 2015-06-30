@@ -7,9 +7,9 @@
 
 namespace Drupal\taxonomy_menu\Plugin\Menu;
 
-use Drupal\Core\Menu\MenuLinkBase;
 use Drupal\Core\Entity\EntityManagerInterface;
-use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Menu\MenuLinkDefault;
+use Drupal\Core\Menu\StaticMenuLinkOverridesInterface;
 use Drupal\taxonomy_menu\Entity\TaxonomyMenu;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -18,7 +18,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @see \Drupal\taxonony_menu\Plugin\Derivative\TaxonomyMenuMenuLink
  */
-class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPluginInterface {
+class TaxonomyMenuMenuLink extends MenuLinkDefault {
 
   /**
    * {@inheritdoc}
@@ -42,13 +42,6 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
   protected $entityManager;
 
   /**
-   * The taxonomy menu.
-   *
-   * @var \Drupal\taxonomy_menu\TaxonomyMenu
-   */
-  protected $taxonomyMenu;
-
-  /**
    * Constructs a new TaxonomyMenuMenuLink.
    *
    * @param array $configuration
@@ -62,13 +55,9 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
    * @param \Drupal\views\ViewExecutableFactory $view_executable_factory
    *   The view executable factory
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityManagerInterface $entity_manager, TaxonomyMenu $taxonomy_menu) {
-    $this->configuration = $configuration;
-    $this->pluginId = $plugin_id;
-    $this->pluginDefinition = $plugin_definition;
-
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, StaticMenuLinkOverridesInterface $static_override, EntityManagerInterface $entity_manager) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition, $static_override);
     $this->entityManager = $entity_manager;
-    $this->taxonomyMenu = $taxonomy_menu;
   }
 
   /**
@@ -79,75 +68,8 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('entity.manager'),
-      $container->get('taxonomy_menu')
+      $container->get('menu_link.static.overrides'),
+      $container->get('entity.manager')
     );
   }
-
-  /**
-   * {@inheritdoc}
-   */
-  /*public function updateLink(array $new_definition_values, $persist) {
-    $overrides = array_intersect_key($new_definition_values, $this->overrideAllowed);
-    // Update the definition.
-    $this->pluginDefinition = $overrides + $this->pluginDefinition;
-    if ($persist) {
-      $view = $this->loadView();
-      $display = &$view->storage->getDisplay($view->current_display);
-      // Just save the title to the original view.
-      $changed = FALSE;
-      foreach ($new_definition_values as $key => $new_definition_value) {
-        if (isset($display['display_options']['menu'][$key]) && $display['display_options']['menu'][$key] != $new_definition_values[$key]) {
-          $display['display_options']['menu'][$key] = $new_definition_values[$key];
-          $changed = TRUE;
-        }
-      }
-      if ($changed) {
-        // @todo Improve this to not trigger a full rebuild of everything, if we
-        //   just changed some properties. https://www.drupal.org/node/2310389
-        $view->storage->save();
-      }
-    }
-    return $this->pluginDefinition;
-  }*/
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getTitle() {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getDescription() {
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function isDeletable() {
-    return FALSE;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function updateLink(array $new_definition_values, $persist) {
-    $overrides = array_intersect_key($new_definition_values, $this->overrideAllowed);
-    // Update the definition.
-    $this->pluginDefinition = $overrides + $this->pluginDefinition;
-    if ($persist) {
-      // TODO - Evaluate what to do if link gets updated
-    }
-    return $this->pluginDefinition;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function deleteLink() {
-    // TODO - Evaluate what to do if link gets deleted
-  }
-
 }
