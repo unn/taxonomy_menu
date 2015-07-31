@@ -16,7 +16,7 @@ use Drupal\simpletest\WebTestBase;
  */
 class TaxonomyMenuOperations extends WebTestBase {
 
-  public static $modules = array('taxonomy_menu', 'taxonomy', 'menu', 'dblog');
+  public static $modules = array('taxonomy_menu', 'taxonomy', 'dblog');
 
   /**
    * Set up for all tests.
@@ -41,8 +41,8 @@ class TaxonomyMenuOperations extends WebTestBase {
     $perms = [
       'administer site configuration',
       'administer taxonomy',
-      'delete terms in test',
-      'edit terms in test'
+      //'delete terms in test',
+      //'edit terms in test'
     ];
     $admin_user = $this->drupalCreateUser($perms);
     $this->drupalLogin($admin_user);
