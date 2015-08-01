@@ -1,5 +1,8 @@
 # Taxonomy Menu
+
 Drupal 8 port of the Taxonomy Menu module
+
+[![Build Status](https://travis-ci.org/d8-contrib-modules/taxonomy_menu.svg?branch=master)](https://travis-ci.org/d8-contrib-modules/taxonomy_menu)
 
 ## Common usage
 
