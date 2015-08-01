@@ -17,15 +17,13 @@ use Drupal\Core\Menu\MenuTreeParameters;
  */
 class TaxonomyMenu extends ControllerBase {
 
- // TODO - REMOVE THIS
-
   /**
    * Render taxonomy links.
    *
    * @return string
    *   Return Hello string.
    */
-  public function renderTaxonomyLinks() {
+  public static function renderTaxonomyLinks() {
 
     $markup = '';
 
@@ -51,8 +49,66 @@ class TaxonomyMenu extends ControllerBase {
 
     return [
         '#type' => 'markup',
-        '#markup' => $this->t($markup),
+        '#markup' => t($markup),
     ];
+  }
+
+  /*
+   * Generates a menu link id for the taxonomy term.
+   */
+  public static function generateTaxonomyMenuLinkId($taxonomy_menu, $term) {
+    $term_id = $term->id();
+    $taxonomy_menu_id = $taxonomy_menu->id();
+    return 'taxonomy_menu.menu_link.' . $taxonomy_menu_id . '.' . $term_id;
+  }
+
+  /*
+   * Generate a render array for taxonomy link.
+   */
+  public static function generateTaxonomyMenuLink($taxonomy_menu, $term, $base_plugin_definition) {
+    $term_id = $term->id();
+    $term_url = $term->urlInfo();
+    $taxonomy_menu_id = $taxonomy_menu->id();
+    $menu_id = $taxonomy_menu->getMenu();
+
+    // Determine parent link.
+    // TODO: Evaluate use case of multiple parents (should we make many menu items?)
+    $menu_parent_id = NULL;
+    $parents = \Drupal::entityManager()->getStorage('taxonomy_term')->loadParents($term_id);
+    if (is_array($parents) and $parents[0] != '0') {
+      $menu_parent_id = 'taxonomy_menu.menu_link:taxonomy_menu.menu_link.' . $taxonomy_menu_id . '.' . $parents[0]['tid'];
+    }
+
+    // TODO: Consider implementing a forced weight based on taxonomy tree.
+
+    // Generate link.
+    $arguments = ['taxonomy_term' => $term_id];
+
+    $link = $base_plugin_definition;
+
+    $link += array(
+      'id' => self::generateTaxonomyMenuLinkId($taxonomy_menu, $term),
+      'title' => $term->label(),
+      'description' => $term->getDescription(),
+      'menu_name' => $menu_id,
+      'metadata' => array(
+        'taxonomy_menu_id' => $taxonomy_menu_id,
+      ),
+      'route_name' => $term_url->getRouteName(),
+      'route_parameters' => $term_url->getRouteParameters(),
+      'load arguments'  => $arguments,
+      'parent' => $menu_parent_id,
+    );
+
+    return $link;
+  }
+
+  /*
+   * A reverse lookup of a taxonomy term and it's taxonomy menus.
+   */
+  public static function getTermTaxonomyMenus($term) {
+    $vocab = $term->getVocabularyId();
+    return \Drupal::entityManager()->getStorage('taxonomy_menu')->loadByProperties(['vocabulary'=>$vocab]);
   }
 
 }

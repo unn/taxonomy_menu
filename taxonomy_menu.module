@@ -5,30 +5,60 @@
  * Contains taxonomy_menu.module.
  */
 
-use Drupal\Core\Routing\RouteMatchInterface;
-
 /**
- * Implements hook_help().
+ * Implements hook_entity_create().
+ *
+ * Check for taxonomy term creation.
  */
-function taxonomy_menu_help($route_name, RouteMatchInterface $route_match) {
-  switch ($route_name) {
-    // Main module help for the taxonomy_menu module.
-    case 'help.page.taxonomy_menu':
-      $output = '';
-      $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('Embed a taxonomy tree into a menu') . '</p>';
-      return $output;
-
-    default:
+function taxonomy_menu_entity_create(\Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getEntityTypeId() == 'taxonomy_term') {
+    // Load relevant taxonomy menus.
+    $tax_menus = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTermTaxonomyMenus($entity);
+    foreach ($tax_menus as $tax_menu) {
+      $plugin_id = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLinkId($tax_menu, $entity);
+      // TODO - evaluate "base plugin definition".
+      $plugin_def = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLink($tax_menu, $entity, []);
+      /** @var \Drupal\Core\Menu\MenuLinkManagerInterface $menu_link_manager */
+      $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
+      $menu_link_manager->addDefinition($plugin_id, $plugin_def);
+    }
   }
 }
 
 /**
- * Implements hook_menu_links_discovered_alter.
+ * Implements hook_entity_delete().
  *
- * Used for debugging only.
- * @param $links
+ * Check for taxonomy term deletion.
  */
-/*function taxonomy_menu_menu_links_discovered_alter(&$links) {
-  var_dump($links);
-}*/
+function taxonomy_menu_entity_delete(Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getEntityTypeId() == 'taxonomy_term') {
+    // Load relevant taxonomy menus.
+    $tax_menus = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTermTaxonomyMenus($entity);
+    foreach ($tax_menus as $tax_menu) {
+      $plugin_id = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLinkId($tax_menu, $entity);
+      /** @var \Drupal\Core\Menu\MenuLinkManagerInterface $menu_link_manager */
+      $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
+      $menu_link_manager->removeDefinition($plugin_id, FALSE);
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_update().
+ *
+ * Check for taxonomy term updates.
+ */
+function taxonomy_menu_entity_update(Drupal\Core\Entity\EntityInterface $entity) {
+  if ($entity->getEntityTypeId() == 'taxonomy_term') {
+    // Load relevant taxonomy menus.
+    $tax_menus = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTermTaxonomyMenus($entity);
+    foreach ($tax_menus as $tax_menu) {
+      $plugin_id = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLinkId($tax_menu, $entity);
+      // TODO - evaluate "base plugin definition".
+      $plugin_def = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLink($tax_menu, $entity, []);
+      /** @var \Drupal\Core\Menu\MenuLinkManagerInterface $menu_link_manager */
+      $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
+      $menu_link_manager->updateDefinition($plugin_id, $plugin_def, FALSE);
+    }
+  }
+}
