@@ -54,6 +54,7 @@ class TaxonomyMenuMenuLink extends DeriverBase implements ContainerDeriverInterf
 
     foreach ($taxonomy_menus as $taxonomy_menu) {
       $links = array_merge($links, $taxonomy_menu->generateTaxonomyLinks($base_plugin_definition));
+
     }
 
     return $links;

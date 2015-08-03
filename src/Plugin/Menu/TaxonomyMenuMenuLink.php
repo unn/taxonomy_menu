@@ -8,9 +8,8 @@
 namespace Drupal\taxonomy_menu\Plugin\Menu;
 
 use Drupal\Core\Entity\EntityManagerInterface;
-use Drupal\Core\Menu\MenuLinkDefault;
-use Drupal\Core\Menu\StaticMenuLinkOverridesInterface;
-use Drupal\taxonomy_menu\Entity\TaxonomyMenu;
+use Drupal\Core\Menu\MenuLinkBase;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -18,7 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @see \Drupal\taxonony_menu\Plugin\Derivative\TaxonomyMenuMenuLink
  */
-class TaxonomyMenuMenuLink extends MenuLinkDefault {
+class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPluginInterface {
 
   /**
    * {@inheritdoc}
@@ -37,9 +36,10 @@ class TaxonomyMenuMenuLink extends MenuLinkDefault {
   /**
    * The entity manager.
    *
-   * @var \Drupal\Core\Entity\EntityManagerInterface
+   * @var \Drupal\Core\Entity\EntityManager
    */
   protected $entityManager;
+
 
   /**
    * Constructs a new TaxonomyMenuMenuLink.
@@ -55,8 +55,10 @@ class TaxonomyMenuMenuLink extends MenuLinkDefault {
    * @param \Drupal\views\ViewExecutableFactory $view_executable_factory
    *   The view executable factory
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, StaticMenuLinkOverridesInterface $static_override, EntityManagerInterface $entity_manager) {
-    parent::__construct($configuration, $plugin_id, $plugin_definition, $static_override);
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityManagerInterface $entity_manager) {
+    $this->configuration = $configuration;
+    $this->pluginId = $plugin_id;
+    $this->pluginDefinition = $plugin_definition;
     $this->entityManager = $entity_manager;
   }
 
@@ -68,8 +70,47 @@ class TaxonomyMenuMenuLink extends MenuLinkDefault {
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('menu_link.static.overrides'),
       $container->get('entity.manager')
     );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getTitle() {
+    return $this->entityManager->getStorage('taxonomy_term')->load($this->pluginDefinition['metadata']['taxonomy_term_id'])->label();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDescription() {
+    return $this->entityManager->getStorage('taxonomy_term')->load($this->pluginDefinition['metadata']['taxonomy_term_id'])->getDescription();
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function updateLink(array $new_definition_values, $persist) {
+    $overrides = array_intersect_key($new_definition_values, $this->overrideAllowed);
+    // Update the definition.
+    $this->pluginDefinition = $overrides + $this->pluginDefinition;
+    if ($persist) {
+      // TODO - consider any "persistence" back to TaxonomyMenu and/or Taxonomy upon menu link update.
+    }
+    return $this->pluginDefinition;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function isDeletable() {
+    return TRUE;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function deleteLink() {
   }
 }

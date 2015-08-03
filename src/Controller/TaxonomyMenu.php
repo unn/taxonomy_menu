@@ -93,11 +93,14 @@ class TaxonomyMenu extends ControllerBase {
       'menu_name' => $menu_id,
       'metadata' => array(
         'taxonomy_menu_id' => $taxonomy_menu_id,
+        'taxonomy_term_id' => $term_id,
       ),
       'route_name' => $term_url->getRouteName(),
       'route_parameters' => $term_url->getRouteParameters(),
       'load arguments'  => $arguments,
       'parent' => $menu_parent_id,
+      'provider' => 'taxonomy_menu',
+      'class' => 'Drupal\taxonomy_menu\Plugin\Menu\TaxonomyMenuMenuLink',
     );
 
     return $link;
@@ -109,6 +112,27 @@ class TaxonomyMenu extends ControllerBase {
   public static function getTermTaxonomyMenus($term) {
     $vocab = $term->getVocabularyId();
     return \Drupal::entityManager()->getStorage('taxonomy_menu')->loadByProperties(['vocabulary'=>$vocab]);
+  }
+
+  /**
+   * Gets array of links based on tax menu.
+   */
+  public static function getTaxonomyMenuLinks($taxonomy_menu, $base_plugin_definition=[]) {
+    $links = [];
+
+    // Load taxonomy terms for tax menu vocab.
+    $terms = \Drupal::entityManager()->getStorage('taxonomy_term')->loadTree($taxonomy_menu->getVocabulary());
+
+    $links = [];
+
+    // Create menu links for each term in the vocabulary.
+    foreach ($terms as $term_data) {
+      $term = \Drupal::entityManager()->getStorage('taxonomy_term')->load($term_data->tid);
+      $mlid = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLinkId($taxonomy_menu, $term);
+      $links[$mlid] = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLink($taxonomy_menu, $term, $base_plugin_definition);
+    }
+
+    return $links;
   }
 
 }

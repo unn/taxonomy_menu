@@ -87,22 +87,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
    * @return array
    */
   public function generateTaxonomyLinks($base_plugin_definition) {
-    $links = [];
 
-    // Load taxonomy terms for tax menu vocab.
-    $terms = \Drupal::entityManager()->getStorage('taxonomy_term')->loadTree($this->getVocabulary());
-
-    $taxonomy_menu_id = $this->id();
-
-    $links = [];
-
-    // Create menu links for each term in the vocabulary.
-    foreach ($terms as $term_data) {
-      $term = \Drupal::entityManager()->getStorage('taxonomy_term')->load($term_data->tid);
-      $mlid = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLinkId($taxonomy_menu_id, $term);
-      $links[$mlid] = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLink($this, $term, $base_plugin_definition);
-    }
-
-    return $links;
+    return \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTaxonomyMenuLinks($this, $base_plugin_definition);
   }
 }
