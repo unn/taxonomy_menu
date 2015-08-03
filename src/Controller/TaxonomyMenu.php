@@ -75,7 +75,10 @@ class TaxonomyMenu extends ControllerBase {
     // TODO: Evaluate use case of multiple parents (should we make many menu items?)
     $menu_parent_id = NULL;
     $parents = \Drupal::entityManager()->getStorage('taxonomy_term')->loadParents($term_id);
-    if (is_array($parents) and $parents[0] != '0') {
+
+    drupal_set_message(var_dump($parents, TRUE));
+
+    if (is_array($parents) and count($parents) and $parents[0] != '0') {
       $menu_parent_id = 'taxonomy_menu.menu_link:taxonomy_menu.menu_link.' . $taxonomy_menu_id . '.' . $parents[0]['tid'];
     }
 
