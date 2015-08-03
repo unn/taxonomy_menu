@@ -16,7 +16,7 @@ use Drupal\simpletest\WebTestBase;
  */
 class TaxonomyMenuOperations extends WebTestBase {
 
-  public static $modules = array('taxonomy_menu', 'taxonomy', 'dblog');
+  public static $modules = array('taxonomy_menu', 'system', 'menu_ui', 'taxonomy', 'dblog');
 
   /**
    * Set up for all tests.
@@ -32,7 +32,7 @@ class TaxonomyMenuOperations extends WebTestBase {
     $this->drupalGet('admin/structure/taxonomy/add');
 
     $edit = [
-      'id' => 'test-tax-vocab',
+      'vid' => 'test_tax_vocab',
       'name' => 'Test',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
@@ -41,6 +41,7 @@ class TaxonomyMenuOperations extends WebTestBase {
     $perms = [
       'administer site configuration',
       'administer taxonomy',
+      'administer menu'
       //'delete terms in test',
       //'edit terms in test'
     ];
@@ -48,20 +49,20 @@ class TaxonomyMenuOperations extends WebTestBase {
     $this->drupalLogin($admin_user);
 
     // Add sample terms to the vocabulary.
-    $this->drupalGet('admin/structure/taxonomy/manage/test-tax-vocab/add');
+    $this->drupalGet('admin/structure/taxonomy/manage/test_tax_vocab/add');
     $edit = [
       'name[0][value]' => 'test term 1',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
 
-    $this->drupalGet('admin/structure/taxonomy/manage/test-tax-vocab/add');
+    $this->drupalGet('admin/structure/taxonomy/manage/test_tax_vocab/add');
     $edit = [
       'name[0][value]' => 'test term 1-A',
       'parent[]' => '1',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
 
-    $this->drupalGet('admin/structure/taxonomy/manage/test-tax-vocab/add');
+    $this->drupalGet('admin/structure/taxonomy/manage/test_tax_vocab/add');
     $edit = [
       'name[0][value]' => 'test term 2',
     ];
@@ -84,9 +85,9 @@ class TaxonomyMenuOperations extends WebTestBase {
     // Create new taxonomy menu.
     $this->drupalGet('admin/config/system/taxonomy_menu/add');
     $edit = [
-      'id' => 'test-tax-menu',
+      'id' => 'test_tax_menu',
       'label' => 'test tax menu',
-      'vocabulary' => 'test-tax-vocab',
+      'vocabulary' => 'test_tax_vocab',
       'menu' => 'test-menu',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
@@ -125,15 +126,15 @@ class TaxonomyMenuOperations extends WebTestBase {
     // Create new taxonomy menu.
     $this->drupalGet('admin/config/system/taxonomy_menu/add');
     $edit = [
-      'id' => 'test-tax-menu',
+      'id' => 'test_tax_menu',
       'label' => 'test tax menu',
-      'vocabulary' => 'test-tax-vocab',
+      'vocabulary' => 'test_tax_vocab',
       'menu' => 'test-menu',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
 
     // Create a new term.
-    $this->drupalGet('admin/structure/taxonomy/manage/test-tax-vocab/add');
+    $this->drupalGet('admin/structure/taxonomy/manage/test_tax_vocab/add');
     $edit = [
       'name[0][value]' => 'test term 3',
     ];
@@ -156,7 +157,7 @@ class TaxonomyMenuOperations extends WebTestBase {
     $edit = [
       'id' => 'test-tax-menu',
       'label' => 'test tax menu',
-      'vocabulary' => 'test-tax-vocab',
+      'vocabulary' => 'test_tax_vocab',
       'menu' => 'test-menu',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
