@@ -76,8 +76,6 @@ class TaxonomyMenu extends ControllerBase {
     $menu_parent_id = NULL;
     $parents = \Drupal::entityManager()->getStorage('taxonomy_term')->loadParents($term_id);
 
-    drupal_set_message(var_dump($parents, TRUE));
-
     if (is_array($parents) and count($parents) and $parents[0] != '0') {
       $menu_parent_id = 'taxonomy_menu.menu_link:taxonomy_menu.menu_link.' . $taxonomy_menu_id . '.' . $parents[0]['tid'];
     }

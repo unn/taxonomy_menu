@@ -11,7 +11,7 @@ taxonomy_menu.taxonomy_menu.*:
     uuid:
       type: string
     vocabulary:
-      type: taxonomy.vocabulary.[id]
+      type: taxonomy.vocabulary.[vid]
       label: 'Vocabulary'
     menu:
       type: system.menu.[id]
