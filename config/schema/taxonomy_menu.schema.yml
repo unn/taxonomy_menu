@@ -1,6 +1,6 @@
 taxonomy_menu.taxonomy_menu.*:
   type: config_entity
-  label: 'TaxonomyMenu config'
+  label: 'Taxonomy Menu config'
   mapping:
     id:
       type: string

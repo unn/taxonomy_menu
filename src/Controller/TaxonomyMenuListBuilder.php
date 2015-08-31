@@ -18,7 +18,7 @@ class TaxonomyMenuListBuilder extends ConfigEntityListBuilder {
    * {@inheritdoc}
    */
   public function buildHeader() {
-    $header['label'] = $this->t('TaxonomyMenu');
+    $header['label'] = $this->t('Taxonomy Menu');
     $header['id'] = $this->t('Machine name');
     return $header + parent::buildHeader();
   }
