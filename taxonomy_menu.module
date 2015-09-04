@@ -5,30 +5,30 @@
  * Contains taxonomy_menu.module.
  */
 
-use Drupal\Core\Routing\RouteMatchInterface;
-
 /**
- * Implements hook_help().
+ * Implements hook_entity_insert().
+ *
+ * Check for taxonomy term insert.
  */
-function taxonomy_menu_help($route_name, RouteMatchInterface $route_match) {
-  switch ($route_name) {
-    // Main module help for the taxonomy_menu module.
-    case 'help.page.taxonomy_menu':
-      $output = '';
-      $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('Embed a taxonomy tree into a menu') . '</p>';
-      return $output;
-
-    default:
-  }
+function taxonomy_menu_taxonomy_term_insert(\Drupal\Core\Entity\EntityInterface $entity) {
+  \Drupal::service('taxonomy_menu.helper')->generateTaxonomyMenuEntries($entity, FALSE);
 }
 
 /**
- * Implements hook_menu_links_discovered_alter.
+ * Implements hook_entity_delete().
  *
- * Used for debugging only.
- * @param $links
+ * Check for taxonomy term deletion.
  */
-/*function taxonomy_menu_menu_links_discovered_alter(&$links) {
-  var_dump($links);
-}*/
+function taxonomy_menu_taxonomy_term_delete(Drupal\Core\Entity\EntityInterface $entity) {
+  \Drupal::service('taxonomy_menu.helper')->removeTaxonomyMenuEntries($entity, FALSE);
+}
+
+
+/**
+ * Implements hook_entity_update().
+ *
+ * Check for taxonomy term updates.
+ */
+function taxonomy_menu_taxonomy_term_update(Drupal\Core\Entity\EntityInterface $entity) {
+  \Drupal::service('taxonomy_menu.helper')->updateTaxonomyMenuEntries($entity, FALSE);
+}

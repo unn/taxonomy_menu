@@ -50,10 +50,11 @@ class TaxonomyMenuMenuLink extends DeriverBase implements ContainerDeriverInterf
    */
   public function getDerivativeDefinitions($base_plugin_definition) {
     $links = array();
+    /** @var $taxonomy_menus \Drupal\taxonomy_menu\TaxonomyMenuInterface[] */
     $taxonomy_menus = $this->taxonomyMenuStorage->loadMultiple();
 
     foreach ($taxonomy_menus as $taxonomy_menu) {
-      $links = array_merge($links, $taxonomy_menu->generateTaxonomyLinks($base_plugin_definition));
+      $links = array_merge($links, $taxonomy_menu->getLinks($base_plugin_definition));
     }
 
     return $links;

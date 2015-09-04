@@ -23,6 +23,7 @@ class TaxonomyMenuForm extends EntityForm {
   public function form(array $form, FormStateInterface $form_state) {
     $form = parent::form($form, $form_state);
 
+    /** @var $taxonomy_menu \Drupal\taxonomy_menu\Entity\TaxonomyMenu */
     $taxonomy_menu = $this->entity;
     $form['label'] = array(
       '#type' => 'textfield',
