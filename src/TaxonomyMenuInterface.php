@@ -13,15 +13,16 @@ use Drupal\Core\Config\Entity\ConfigEntityInterface;
  * Provides an interface defining a TaxonomyMenu entity.
  */
 interface TaxonomyMenuInterface extends ConfigEntityInterface {
-  // Add get/set methods for your configuration properties here.
 
   /**
-   * @return \Drupal\system\Entity\Menu
+   * @return string
+   *   The machine name of the menu entity which hold the vocabulary's menu items.
    */
   public function getMenu();
 
   /**
-   * @return \Drupal\taxonomy\VocabularyInterface
+   * @return string
+   *   The vocabulary whose terms will be used to generate a menu.
    */
   public function getVocabulary();
 

@@ -34,43 +34,6 @@ class TaxonomyMenuHelper {
   }
 
   /**
-   * Render taxonomy links.
-   *
-   * @return string
-   *   Return Hello string.
-   */
-  public function renderTaxonomyLinks() {
-
-    $markup = '';
-
-    /*
-    // Check current main menu.
-    $menu_tree = \Drupal::menuTree();
-    $parameters = new MenuTreeParameters();
-    $tree = $menu_tree->load('main', $parameters);
-    $markup .= var_export($tree, TRUE);
-    */
-
-    // This is not a thing...
-    /*
-    $taxonomy_menus = $this->menuStorage->loadMultiple();
-    $links = [];
-
-    // Get taxonomy and create menu links from vocabularies.
-    foreach ($taxonomy_menus as $taxonomy_menu) {
-      $links += $taxonomy_menu->generateTaxonomyLinks([]);
-    }
-
-    //$markup .= var_export($links, TRUE);
-
-     */
-    return [
-        '#type' => 'markup',
-        '#markup' => t($markup),
-    ];
-  }
-
-  /**
    * A reverse lookup of a taxonomy term menus by vocabulary.
    *
    * @return \Drupal\taxonomy_menu\TaxonomyMenuInterface[]
@@ -116,7 +79,6 @@ class TaxonomyMenuHelper {
     $tax_menus = $this->getTermMenusByVocabulary($term->getVocabularyId());
     foreach ($tax_menus as $menu) {
       foreach ($menu->getLinks([], TRUE) as $plugin_id => $plugin_def) {
-        drupal_set_message(print_r($menu->getVocabulary(), TRUE));
         if (!$rebuild_all) {
           $plugin_id_explode = explode('.', $plugin_id);
           $term_id = array_pop($plugin_id_explode);

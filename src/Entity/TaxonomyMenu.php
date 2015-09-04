@@ -59,14 +59,16 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   /**
    * The taxonomy vocabulary.
    *
-   * @var \Drupal\taxonomy\VocabularyInterface
+   * @var string
+   *   The machine name of the vocabulary this entity represents.
    */
   protected $vocabulary;
 
   /**
    * The menu to embed the vocabulary.
    *
-   * @var \Drupal\system\Entity\Menu
+   * @var string
+   *   The machine name of the menu entity.
    */
   protected $menu;
 
