@@ -11,16 +11,7 @@
  * Check for taxonomy term insert.
  */
 function taxonomy_menu_taxonomy_term_insert(\Drupal\Core\Entity\EntityInterface $entity) {
-  // Load relevant taxonomy menus.
-  $tax_menus = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTermTaxonomyMenus($entity);
-  foreach ($tax_menus as $tax_menu) {
-    $plugin_id = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLinkId($tax_menu, $entity);
-    // TODO - evaluate "base plugin definition".
-    $plugin_def = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLink($tax_menu, $entity, []);
-    /** @var \Drupal\Core\Menu\MenuLinkManagerInterface $menu_link_manager */
-    $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
-    $menu_link_manager->addDefinition($plugin_id, $plugin_def);
-  }
+  \Drupal::service('taxonomy_menu.helper')->generateTaxonomyMenuEntries($entity, FALSE);
 }
 
 /**
@@ -29,14 +20,7 @@ function taxonomy_menu_taxonomy_term_insert(\Drupal\Core\Entity\EntityInterface 
  * Check for taxonomy term deletion.
  */
 function taxonomy_menu_taxonomy_term_delete(Drupal\Core\Entity\EntityInterface $entity) {
-  // Load relevant taxonomy menus.
-  $tax_menus = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTermTaxonomyMenus($entity);
-  foreach ($tax_menus as $tax_menu) {
-    $plugin_id = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLinkId($tax_menu, $entity);
-    /** @var \Drupal\Core\Menu\MenuLinkManagerInterface $menu_link_manager */
-    $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
-    $menu_link_manager->removeDefinition($plugin_id, FALSE);
-  }
+  \Drupal::service('taxonomy_menu.helper')->removeTaxonomyMenuEntries($entity, FALSE);
 }
 
 
@@ -46,77 +30,5 @@ function taxonomy_menu_taxonomy_term_delete(Drupal\Core\Entity\EntityInterface $
  * Check for taxonomy term updates.
  */
 function taxonomy_menu_taxonomy_term_update(Drupal\Core\Entity\EntityInterface $entity) {
-  // Load relevant taxonomy menus.
-  $tax_menus = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTermTaxonomyMenus($entity);
-  foreach ($tax_menus as $tax_menu) {
-    $plugin_id = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLinkId($tax_menu, $entity);
-    // TODO - evaluate "base plugin definition".
-    $plugin_def = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::generateTaxonomyMenuLink($tax_menu, $entity, []);
-    /** @var \Drupal\Core\Menu\MenuLinkManagerInterface $menu_link_manager */
-    $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
-    $menu_link_manager->updateDefinition($plugin_id, $plugin_def, FALSE);
-  }
-}
-
-
-/**
- * Implements hook_entity_insert().
- *
- * Check for taxonomy menu insert.
- */
-function taxonomy_menu_taxonomy_menu_insert(\Drupal\Core\Entity\EntityInterface $entity) {
-  // Load relevant taxonomy menu.
-  $links = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTaxonomyMenuLinks($entity);
-  foreach ($links as $link_key => $link_def) {
-    /** @var \Drupal\Core\Menu\MenuLinkManagerInterface $menu_link_manager */
-    $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
-    $menu_link_manager->addDefinition($link_key, $link_def);
-  }
-}
-
-/**
- * Implements hook_entity_delete().
- *
- * Check for taxonomy menu deletion.
- */
-function taxonomy_menu_taxonomy_menu_delete(Drupal\Core\Entity\EntityInterface $entity) {
-  // Load relevant taxonomy menu.
-  $links = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTaxonomyMenuLinks($entity);
-  foreach ($links as $link_key => $link_def) {
-    /** @var \Drupal\Core\Menu\MenuLinkManagerInterface $menu_link_manager */
-    $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
-    $menu_link_manager->removeDefinition($link_key, FALSE);
-  }
-}
-
-/**
- * Implements hook_entity_presave().
- *
- * Remove taxonomy term menus for updates.
- */
-function taxonomy_menu_taxonomy_menu_presave(Drupal\Core\Entity\EntityInterface $entity) {
-  if (!$entity->isNew()) {
-    // Load relevant taxonomy menu.
-    $links = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTaxonomyMenuLinks($entity);
-    foreach ($links as $link_key => $link_def) {
-      /** @var \Drupal\Core\Menu\MenuLinkManagerInterface $menu_link_manager */
-      $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
-      $menu_link_manager->removeDefinition($link_key, FALSE);
-    }
-  }
-}
-
-/**
- * Implements hook_entity_update().
- *
- * Check for taxonomy term updates.
- */
-function taxonomy_menu_taxonomy_menu_update(Drupal\Core\Entity\EntityInterface $entity) {
-  // Load relevant taxonomy menu.
-  $links = \Drupal\taxonomy_menu\Controller\TaxonomyMenu::getTaxonomyMenuLinks($entity);
-  foreach ($links as $link_key => $link_def) {
-    /** @var \Drupal\Core\Menu\MenuLinkManagerInterface $menu_link_manager */
-    $menu_link_manager = \Drupal::service('plugin.manager.menu.link');
-    $menu_link_manager->addDefinition($link_key, $link_def);
-  }
+  \Drupal::service('taxonomy_menu.helper')->updateTaxonomyMenuEntries($entity, FALSE);
 }

@@ -96,25 +96,25 @@ class TaxonomyMenuOperations extends WebTestBase {
     // Check menu for taxonomy-based menu items keyed 1, 2, and 3.
     $this->drupalGet('admin/structure/menu/manage/test-menu');
     $this->assertFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link.test.1][enabled]',
+      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.1][enabled]',
       NULL,
       'I should expect to see enabled field for taxonomy term 1'
     );
     $this->assertFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link.test.2][enabled]',
+      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.2][enabled]',
       NULL,
       'I should expect to see enabled field for taxonomy term 2'
     );
     $this->assertFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link.test.3][enabled]',
+      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.3][enabled]',
       NULL,
       'I should expect to see enabled field for taxonomy term 3'
     );
 
     // Check 2 is a parent of 1.
     $this->assertFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link.test.2][parent]',
-      'taxonomy_menu.menu_link:taxonomy_menu.menu_link.test.1',
+      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.2][parent]',
+      'taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.1',
       'I should expect to see taxonomy term 2 have a parent of taxonomy term 1'
     );
 
@@ -132,9 +132,10 @@ class TaxonomyMenuOperations extends WebTestBase {
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
 
+    $this->drupalGet('admin/structure/menu/manage/test-menu');
     // Check for it within the menu.
     $this->assertFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link.test.4][enabled]',
+      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.4][enabled]',
       NULL,
       'I should expect to see enabled field for taxonomy term 4'
     );
