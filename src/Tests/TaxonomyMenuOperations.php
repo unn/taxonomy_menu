@@ -16,7 +16,7 @@ use Drupal\simpletest\WebTestBase;
  */
 class TaxonomyMenuOperations extends WebTestBase {
 
-  public static $modules = array('taxonomy_menu', 'taxonomy', 'dblog');
+  public static $modules = array('taxonomy_menu', 'system', 'menu_ui', 'taxonomy', 'dblog');
 
   /**
    * Set up for all tests.
@@ -32,7 +32,7 @@ class TaxonomyMenuOperations extends WebTestBase {
     $this->drupalGet('admin/structure/taxonomy/add');
 
     $edit = [
-      'id' => 'test-tax-vocab',
+      'vid' => 'test_tax_vocab',
       'name' => 'Test',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
@@ -41,6 +41,7 @@ class TaxonomyMenuOperations extends WebTestBase {
     $perms = [
       'administer site configuration',
       'administer taxonomy',
+      'administer menu'
       //'delete terms in test',
       //'edit terms in test'
     ];
@@ -48,20 +49,20 @@ class TaxonomyMenuOperations extends WebTestBase {
     $this->drupalLogin($admin_user);
 
     // Add sample terms to the vocabulary.
-    $this->drupalGet('admin/structure/taxonomy/manage/test-tax-vocab/add');
+    $this->drupalGet('admin/structure/taxonomy/manage/test_tax_vocab/add');
     $edit = [
       'name[0][value]' => 'test term 1',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
 
-    $this->drupalGet('admin/structure/taxonomy/manage/test-tax-vocab/add');
+    $this->drupalGet('admin/structure/taxonomy/manage/test_tax_vocab/add');
     $edit = [
       'name[0][value]' => 'test term 1-A',
       'parent[]' => '1',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
 
-    $this->drupalGet('admin/structure/taxonomy/manage/test-tax-vocab/add');
+    $this->drupalGet('admin/structure/taxonomy/manage/test_tax_vocab/add');
     $edit = [
       'name[0][value]' => 'test term 2',
     ];
@@ -74,6 +75,16 @@ class TaxonomyMenuOperations extends WebTestBase {
       'label' => 'Test',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
+
+    // Create new taxonomy menu.
+    $this->drupalGet('admin/config/system/taxonomy_menu/add');
+    $edit = [
+      'id' => 'test_tax_menu',
+      'label' => 'test tax menu',
+      'vocabulary' => 'test_tax_vocab',
+      'menu' => 'test-menu',
+    ];
+    $this->drupalPostForm(NULL, $edit, t('Save'));
   }
 
   /**
@@ -81,38 +92,29 @@ class TaxonomyMenuOperations extends WebTestBase {
    */
   function testTaxMenuCreate() {
 
-    // Create new taxonomy menu.
-    $this->drupalGet('admin/config/system/taxonomy_menu/add');
-    $edit = [
-      'id' => 'test-tax-menu',
-      'label' => 'test tax menu',
-      'vocabulary' => 'test-tax-vocab',
-      'menu' => 'test-menu',
-    ];
-    $this->drupalPostForm(NULL, $edit, t('Save'));
 
     // Check menu for taxonomy-based menu items keyed 1, 2, and 3.
     $this->drupalGet('admin/structure/menu/manage/test-menu');
     $this->assertFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test.1][enabled]',
+      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.1][enabled]',
       NULL,
       'I should expect to see enabled field for taxonomy term 1'
     );
     $this->assertFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test.2][enabled]',
+      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.2][enabled]',
       NULL,
       'I should expect to see enabled field for taxonomy term 2'
     );
     $this->assertFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test.3][enabled]',
+      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.3][enabled]',
       NULL,
       'I should expect to see enabled field for taxonomy term 3'
     );
 
     // Check 2 is a parent of 1.
     $this->assertFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test.2][parent]',
-      'taxonomy_menu.menu_link:taxonomy_menu.menu_link.test.1',
+      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.2][parent]',
+      'taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.1',
       'I should expect to see taxonomy term 2 have a parent of taxonomy term 1'
     );
 
@@ -122,26 +124,18 @@ class TaxonomyMenuOperations extends WebTestBase {
    * Test creation of taxonomy term.
    */
   function testTaxTermCreate() {
-    // Create new taxonomy menu.
-    $this->drupalGet('admin/config/system/taxonomy_menu/add');
-    $edit = [
-      'id' => 'test-tax-menu',
-      'label' => 'test tax menu',
-      'vocabulary' => 'test-tax-vocab',
-      'menu' => 'test-menu',
-    ];
-    $this->drupalPostForm(NULL, $edit, t('Save'));
 
     // Create a new term.
-    $this->drupalGet('admin/structure/taxonomy/manage/test-tax-vocab/add');
+    $this->drupalGet('admin/structure/taxonomy/manage/test_tax_vocab/add');
     $edit = [
       'name[0][value]' => 'test term 3',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
 
+    $this->drupalGet('admin/structure/menu/manage/test-menu');
     // Check for it within the menu.
     $this->assertFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test.4][enabled]',
+      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.4][enabled]',
       NULL,
       'I should expect to see enabled field for taxonomy term 4'
     );
@@ -151,15 +145,6 @@ class TaxonomyMenuOperations extends WebTestBase {
    * Test deletion of taxonomy term.
    */
   function testTaxTermDelete() {
-    // Create new taxonomy menu.
-    $this->drupalGet('admin/config/system/taxonomy_menu/add');
-    $edit = [
-      'id' => 'test-tax-menu',
-      'label' => 'test tax menu',
-      'vocabulary' => 'test-tax-vocab',
-      'menu' => 'test-menu',
-    ];
-    $this->drupalPostForm(NULL, $edit, t('Save'));
 
     // Delete a term.
     $this->drupalGet('taxonomy/term/3/delete');
@@ -169,7 +154,7 @@ class TaxonomyMenuOperations extends WebTestBase {
 
     // Check for it within the menu.
     $this->assertNoFieldByName(
-      'links[menu_plugin_id:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test.3][enabled]',
+      'links[menu_plugin_id:taxonomy_menu.menu_link.test.3][enabled]',
       NULL,
       'I should not expect to see enabled field for taxonomy term 3'
     );

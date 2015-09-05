@@ -7,6 +7,5 @@ entity.taxonomy_menu.collection:
 
 taxonomy_menu.menu_link:
   class: Drupal\taxonomy_menu\Plugin\Menu\TaxonomyMenuMenuLink
-  #form_class: Drupal\taxonomy_menu\Plugin\Menu\Form\ViewsMenuLinkForm
-  deriver: \Drupal\taxonomy_menu\Plugin\Derivative\TaxonomyMenuMenuLink
+  deriver: Drupal\taxonomy_menu\Plugin\Derivative\TaxonomyMenuMenuLink
 
