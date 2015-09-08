@@ -31,6 +31,7 @@ use Drupal\taxonomy_menu\TaxonomyMenuInterface;
  *     "label" = "label",
  *     "uuid" = "uuid"
  *   },
+ *   links = {
  *     "edit-form" = "/admin/config/system/taxonomy_menu/{taxonomy_menu}",
  *     "delete-form" = "/admin/config/system/taxonomy_menu/{taxonomy_menu}/delete",
  *     "collection" = "/admin/config/system/taxonomy_menu"
