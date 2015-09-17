@@ -13,7 +13,7 @@ use Drupal\Core\Config\Entity\ConfigEntityInterface;
  * Provides an interface defining a TaxonomyMenu entity.
  */
 interface TaxonomyMenuInterface extends ConfigEntityInterface {
-
+  
   /**
    * @return string
    *   The machine name of the menu entity which hold the vocabulary's menu items.

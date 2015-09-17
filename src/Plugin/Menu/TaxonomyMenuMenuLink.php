@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @see \Drupal\taxonony_menu\Plugin\Derivative\TaxonomyMenuMenuLink
  */
+
 class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPluginInterface {
 
   /**
@@ -39,7 +40,6 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
    * @var \Drupal\Core\Entity\EntityManager
    */
   protected $entityManager;
-
 
   /**
    * Constructs a new TaxonomyMenuMenuLink.

@@ -222,5 +222,4 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
 
     return $link;
   }
-
 }

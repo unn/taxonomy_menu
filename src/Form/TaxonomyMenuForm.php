@@ -30,7 +30,7 @@ class TaxonomyMenuForm extends EntityForm {
       '#title' => $this->t('Label'),
       '#maxlength' => 255,
       '#default_value' => $taxonomy_menu->label(),
-      '#description' => $this->t("Label for the TaxonomyMenu."),
+      '#description' => $this->t("Label for the Taxonomy Menu."),
       '#required' => TRUE,
     );
 
@@ -80,12 +80,12 @@ class TaxonomyMenuForm extends EntityForm {
     $status = $taxonomy_menu->save();
 
     if ($status) {
-      drupal_set_message($this->t('Saved the %label TaxonomyMenu.', array(
+      drupal_set_message($this->t('Saved the %label Taxonomy Menu.', array(
         '%label' => $taxonomy_menu->label(),
       )));
     }
     else {
-      drupal_set_message($this->t('The %label TaxonomyMenu was not saved.', array(
+      drupal_set_message($this->t('The %label Taxonomy Menu was not saved.', array(
         '%label' => $taxonomy_menu->label(),
       )));
     }
