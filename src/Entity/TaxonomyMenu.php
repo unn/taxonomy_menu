@@ -24,7 +24,7 @@ use Drupal\taxonomy_menu\TaxonomyMenuInterface;
  *     "form" = {
  *       "add" = "Drupal\taxonomy_menu\Form\TaxonomyMenuForm",
  *       "edit" = "Drupal\taxonomy_menu\Form\TaxonomyMenuForm",
- *       "delete" = "Drupal\taxonomy_menu\Form\TaxonomyMenuDeleteForm"
+ *       "delete" = "Drupal\Core\Entity\EntityDeleteForm"
  *     }
  *   },
  *   config_prefix = "taxonomy_menu",
