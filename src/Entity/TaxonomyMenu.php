@@ -96,6 +96,8 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
         $this->getMenuLinkManager()->removeDefinition($link_key, FALSE);
       }
     }
+    $this->addDependency('config', 'system.menu.' . $this->getMenu());
+    $this->addDependency('config', 'taxonomy.vocabulary.' . $this->getVocabulary());
   }
 
   /**
