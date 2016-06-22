@@ -18,7 +18,7 @@ use Drupal\taxonomy_menu\TaxonomyMenuInterface;
  *
  * @ConfigEntityType(
  *   id = "taxonomy_menu",
- *   label = @Translation("TaxonomyMenu"),
+ *   label = @Translation("Taxonomy menu"),
  *   handlers = {
  *     "list_builder" = "Drupal\taxonomy_menu\Controller\TaxonomyMenuListBuilder",
  *     "form" = {
