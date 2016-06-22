@@ -7,7 +7,6 @@
 
 namespace Drupal\taxonomy_menu\Form;
 
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
 
@@ -45,7 +44,7 @@ class TaxonomyMenuForm extends EntityForm {
 
     // Vocabulary selection.
     $options = [];
-    $vocabulary_storage = \Drupal::entityManager()->getStorage('taxonomy_vocabulary');
+    $vocabulary_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary');
     foreach ($vocabulary_storage->loadMultiple() as $vocabulary) {
       $options[$vocabulary->id()] = $vocabulary->label();
     }
@@ -58,7 +57,7 @@ class TaxonomyMenuForm extends EntityForm {
 
     // Menu selection.
     $options = [];
-    $menu_storage = \Drupal::entityManager()->getStorage('menu');
+    $menu_storage = \Drupal::entityTypeManager()->getStorage('menu');
     foreach ($menu_storage->loadMultiple() as $menu) {
       $options[$menu->id()] = $menu->label();
     }
@@ -89,7 +88,7 @@ class TaxonomyMenuForm extends EntityForm {
         '%label' => $taxonomy_menu->label(),
       )));
     }
-    $form_state->setRedirectUrl($taxonomy_menu->urlInfo('collection'));
+    $form_state->setRedirectUrl($taxonomy_menu->toUrl('collection'));
   }
 
 }

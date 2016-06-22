@@ -129,7 +129,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
    */
   public function getLinks($base_plugin_definition = [], $include_base_plugin_id = FALSE) {
     /** @var $termStorage \Drupal\taxonomy\TermStorageInterface */
-    $termStorage = $this->entityManager()->getStorage('taxonomy_term');
+    $termStorage = $this->entityTypeManager()->getStorage('taxonomy_term');
     // Load taxonomy terms for tax menu vocab.
     $terms = $termStorage->loadTree($this->getVocabulary());
 
@@ -137,7 +137,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
 
     // Create menu links for each term in the vocabulary.
     foreach ($terms as $term) {
-      if (!$term instanceof \Drupal\taxonomy\TermInterface) {
+      if (!$term instanceof TermInterface) {
         $term = Term::load($term->tid);
       }
       $mlid = $this->buildMenuPluginId($term, $include_base_plugin_id);
@@ -179,7 +179,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
    */
   protected function buildMenuDefinition(TermInterface $term, $base_plugin_definition) {
     $term_id = $term->id();
-    $term_url = $term->urlInfo();
+    $term_url = $term->toUrl();
     $taxonomy_menu_id = $this->id();
     $menu_id = $this->getMenu();
 
@@ -187,7 +187,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
     // TODO: Evaluate use case of multiple parents (should we make many menu items?)
     $menu_parent_id = NULL;
     /** @var $termStorage \Drupal\taxonomy\TermStorageInterface */
-    $termStorage = $this->entityManager()->getStorage('taxonomy_term');
+    $termStorage = $this->entityTypeManager()->getStorage('taxonomy_term');
     $parents = $termStorage->loadParents($term_id);
     $parents = array_values($parents);
 
