@@ -97,6 +97,10 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
     $link = $this->entityManager->getStorage('taxonomy_term')
       ->load($this->pluginDefinition['metadata']['taxonomy_term_id']);
     if (!empty($link)) {
+      $current_language_id = \Drupal::languageManager()->getCurrentLanguage()->getId();
+      if ($link->hasTranslation($current_language_id)){
+        $link = $link->getTranslation($current_language_id);
+      }
       return $link->label();
     }
     return NULL;
@@ -110,6 +114,10 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
     $link = $this->entityManager->getStorage('taxonomy_term')
       ->load($this->pluginDefinition['metadata']['taxonomy_term_id']);
     if (!empty($link)) {
+      $current_language_id = \Drupal::languageManager()->getCurrentLanguage()->getId();
+      if ($link->hasTranslation($current_language_id)){
+        $link = $link->getTranslation($current_language_id);
+      }
       return $link->getDescription();
     }
     return NULL;
