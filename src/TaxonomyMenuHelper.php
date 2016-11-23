@@ -93,7 +93,16 @@ class TaxonomyMenuHelper {
           }
         }
 
-        $this->manager->updateDefinition($plugin_id, $plugin_def, FALSE);
+        if ($this->manager->hasDefinition($plugin_id)) {
+          $this->manager->updateDefinition($plugin_id, $plugin_def, FALSE);
+        }
+        else {
+          // Remove specific menu link if vid term is different to this old vid.
+          if ($term->original->getVocabularyId() != $term->getVocabularyId()) {
+            $this->removeTaxonomyMenuEntries($term->original);
+          }
+          $this->manager->addDefinition($plugin_id, $plugin_def);
+        }
       }
     }
   }
