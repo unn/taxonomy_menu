@@ -654,7 +654,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
             }
             // if display number is selected and $num > 0 then change the title
             elseif (taxonomy_menu_variable_get('display_num', $t->vid, FALSE)) {
-              // if number > 0 and display decendants, then count all of the children
+              // if number > 0 and display descendants, then count all of the children
               if (taxonomy_menu_variable_get('display_descendants', $t->vid, FALSE)) {
                 $num = taxonomy_menu_term_count_nodes($t->tid);
               }
