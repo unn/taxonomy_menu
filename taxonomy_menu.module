@@ -292,12 +292,14 @@ function _taxonomy_menu_check_variable($variable, $new_value) {
  */
 function _taxonomy_menu_update_link_items($vid) {
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vid), FALSE);
+  $depth = variable_get(_taxonomy_menu_build_variable('max_depth', $vid), 0);
 
   // Get a list of the current tid - menu_link combinations
   $menu_links = _taxonomy_menu_get_menu_items($vid);
 
   // Cycle through the menu links
   foreach ($menu_links as $tid => $mlid) {
+    if (!_taxonomy_menu_term_too_deep($tid, $depth))
     // $args must be reset each time through.
     $args = array(
       'menu_name' => $menu_name,
@@ -436,8 +438,9 @@ function _taxonomy_menu_taxonomy_termapi_helper($term, $operation) {
   // option has been checked.
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $term->vid), 0);
   $sync = variable_get(_taxonomy_menu_build_variable('sync', $term->vid), 0);
+  $depth = variable_get(_taxonomy_menu_build_variable('max_depth', $term->vid), 0);
 
-  if ($menu_name && $sync) {
+  if ($menu_name && $sync && !_taxonomy_menu_term_too_deep($term->tid, $depth)) {
     $item = array(
       'tid' => $term->tid,
       'vid' => $term->vid,
@@ -1084,6 +1087,14 @@ function taxonomy_menu_taxonomy_menu_options() {
     'default' => TRUE,
   );
 
+  $options['max_depth'] = array(
+   '#type' => 'select',
+   '#title' => t('Max depth'),
+   '#description' => t('Limit how many levels of the taxonomy tree to process. Useful if you have a very large tree of taxonomy terms, and only want to provide a menu for the first several levels.'),
+   '#options' => array(0 => t('All'), 1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5, 6 => 6, 7 => 7, 8 => 8, 9 => 9),
+   'default' => 0,
+  );
+
   $options['display_num'] = array(
     '#title' => t('Display number of items'),
     '#description' => t('Display the number of items per taxonomy terms. Will not show up for vocabulary menu items.'),
@@ -1210,4 +1221,25 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
       }
     }
   }
+}
+
+/**
+ * Get term depth from a tid.
+ */
+function _taxonomy_menu_term_too_deep($tid, $max_depth) {
+  if ($max_depth) {
+    $depth = 0;
+    while ($parent = db_select('taxonomy_term_hierarchy', 't')
+      ->condition('tid', $tid, '=')
+      ->fields('t')
+      ->execute()
+      ->fetchAssoc()) {
+      $depth++;
+      $tid = $parent['parent'];
+      if ($depth > $max_depth) {
+        return TRUE;
+      }
+    }
+  }
+  return FALSE;
 }
