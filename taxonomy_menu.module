@@ -639,13 +639,23 @@ function _taxonomy_menu_save($item) {
     'link_title' => $item['name'],
     'menu_name' => $item['menu_name'],
     'plid' => $plid,
-    'options' => array('attributes' => array('title' => trim($item['description'])
-      ? $item['description'] : $item['name'])),
     'weight' => $item['weight'],
     'module' => 'taxonomy_menu',
     'expanded' => variable_get(_taxonomy_menu_build_variable('expanded', $item['vid']), TRUE),
     'link_path' => $path,
   );
+
+  // Be sure to load the original menu link to preserve non-standard properties.
+  if (isset($item['mlid']) && !empty($item['mlid']) && $original_link = menu_link_load($item['mlid'])) {
+    $link = array_merge($original_link, $link);
+  }
+  else {
+    $link['options'] = array(
+      'attributes' => array(
+        'title' => trim($item['description']) ? $item['description'] : $item['name'],
+      ),
+    );
+  }
 
   // Add setup the query paramater in the URL correctly
   if (strpos($path, '?') !== FALSE) {
