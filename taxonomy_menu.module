@@ -864,7 +864,7 @@ function _taxonomy_menu_create_item($args = array(), $node) {
     // a flat taxonomy menu.
     if (is_object($term)) {
       $term_parents = taxonomy_get_parents_all($term->tid);
-      $root_term_weight = $term_parents[count($term_parents) - 1]->weight;
+      $root_term_weight = ($term_parents) ? $term_parents[count($term_parents) - 1]->weight : 0;
     }
     else {
       $root_term_weight = 0;
