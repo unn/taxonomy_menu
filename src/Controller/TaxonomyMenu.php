@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\taxonomy_menu\Controller\TaxonomyMenu.
- */
-
 namespace Drupal\taxonomy_menu\Controller;
 
 use Drupal\Core\Controller\ControllerBase;

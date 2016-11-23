@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Definition of Drupal\taxonomy_menu\Tests\KeyService.
- */
-
 namespace Drupal\taxonomy_menu\Tests;
 
 use Drupal\simpletest\WebTestBase;

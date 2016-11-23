@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\taxonomy_menu\Controller\TaxonomyMenuListBuilder.
- */
-
 namespace Drupal\taxonomy_menu\Controller;
 
 use Drupal\Core\Config\Entity\ConfigEntityListBuilder;

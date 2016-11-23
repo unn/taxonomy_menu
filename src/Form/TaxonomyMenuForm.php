@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\taxonomy_menu\Form\TaxonomyMenuForm.
- */
-
 namespace Drupal\taxonomy_menu\Form;
 
 use Drupal\Core\Entity\EntityForm;

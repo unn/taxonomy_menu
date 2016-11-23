@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\taxonomy_menu\Tests\TaxonomyMenu.
- */
-
 namespace Drupal\taxonomy_menu\Tests;
 
 use Drupal\simpletest\WebTestBase;

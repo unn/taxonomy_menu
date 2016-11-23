@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\taxonomy_menu\Plugin\Menu\TaxonomyMenuMenuLink.
- */
-
 namespace Drupal\taxonomy_menu\Plugin\Menu;
 
 use Drupal\Core\Entity\EntityManagerInterface;

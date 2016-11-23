@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains Drupal\taxonomy_menu\Entity\TaxonomyMenu.
- */
-
 namespace Drupal\taxonomy_menu\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityBase;

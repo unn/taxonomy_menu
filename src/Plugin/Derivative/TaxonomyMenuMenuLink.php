@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\taxonomy_menu\Plugin\Derivative\TaxonomyMenuMenuLink.
- */
-
 namespace Drupal\taxonomy_menu\Plugin\Derivative;
 
 use Drupal\Component\Plugin\Derivative\DeriverBase;
