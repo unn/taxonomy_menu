@@ -20,8 +20,17 @@ module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.admin');
  * Implements hook_help().
  */
 function taxonomy_menu_help($path, $arg) {
-  // @TODO Implement the hook. Make documentation available to the user.
-}
+  switch ($path) {
+    case 'admin/help#taxonomy_menu':
+      return '<p>' . t('This module allows you to use a taxonomy vocabulary as
+        a custom menu. You can then place this menu into specific regions on
+        pages. Each taxonomy term in the vocabulary will then be a menu item
+        that you can click on. After you click on one of the menu items
+        (taxonomy terms), you will then be taken to an aggregation page where
+        all items tagged with the taxonomy term will reside. As always, more
+        functionality is being planned with further versions.') . '</p>';
+  }
+ }
 
 /**
  * Implements hook_form_FORM_ID_alter().
@@ -723,4 +732,3 @@ function taxonomy_menu_variable_get($key, $vid, $default) {
 function taxonomy_menu_variable_set($key, $vid, $value) {
   return variable_set(_taxonomy_menu_build_variable($key, $vid), $value);
 }
-
