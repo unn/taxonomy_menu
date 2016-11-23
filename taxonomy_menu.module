@@ -664,6 +664,11 @@ function _taxonomy_menu_save($item) {
   if (isset($item['mlid']) && $item['mlid']) {
     $link['mlid'] = $item['mlid'];
     $insert = FALSE;
+    $menu_link = menu_link_load($item['mlid']);
+    $is_hidden = $menu_link['hidden'];
+  }
+  else {
+    $is_hidden = 0;
   }
 
   // FIXME: i18nmenu need to be cleaned up to allow translation from other menu module
@@ -687,7 +692,7 @@ function _taxonomy_menu_save($item) {
   }
 
   // If remove is true then set hidden to 1
-  $link['hidden'] = (isset($item['remove']) && $item['remove']) ? 1 : 0;
+  $link['hidden'] = (isset($item['remove']) && $item['remove']) ? 1 : $is_hidden;
 
   // Save the menu item
   if ($mlid = menu_link_save($link)) {
