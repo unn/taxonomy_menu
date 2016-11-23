@@ -77,7 +77,7 @@ class TaxonomyMenuOperations extends WebTestBase {
     $this->drupalPostForm(NULL, $edit, t('Save'));
 
     // Create new taxonomy menu.
-    $this->drupalGet('admin/config/system/taxonomy_menu/add');
+    $this->drupalGet('admin/structure/taxonomy_menu/add');
     $edit = [
       'id' => 'test_tax_menu',
       'label' => 'test tax menu',
