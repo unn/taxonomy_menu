@@ -161,7 +161,7 @@ function taxonomy_menu_vocab_submit($form, &$form_state) {
       }
     }
 
-    // If $changed is alreayd set to true, then don't bother checking any others.
+    // If $changed is already set to true, then don't bother checking any others.
     if (!$changed) {
       // Check to see if the variable has changed.
       if (_taxonomy_menu_check_variable($variable_name, $value)) {
@@ -377,7 +377,7 @@ function taxonomy_menu_taxonomy_term_delete($term) {
 function taxonomy_menu_node_insert($node) {
   $terms_old = &drupal_static('taxonomy_menu_terms_old');
   // We use this direct table pull to avoid the cache and because
-  // free tags are not formated in a matter where extrating the
+  // free tags are not formatted in a matter where extrating the
   // tid's is easy.
   $terms_new = _taxonomy_menu_get_node_terms($node);
 
@@ -392,7 +392,7 @@ function taxonomy_menu_node_insert($node) {
 function taxonomy_menu_node_update($node) {
   $terms_old = &drupal_static('taxonomy_menu_terms_old');
   //we use this direct table pull to avoid the cache and because
-  //free tags are not formated in a matter where extrating the
+  //free tags are not formatted in a matter where extrating the
   //tid's is easy
   $terms_new = _taxonomy_menu_get_node_terms($node);
 
@@ -921,7 +921,7 @@ function _taxonomy_menu_item($item) {
 
     // if display number is selected and $num > 0 then change the title
     if (variable_get(_taxonomy_menu_build_variable('display_num', $item['vid']), FALSE)) {
-      // if number > 0 and display decendants, then count all of the children
+      // if number > 0 and display descendants, then count all of the children
       if (variable_get(_taxonomy_menu_build_variable('display_descendants', $item['vid']), FALSE)) {
         $num = taxonomy_menu_term_count_nodes($item['tid'], $item['vid']);
       }
@@ -1164,7 +1164,7 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
             }
             // if display number is selected and $num > 0 then change the title
             elseif (variable_get(_taxonomy_menu_build_variable('display_num', $t->vid), FALSE)) {
-              // if number > 0 and display decendants, then count all of the children
+              // if number > 0 and display descendants, then count all of the children
               if (variable_get(_taxonomy_menu_build_variable('display_descendants', $t->vid), FALSE)) {
                 $num = taxonomy_menu_term_count_nodes($t->tid, $t->vid);
               }
