@@ -68,6 +68,12 @@ class TaxonomyMenuForm extends EntityForm {
       '#default_value' => $taxonomy_menu->getMenu(),
     ];
 
+    $form['expanded'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('All menus entries expanded'),
+      '#default_value' => $taxonomy_menu->expanded,
+    ];
+
     return $form;
   }
 

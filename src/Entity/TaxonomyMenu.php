@@ -73,6 +73,13 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   protected $menu;
 
   /**
+   * The TaxonomyMenu mode.
+   *
+   * @var boolean
+   */
+  public $expanded;
+
+  /**
    * {@inheritdoc}
    */
   public function getVocabulary() {
@@ -212,6 +219,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
       'title' => $term->label(),
       'description' => $term->getDescription(),
       'menu_name' => $menu_id,
+      'expanded' => $this->expanded,
       'metadata' => array(
         'taxonomy_menu_id' => $taxonomy_menu_id,
         'taxonomy_term_id' => $term_id,
