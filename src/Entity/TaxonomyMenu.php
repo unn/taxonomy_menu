@@ -65,6 +65,11 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   protected $vocabulary;
 
   /**
+   * @todo
+   */
+  protected $depth;
+
+  /**
    * The menu to embed the vocabulary.
    *
    * @var string
@@ -73,11 +78,16 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   protected $menu;
 
   /**
-   * The TaxonomyMenu mode.
+   * The expanded mode.
    *
    * @var boolean
    */
   public $expanded;
+
+   /**
+   * @todo
+   */
+  protected $menu_parent;
 
   /**
    * {@inheritdoc}
@@ -89,8 +99,22 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   /**
    * {@inheritdoc}
    */
+  public function getDepth() {
+    return $this->depth;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function getMenu() {
     return $this->menu;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getMenuParent() {
+    return $this->menu_parent;
   }
 
   /**
@@ -138,7 +162,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
     /** @var $termStorage \Drupal\taxonomy\TermStorageInterface */
     $termStorage = $this->entityTypeManager()->getStorage('taxonomy_term');
     // Load taxonomy terms for tax menu vocab.
-    $terms = $termStorage->loadTree($this->getVocabulary());
+    $terms = $termStorage->loadTree($this->getVocabulary(), 0, $this->getDepth() + 1);
 
     $links = [];
 
@@ -204,7 +228,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
 
     // Please note: if menu_parent_id is NULL, it will not update the hierarchy properly.
     if (empty($menu_parent_id)) {
-      $menu_parent_id = '0';
+      $menu_parent_id = str_replace($this->getMenu() . ':', '', $this->getMenuParent());
     }
 
     // TODO: Consider implementing a forced weight based on taxonomy tree.

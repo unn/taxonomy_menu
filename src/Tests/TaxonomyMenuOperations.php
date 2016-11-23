@@ -84,6 +84,8 @@ class TaxonomyMenuOperations extends WebTestBase {
       'vocabulary' => 'test_tax_vocab',
       'menu' => 'test-menu',
       'expanded' => 1,
+      'depth' => '1',
+      'menu_parent' => 'test-menu:',
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
   }
