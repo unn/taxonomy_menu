@@ -154,7 +154,6 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
     parent::delete();
   }
 
-
   /**
    * {@inheritdoc}
    */
@@ -241,6 +240,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
     $link += array(
       'id' => $this->buildMenuPluginId($term),
       'title' => $term->label(),
+      'weight' => $term->getWeight(),
       'description' => $term->getDescription(),
       'menu_name' => $menu_id,
       'expanded' => $this->expanded,
