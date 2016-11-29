@@ -104,8 +104,13 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
     /** @var $link \Drupal\taxonomy\Entity\Term */
     $link = $this->entityManager->getStorage('taxonomy_term')
       ->load($this->pluginDefinition['metadata']['taxonomy_term_id']);
-    if (!empty($link)) {
-      return $link->getDescription();
+
+    // Get the description field name.
+    $taxonomy_menu = $this->entityManager->getStorage('taxonomy_menu')->load($this->pluginDefinition['metadata']['taxonomy_menu_id']);
+    $description_field_name = $taxonomy_menu->getDescriptionFieldName();
+
+    if (!empty($link) && $link->hasField($description_field_name)) {
+      return $link->{$description_field_name}->value;
     }
     return NULL;
   }

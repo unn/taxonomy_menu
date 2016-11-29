@@ -85,6 +85,14 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   protected $menu_parent;
 
   /**
+   * The name of the description field.
+   *
+   * @var string
+   *  The machine name of the field to be used as the description.
+   */
+  protected $description_field_name;
+
+  /**
    * {@inheritdoc}
    */
   public function getVocabulary() {
@@ -110,6 +118,13 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
    */
   public function getMenuParent() {
     return $this->menu_parent;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getDescriptionFieldName() {
+    return $this->description_field_name;
   }
 
   /**
