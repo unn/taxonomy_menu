@@ -2,13 +2,6 @@ TAXONOMY MENU
 =============
 (README.txt: 13th of April 2009, Version 6.x-2.3, indytechcook + ksc)
 
--------------- Content ------------------
-INTRO
-INSTALLATION
-- New
-- Upgrade
-CONFIGURATION
-- Where to find the configuration screen?
 - Adjustments and options
 PATH TYPES and INTEGRATION WITH VIEWS MODULE
 - Menu Path Type: Default

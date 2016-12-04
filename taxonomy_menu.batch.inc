@@ -1,11 +1,6 @@
 <?php
 
 /**
- * @file
- * Batch API Code
- */
-
-/**
  * The $batch can include the following values. Only 'operations'
  * and 'finished' are required, all others will be set to default values.
  *
