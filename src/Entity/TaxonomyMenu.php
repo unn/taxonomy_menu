@@ -37,6 +37,7 @@ use Drupal\taxonomy_menu\TaxonomyMenuInterface;
  * )
  */
 class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
+
   /**
    * The TaxonomyMenu ID.
    *
@@ -60,7 +61,9 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   protected $vocabulary;
 
   /**
-   * @todo
+   * The depth to generate menu items.
+   *
+   * @var int
    */
   protected $depth;
 
@@ -75,12 +78,14 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   /**
    * The expanded mode.
    *
-   * @var boolean
+   * @var bool
    */
   public $expanded;
 
-   /**
-   * @todo
+  /**
+   * The menu parent.
+   *
+   * @var string
    */
   protected $menu_parent;
 
@@ -189,7 +194,10 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   }
 
   /**
+   * Get the Menu Link Manager
+   *
    * @return \Drupal\Core\Menu\MenuLinkManagerInterface
+   *   The Menu Link Manager Service
    */
   protected function getMenuLinkManager() {
     return \Drupal::service('plugin.manager.menu.link');
@@ -212,10 +220,11 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
    *
    * @param \Drupal\taxonomy\TermInterface $term
    *  The taxonomy term for which to build a menu link render array.
-   * @param $base_plugin_definition
+   * @param array $base_plugin_definition
    *  The base plugin definition to merge the link with.
    *
    * @return array
+   *  The menu link plugin definition.
    */
   protected function buildMenuDefinition(TermInterface $term, $base_plugin_definition) {
     $term_id = $term->id();

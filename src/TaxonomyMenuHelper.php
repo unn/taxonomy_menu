@@ -14,15 +14,27 @@ use Drupal\taxonomy\TermInterface;
 class TaxonomyMenuHelper {
 
   /**
+   * Taxonomy Menu storage.
+   *
    * @var \Drupal\Core\Entity\EntityStorageInterface
    */
   protected $menuStorage;
 
   /**
+   * Menu Link Manager.
+   *
    * @var \Drupal\Core\Menu\MenuLinkManagerInterface
    */
   protected $manager;
 
+  /**
+   * Constructor.
+   *
+   * @param EntityTypeManagerInterface $entity_type_manager
+   * @param \Drupal\Core\Menu\MenuLinkManagerInterface $manager
+   *   The menu link manager.
+   * @internal param EntityTypeManagerInterface $entity_manager The storage interface.*   The storage interface.
+   */
   public function __construct(EntityTypeManagerInterface $entity_type_manager, MenuLinkManagerInterface $manager) {
     $this->menuStorage = $entity_type_manager->getStorage('taxonomy_menu');
     $this->manager = $manager;
@@ -31,7 +43,11 @@ class TaxonomyMenuHelper {
   /**
    * A reverse lookup of a taxonomy term menus by vocabulary.
    *
+   * @param string $vid
+   *   The vocabulary id.
+   *
    * @return \Drupal\taxonomy_menu\TaxonomyMenuInterface[]
+   *   The Taxonomy Menu
    */
   public function getTermMenusByVocabulary($vid) {
     return $this->menuStorage->loadByProperties(['vocabulary'=>$vid]);
@@ -41,6 +57,7 @@ class TaxonomyMenuHelper {
    * Create menu entries associate with the vocabulary of this term.
    *
    * @param \Drupal\taxonomy\TermInterface $term
+   *   Term
    */
   public function generateTaxonomyMenuEntries(TermInterface $term, $rebuild_all = TRUE) {
     // Load relevant taxonomy menus.
@@ -69,6 +86,7 @@ class TaxonomyMenuHelper {
    * Update menu entries associate with the vocabulary of this term.
    *
    * @param \Drupal\taxonomy\TermInterface $term
+   *   Term
    */
   public function updateTaxonomyMenuEntries(TermInterface $term, $rebuild_all = TRUE) {
 
@@ -106,6 +124,9 @@ class TaxonomyMenuHelper {
    * Remove menu entries associate with the vocabulary of this term.
    *
    * @param \Drupal\taxonomy\TermInterface $term
+   *   Term.
+   * @param bool $rebuild_all
+   *   Whether to rebuild all links or not.
    */
   public function removeTaxonomyMenuEntries(TermInterface $term, $rebuild_all = TRUE) {
     // Load relevant taxonomy menus.
