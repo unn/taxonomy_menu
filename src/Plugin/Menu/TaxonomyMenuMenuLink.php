@@ -2,7 +2,7 @@
 
 namespace Drupal\taxonomy_menu\Plugin\Menu;
 
-use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Menu\MenuLinkBase;
 use Drupal\Core\Menu\StaticMenuLinkOverridesInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
@@ -30,11 +30,11 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
   );
 
   /**
-   * The entity manager.
+   * The entity type manager.
    *
-   * @var \Drupal\Core\Entity\EntityManager
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entityManager;
+  protected $entityTypeManager;
 
   /**
    * The static menu link service used to store updates to weight/parent etc.
@@ -52,8 +52,8 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
    *   The plugin_id for the plugin instance.
    * @param mixed                                      $plugin_definition
    *   The plugin implementation definition.
-   * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
-   *   The entity manager
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    * @param \Drupal\views\ViewExecutableFactory        $view_executable_factory
    *   The view executable factory
    */
@@ -61,13 +61,13 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
     array $configuration,
     $plugin_id,
     $plugin_definition,
-    EntityManagerInterface $entity_manager,
+    EntityTypeManagerInterface $entity_type_manager,
     StaticMenuLinkOverridesInterface $static_override
   ) {
     $this->configuration = $configuration;
     $this->pluginId = $plugin_id;
     $this->pluginDefinition = $plugin_definition;
-    $this->entityManager = $entity_manager;
+    $this->entityTypeManager = $entity_type_manager;
     $this->staticOverride = $static_override;
   }
 
@@ -79,7 +79,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('entity.manager'),
+      $container->get('entity_type.manager'),
       $container->get('menu_link.static.overrides')
     );
   }
@@ -89,7 +89,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
    */
   public function getTitle() {
     /** @var $link \Drupal\taxonomy\Entity\Term */
-    $link = $this->entityManager->getStorage('taxonomy_term')
+    $link = $this->entityTypeManager->getStorage('taxonomy_term')
       ->load($this->pluginDefinition['metadata']['taxonomy_term_id']);
     if (!empty($link)) {
       return $link->label();
@@ -102,7 +102,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
    */
   public function getDescription() {
     /** @var $link \Drupal\taxonomy\Entity\Term */
-    $link = $this->entityManager->getStorage('taxonomy_term')
+    $link = $this->entityTypeManager->getStorage('taxonomy_term')
       ->load($this->pluginDefinition['metadata']['taxonomy_term_id']);
     if (!empty($link)) {
       return $link->getDescription();

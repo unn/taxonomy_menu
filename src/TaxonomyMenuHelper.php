@@ -2,7 +2,7 @@
 
 namespace Drupal\taxonomy_menu;
 
-use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Menu\MenuLinkManagerInterface;
 use Drupal\taxonomy\TermInterface;
 
@@ -23,8 +23,8 @@ class TaxonomyMenuHelper {
    */
   protected $manager;
 
-  public function __construct(EntityManagerInterface $entity_manager, MenuLinkManagerInterface $manager) {
-    $this->menuStorage = $entity_manager->getStorage('taxonomy_menu');
+  public function __construct(EntityTypeManagerInterface $entity_type_manager, MenuLinkManagerInterface $manager) {
+    $this->menuStorage = $entity_type_manager->getStorage('taxonomy_menu');
     $this->manager = $manager;
   }
 
