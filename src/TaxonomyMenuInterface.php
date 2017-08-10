@@ -33,6 +33,12 @@ interface TaxonomyMenuInterface extends ConfigEntityInterface {
   public function getMenuParent();
 
   /**
+   * @return string
+   *   The machine name of the field to be used as the description.
+   */
+  public function getDescriptionFieldName();
+
+  /**
    * Get menu link plugin definitions
    *
    * @param array $base_plugin_definition

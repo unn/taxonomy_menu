@@ -23,3 +23,6 @@ taxonomy_menu.taxonomy_menu.*:
     menu_parent:
       type: string
       label: 'Menu parent'
+    description_field_name:
+      type: string
+      label: 'Description field name'
