@@ -49,7 +49,43 @@ class TaxonomyMenuForm extends EntityForm {
       '#title' => $this->t('Vocabulary'),
       '#options' => $options,
       '#default_value' => $taxonomy_menu->getVocabulary(),
+      '#ajax' => array(
+        'callback' => '::ajaxReplaceDescriptionFieldForm',
+        'wrapper' => 'description-field-container',
+        'method' => 'replace',
+      ),
     ];
+
+    // Description field selection.
+    $form['description_container'] = [
+      '#type' => 'container',
+      '#prefix' => '<div id="description-field-container">',
+      '#suffix' => '</div>',
+    ];
+
+    $selected_vocabulary = $taxonomy_menu->getVocabulary();
+
+    if ($selected_vocabulary) {
+      $field_definitions = $this->entityManager->getFieldDefinitions('taxonomy_term', $selected_vocabulary);
+
+      // Build a field options array.
+      $field_options = ['' => $this->t('none')];
+      if (count($field_definitions)) {
+        foreach ($field_definitions as $field_name => $field_definition) {
+          $field_options[$field_name] = $field_definition->getName();
+        }
+      }
+
+      if (count($field_options)) {
+        $form['description_container']['description_field_name'] = [
+          '#type' => 'select',
+          '#title' => $this->t('Description field'),
+          '#description' => $this->t('Select the field to be used for the menu item description.'),
+          '#options' => $field_options,
+          '#default_value' => $taxonomy_menu->getDescriptionFieldName(),
+        ];
+      }
+    }
 
     // Menu selection.
     $options = [];
@@ -94,6 +130,13 @@ class TaxonomyMenuForm extends EntityForm {
     ];
 
     return $form;
+  }
+
+  /**
+   * AJAX callback; Builds the description field selector.
+   */
+  public static function ajaxReplaceDescriptionFieldForm(array &$form, FormStateInterface $form_state) {
+    return $form['description_container'];
   }
 
   /**
