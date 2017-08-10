@@ -232,24 +232,24 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
 
     $link = $base_plugin_definition;
 
-    $link += array(
+    $link += [
       'id' => $this->buildMenuPluginId($term),
       'title' => $term->label(),
       'weight' => $term->getWeight(),
       'description' => $term->getDescription(),
       'menu_name' => $menu_id,
       'expanded' => $this->expanded,
-      'metadata' => array(
+      'metadata' => [
         'taxonomy_menu_id' => $taxonomy_menu_id,
         'taxonomy_term_id' => $term_id,
-      ),
+      ],
       'route_name' => $term_url->getRouteName(),
       'route_parameters' => $term_url->getRouteParameters(),
       'load arguments'  => $arguments,
       'parent' => $menu_parent_id,
       'provider' => 'taxonomy_menu',
       'class' => 'Drupal\taxonomy_menu\Plugin\Menu\TaxonomyMenuMenuLink',
-    );
+    ];
 
     return $link;
   }

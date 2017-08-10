@@ -44,7 +44,7 @@ class TaxonomyMenuMenuLink extends DeriverBase implements ContainerDeriverInterf
    * {@inheritdoc}
    */
   public function getDerivativeDefinitions($base_plugin_definition) {
-    $links = array();
+    $links = [];
     /** @var $taxonomy_menus \Drupal\taxonomy_menu\TaxonomyMenuInterface[] */
     $taxonomy_menus = $this->taxonomyMenuStorage->loadMultiple();
 

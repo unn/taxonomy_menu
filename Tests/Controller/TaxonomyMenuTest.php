@@ -12,11 +12,11 @@ class TaxonomyMenuTest extends WebTestBase {
    * {@inheritdoc}
    */
   public static function getInfo() {
-    return array(
+    return [
       'name' => "taxonomy_menu TaxonomyMenu's controller functionality",
       'description' => 'Test Unit for module taxonomy_menu and controller TaxonomyMenu.',
       'group' => 'Other',
-    );
+    ];
   }
 
   /**

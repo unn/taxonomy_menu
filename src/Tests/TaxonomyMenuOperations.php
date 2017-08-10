@@ -20,7 +20,7 @@ class TaxonomyMenuOperations extends WebTestBase {
     parent::setUp();
 
     // Create user with permission to create policy.
-    $user1 = $this->drupalCreateUser(array('administer site configuration', 'administer taxonomy'));
+    $user1 = $this->drupalCreateUser(['administer site configuration', 'administer taxonomy']);
     $this->drupalLogin($user1);
 
     // Create a testing taxonomy vocabulary.

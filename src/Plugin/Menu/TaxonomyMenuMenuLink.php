@@ -18,7 +18,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
   /**
    * {@inheritdoc}
    */
-  protected $overrideAllowed = array(
+  protected $overrideAllowed = [
     //'menu_name' => 1,
     //'parent' => 1,
     'weight' => 1,
@@ -27,7 +27,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
     //'title' => 1,
     //'description' => 1,
     //'metadata' => 1,
-  );
+  ];
 
   /**
    * The entity type manager.

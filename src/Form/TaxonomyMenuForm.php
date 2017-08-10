@@ -20,23 +20,23 @@ class TaxonomyMenuForm extends EntityForm {
 
     /** @var $taxonomy_menu \Drupal\taxonomy_menu\Entity\TaxonomyMenu */
     $taxonomy_menu = $this->entity;
-    $form['label'] = array(
+    $form['label'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Label'),
       '#maxlength' => 255,
       '#default_value' => $taxonomy_menu->label(),
       '#description' => $this->t("Label for the Taxonomy Menu."),
       '#required' => TRUE,
-    );
+    ];
 
-    $form['id'] = array(
+    $form['id'] = [
       '#type' => 'machine_name',
       '#default_value' => $taxonomy_menu->id(),
       '#machine_name' => array(
         'exists' => '\Drupal\taxonomy_menu\Entity\TaxonomyMenu::load',
       ),
       '#disabled' => !$taxonomy_menu->isNew(),
-    );
+    ];
 
     // Vocabulary selection.
     $options = [];
@@ -104,14 +104,14 @@ class TaxonomyMenuForm extends EntityForm {
     $status = $taxonomy_menu->save();
 
     if ($status) {
-      drupal_set_message($this->t('Saved the %label Taxonomy Menu.', array(
+      drupal_set_message($this->t('Saved the %label Taxonomy Menu.', [
         '%label' => $taxonomy_menu->label(),
-      )));
+      ]));
     }
     else {
-      drupal_set_message($this->t('The %label Taxonomy Menu was not saved.', array(
+      drupal_set_message($this->t('The %label Taxonomy Menu was not saved.', [
         '%label' => $taxonomy_menu->label(),
-      )));
+      ]));
     }
     $form_state->setRedirectUrl($taxonomy_menu->toUrl('collection'));
   }
