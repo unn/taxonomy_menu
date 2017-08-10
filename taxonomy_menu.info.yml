@@ -3,4 +3,4 @@ type: module
 description: Embed a taxonomy tree into a menu
 core: 8.x
 package: Menu
-
+configure: entity.taxonomy_menu.collection
