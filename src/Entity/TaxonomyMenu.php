@@ -126,6 +126,18 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   }
 
   /**
+   * Return if menu items should be ordered by the terms weight.
+   *
+   * Default value is TRUE.
+   *
+   * @return bool
+   *   True or false.
+   */
+  public function useTermWeightOrder() {
+    return isset($this->use_term_weight_order) ? $this->use_term_weight_order : TRUE;
+  }
+
+  /**
    * {@inheritdoc}
    */
   public function getDescriptionFieldName() {
@@ -259,7 +271,6 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
     $link += [
       'id' => $this->buildMenuPluginId($term),
       'title' => $term->label(),
-      'weight' => $term->getWeight(),
       'description' => $term->getDescription(),
       'menu_name' => $menu_id,
       'expanded' => $this->expanded,
@@ -274,6 +285,11 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
       'provider' => 'taxonomy_menu',
       'class' => 'Drupal\taxonomy_menu\Plugin\Menu\TaxonomyMenuMenuLink',
     ];
+
+    // Order by terms weight if configured for this taxonomy_menu.
+    if ($this->useTermWeightOrder()) {
+      $link['weight'] = $term->getWeight();
+    }
 
     return $link;
   }

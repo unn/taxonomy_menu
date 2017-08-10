@@ -129,6 +129,15 @@ class TaxonomyMenuForm extends EntityForm {
       '#default_value' => $taxonomy_menu->getMenuParent(),
     ];
 
+    // If this checkbox is active, use the term weight for the menu item order.
+    // Otherwise the menu items will be sorted alphabetically.
+    // The default is order by weight.
+    $form['use_term_weight_order'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Use term weight order'),
+      '#default_value' => isset($taxonomy_menu->use_term_weight_order) ? $taxonomy_menu->use_term_weight_order : TRUE,
+    ];
+
     return $form;
   }
 

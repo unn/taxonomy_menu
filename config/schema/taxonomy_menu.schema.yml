@@ -26,3 +26,6 @@ taxonomy_menu.taxonomy_menu.*:
     description_field_name:
       type: string
       label: 'Description field name'
+    use_term_weight_order:
+      type: boolean
+      label: 'Use term weight order'
