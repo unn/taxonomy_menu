@@ -29,6 +29,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
     'weight' => 1,
     'expanded' => 1,
     'enabled' => 1,
+    'parent' => 1,
   ];
 
   /**
