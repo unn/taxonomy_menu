@@ -85,10 +85,10 @@ function taxonomy_menu_form_alter(&$form, &$form_state, $form_id) {
     // Rebuild the menu.
     $form['taxonomy_menu']['options']['rebuild'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Select to rebuild the menu on submit.'),
+      '#title' => t('Rebuild the menu on submit'),
       '#default_value' => 0,
       '#weight' => 20,
-      '#description' => t('Rebuild the menu on submit. <strong>Warning</strong>: This will delete then re-create all of the menu items. Only use this option if you are experiencing issues like missing menu items or other inconsistencies.'),
+      '#description' => t('<strong>Warning</strong>: This will delete then re-create all of the menu items. Only use this option if you are experiencing issues like missing menu items or other inconsistencies.'),
     );
     // Move the buttons to the bottom of the form.
     $form['submit']['#weight'] = 49;
@@ -1098,45 +1098,39 @@ function taxonomy_menu_taxonomy_menu_options() {
   );
 
   $options['display_num'] = array(
-    '#title' => t('Display number of items'),
-    '#description' => t('Display the number of items per taxonomy terms. Will not show up for vocabulary menu items.'),
+    '#title' => t('Display the number of items in each taxonomy term.'),
     'default' => FALSE,
   );
 
   $options['hide_empty_terms'] = array(
-    '#title' => t('Hide empty terms'),
-    '#description' => t('Hide terms with no items attached to them.'),
+    '#title' => t('Do not add a menu link for taxonomy terms with no items.'),
     'default' => FALSE,
   );
 
   $options['voc_item'] = array(
-    '#title' => t('Add item for vocabulary'),
-    '#description' => t('Shows the vocabulary name as the top level menu item of the taxonomy menu.'),
+    '#title' => t('Include the vocabulary name as the top level menu item of the taxonomy menu.'),
     'default' => FALSE,
     '#disabled' => TRUE,
   );
 
   $options['voc_item_description'] = array(
-    '#title' => t('Add description for vocabulary'),
-    '#description' => t('Add the vocabulary description to the vocabulary menu item.'),
+    '#title' => t('Add the vocabulary description to the vocabulary menu item.'),
     'default' => FALSE,
+    '#access' => FALSE,
   );
 
   $options['term_item_description'] = array(
-    '#title' => t('Add description for terms'),
-    '#description' => t('Add the term description to the term menu item.'),
+    '#title' => t('Add the taxonomy term description to the term menu item.'),
     'default' => FALSE,
   );
 
   $options['expanded'] = array(
-    '#title' => t('Auto expand menu items'),
-    '#description' => t('Automatically show all menu items as expanded.'),
+    '#title' => t('Automatically show all menu items as expanded.'),
     'default' => TRUE,
   );
 
   $options['flat'] = array(
-    '#title' => t('Flatten the taxonomy\'s hierarchy in the menu'),
-    '#description' => t('Add all menu items to the same level rather than hierarchically.'),
+    '#title' => t('Add all menu items to the same level rather than retaining term hierarchy.'),
     'default' => FALSE,
   );
 
@@ -1149,8 +1143,7 @@ function taxonomy_menu_taxonomy_menu_options() {
   );
 
   $options['display_descendants'] = array(
-    '#title' => t('Display descendants'),
-    '#description' => t('Changes the default path to taxonomy/term/tid+tid+tid for all terms thave have child terms.'),
+    '#title' => t('Display descendants: change the path to taxonomy/term/tid+tid+tid for all terms thave have child terms.'),
     'default' => FALSE,
   );
 
