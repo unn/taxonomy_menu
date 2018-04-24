@@ -61,7 +61,7 @@ function taxonomy_menu_form_alter(&$form, &$form_state, $form_id) {
       '#title' => t('Menu location'),
       '#default_value' => $default,
       '#options' => $menu_items,
-      '#description' => t('The menu and parent under which to insert taxonomy menu items.'),
+      '#description' => t('Taxonomy menu items will be inserted below the item selected here.'),
       '#attributes' => array('class' => array('menu-title-select')),
     );
 
