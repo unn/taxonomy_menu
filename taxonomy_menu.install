@@ -9,11 +9,10 @@
  * Implements hook_uninstall().
  */
 function taxonomy_menu_uninstall() {
-
-  //remove menu items
+  // Remove menu items.
   db_delete('menu_links')->condition('module', 'taxonomy_menu', '=')->execute();
 
-  //rebuild the menus
+  // Rebuild the menus.
   variable_set('menu_rebuild_needed', TRUE);
 
   // Delete variables
@@ -27,16 +26,9 @@ function taxonomy_menu_uninstall() {
 }
 
 /**
- * Implements hook_install().
- */
-function taxonomy_menu_install() {
-}
-
-/**
  * Implements hook_schema().
  */
 function taxonomy_menu_schema() {
-
   $schema['taxonomy_menu'] = array(
     'description' => 'Links a taxonomy term to a menu item.',
     'fields' => array(

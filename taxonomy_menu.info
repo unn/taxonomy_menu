@@ -1,9 +1,9 @@
-core          = "7.x"
+core = "7.x"
 dependencies[] = taxonomy
 dependencies[] = menu
-description   = "Adds links to taxonomy terms to a menu."
-name          = "Taxonomy menu"
-package       = Taxonomy menu
+description = "Adds links to taxonomy terms into a menu."
+name = "Taxonomy menu"
+package = Taxonomy menu
 files[] = taxonomy_menu.batch.inc
 files[] = taxonomy_menu.database.inc
 files[] = taxonomy_menu.module
