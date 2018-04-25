@@ -33,9 +33,9 @@ class TaxonomyMenuForm extends EntityForm {
     $form['id'] = [
       '#type' => 'machine_name',
       '#default_value' => $taxonomy_menu->id(),
-      '#machine_name' => array(
+      '#machine_name' => [
         'exists' => '\Drupal\taxonomy_menu\Entity\TaxonomyMenu::load',
-      ),
+      ],
       '#disabled' => !$taxonomy_menu->isNew(),
     ];
 
@@ -50,11 +50,11 @@ class TaxonomyMenuForm extends EntityForm {
       '#title' => $this->t('Vocabulary'),
       '#options' => $options,
       '#default_value' => $taxonomy_menu->getVocabulary(),
-      '#ajax' => array(
+      '#ajax' => [
         'callback' => '::ajaxReplaceDescriptionFieldForm',
         'wrapper' => 'description-field-container',
         'method' => 'replace',
-      ),
+      ],
     ];
 
     // Description field selection.

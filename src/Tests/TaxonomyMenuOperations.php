@@ -11,7 +11,7 @@ use Drupal\simpletest\WebTestBase;
  */
 class TaxonomyMenuOperations extends WebTestBase {
 
-  public static $modules = array('taxonomy_menu', 'system', 'menu_ui', 'taxonomy', 'dblog');
+  public static $modules = ['taxonomy_menu', 'system', 'menu_ui', 'taxonomy', 'dblog'];
 
   /**
    * Set up for all tests.
