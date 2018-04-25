@@ -91,6 +91,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
    * {@inheritdoc}
    */
   public function getTitle() {
+    /* @var $link \Drupal\taxonomy\Entity\Term. */
     $link = $this->entityTypeManager->getStorage('taxonomy_term')
       ->load($this->pluginDefinition['metadata']['taxonomy_term_id']);
 
@@ -110,7 +111,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
    * {@inheritdoc}
    */
   public function getDescription() {
-    // @var $link \Drupal\taxonomy\Entity\Term.
+    /* @var $link \Drupal\taxonomy\Entity\Term. */
     $link = $this->entityTypeManager->getStorage('taxonomy_term')
       ->load($this->pluginDefinition['metadata']['taxonomy_term_id']);
 

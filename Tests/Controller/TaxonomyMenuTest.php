@@ -8,6 +8,7 @@ use Drupal\simpletest\WebTestBase;
  * Provides automated tests for the taxonomy_menu module.
  */
 class TaxonomyMenuTest extends WebTestBase {
+
   /**
    * {@inheritdoc}
    */

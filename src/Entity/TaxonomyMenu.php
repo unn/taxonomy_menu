@@ -238,7 +238,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
    * @return array
    *  The menu link plugin definition.
    */
-  protected function buildMenuDefinition(TermInterface $term, $base_plugin_definition) {
+  protected function buildMenuDefinition(TermInterface $term, array $base_plugin_definition) {
     $term_id = $term->id();
     $term_url = $term->toUrl();
     $taxonomy_menu_id = $this->id();
@@ -247,7 +247,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
     // Determine parent link.
     // TODO: Evaluate use case of multiple parents (should we make many menu items?)
     $menu_parent_id = NULL;
-    /** @var $termStorage \Drupal\taxonomy\TermStorageInterface */
+    /* @var $termStorage \Drupal\taxonomy\TermStorageInterface */
     $termStorage = $this->entityTypeManager()->getStorage('taxonomy_term');
     $parents = $termStorage->loadParents($term_id);
     $parents = array_values($parents);
@@ -256,13 +256,12 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
       $menu_parent_id = $this->buildMenuPluginId($parents[0]);
     }
 
-    // Please note: if menu_parent_id is NULL, it will not update the hierarchy properly.
+    // Note: if menu_parent_id is NULL, it will not update the hierarchy properly.
     if (empty($menu_parent_id)) {
       $menu_parent_id = str_replace($this->getMenu() . ':', '', $this->getMenuParent());
     }
 
     // TODO: Consider implementing a forced weight based on taxonomy tree.
-
     // Generate link.
     $arguments = ['taxonomy_term' => $term_id];
 
@@ -293,4 +292,5 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
 
     return $link;
   }
+
 }

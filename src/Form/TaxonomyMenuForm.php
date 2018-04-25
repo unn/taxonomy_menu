@@ -12,13 +12,14 @@ use Drupal\system\Entity\Menu;
  * @package Drupal\taxonomy_menu\Form
  */
 class TaxonomyMenuForm extends EntityForm {
+
   /**
    * {@inheritdoc}
    */
   public function form(array $form, FormStateInterface $form_state) {
     $form = parent::form($form, $form_state);
 
-    /** @var $taxonomy_menu \Drupal\taxonomy_menu\Entity\TaxonomyMenu */
+    /* @var $taxonomy_menu \Drupal\taxonomy_menu\Entity\TaxonomyMenu */
     $taxonomy_menu = $this->entity;
     $form['label'] = [
       '#type' => 'textfield',
@@ -108,7 +109,7 @@ class TaxonomyMenuForm extends EntityForm {
       '#type' => 'select',
       '#title' => $this->t('Depth'),
       '#default_value' => $taxonomy_menu->getDepth(),
-      '#options' => range(1,9),
+      '#options' => range(1, 9),
     ];
 
     // Menu selection.
@@ -120,7 +121,7 @@ class TaxonomyMenuForm extends EntityForm {
 
     $menu_parent_selector = \Drupal::service('menu.parent_form_selector');
     $available_menus = $custom_menus;
-    $menu_options = $menu_parent_selector->getParentSelectOptions(null, $available_menus);
+    $menu_options = $menu_parent_selector->getParentSelectOptions(NULL, $available_menus);
 
     $form['menu_parent'] = [
       '#type' => 'select',

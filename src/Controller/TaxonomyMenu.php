@@ -11,8 +11,6 @@ use Drupal\Core\Controller\ControllerBase;
  */
 class TaxonomyMenu extends ControllerBase {
 
- // TODO - REMOVE THIS
-
   /**
    * Render taxonomy links.
    *
@@ -20,16 +18,7 @@ class TaxonomyMenu extends ControllerBase {
    *   Return Hello string.
    */
   public function renderTaxonomyLinks() {
-
     $markup = '';
-
-    /*
-    // Check current main menu.
-    $menu_tree = \Drupal::menuTree();
-    $parameters = new MenuTreeParameters();
-    $tree = $menu_tree->load('main', $parameters);
-    $markup .= var_export($tree, TRUE);
-    */
 
     // Load taxonomy menus.
     $storage = \Drupal::entityTypeManager()->getStorage('taxonomy_menu');
@@ -41,11 +30,9 @@ class TaxonomyMenu extends ControllerBase {
       $links += $taxonomy_menu->generateTaxonomyLinks([]);
     }
 
-    //$markup .= var_export($links, TRUE);
-
     return [
-        '#type' => 'markup',
-        '#markup' => $this->t($markup),
+      '#type' => 'markup',
+      '#markup' => $this->t($markup),
     ];
   }
 
