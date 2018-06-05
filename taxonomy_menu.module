@@ -12,6 +12,19 @@ require_once(DRUPAL_ROOT . '/' . drupal_get_path('module', 'taxonomy_menu') . '/
 require_once(DRUPAL_ROOT . '/' . drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.batch.inc');
 
 /**
+ * Implements hook_help().
+ */
+function taxonomy_menu_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#taxonomy_menu':
+      $output = '';
+      $output .= '<p>' . t('The Taxonomy Menu module transforms your taxonomy vocabularies into menus.') . '</p>';
+      $output .= '<p>' . t('For more information, please visit the official <a href="@url">project page</a> on Drupal.org.', array('@url' => 'https://www.drupal.org/project/taxonomy_menu')) . '</p>';
+      return $output;
+  }
+}
+
+/**
  * Implements hook_form_alter().
  *
  * Modify the form at admin/content/taxonomy/edit/vocabulary/xx. We add
