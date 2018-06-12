@@ -221,7 +221,7 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
   public function buildMenuPluginId(TermInterface $term, $include_base_plugin_id = TRUE) {
     $plugin_id = '';
     if ($include_base_plugin_id) {
-      $plugin_id .= 'taxonomy_menu.menu_link:';
+      $plugin_id .= 'taxonomy_menu:';
     }
     $plugin_id .= 'taxonomy_menu.menu_link.' . $this->id() . '.' . $term->id();
     return $plugin_id;
