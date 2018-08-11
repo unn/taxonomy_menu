@@ -406,15 +406,17 @@ function taxonomy_menu_node_insert($node) {
  * Implements hook_node_update().
  */
 function taxonomy_menu_node_update($node) {
-  $terms_old = &drupal_static('taxonomy_menu_terms_old');
-  // We use this direct table pull to avoid the cache and because
-  // free tags are not formatted in a matter where extrating the
-  // tid's is easy.
-  $terms_new = _taxonomy_menu_get_node_terms($node);
+  if (isset($node->original->status) and $node->original->status != $node->status) {
+    $terms_old = &drupal_static('taxonomy_menu_terms_old');
+    // We use this direct table pull to avoid the cache and because
+    // free tags are not formatted in a matter where extracting the
+    // tid's is easy.
+    $terms_new = _taxonomy_menu_get_node_terms($node);
 
-  // Merge current terms and previous terms to update both menu items.
-  $terms = array_unique(array_merge((array)$terms_new, (array)$terms_old));
-  _taxonomy_menu_nodeapi_helper('update', $terms, $node);
+    // Merge current terms and previous terms to update both menu items.
+    $terms = array_unique(array_merge((array)$terms_new, (array)$terms_old));
+    _taxonomy_menu_nodeapi_helper('update', $terms, $node);
+  }
 }
 
 /**
