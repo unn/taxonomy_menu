@@ -290,6 +290,8 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
       $link['weight'] = $term->getWeight();
     }
 
+    \Drupal::moduleHandler()->alter('taxonomy_menu_link', $link, $term);
+
     return $link;
   }
 
