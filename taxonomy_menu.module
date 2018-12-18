@@ -6,10 +6,10 @@
  */
 
 // Include the database layer.
-require_once(DRUPAL_ROOT . '/' . drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.database.inc');
+module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.database');
 
 // Include the batch functions.
-require_once(DRUPAL_ROOT . '/' . drupal_get_path('module', 'taxonomy_menu') . '/taxonomy_menu.batch.inc');
+module_load_include('inc', 'taxonomy_menu', 'taxonomy_menu.batch');
 
 /**
  * Implements hook_help().
