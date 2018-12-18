@@ -360,10 +360,29 @@ function _taxonomy_menu_insert_link_items($vid) {
  * Implements hook_taxonomy_vocabulary_delete().
  */
 function taxonomy_menu_taxonomy_vocabulary_delete($vocabulary) {
-  // Delete the menu items
+  // Delete the menu items for this vocab.
   _taxonomy_menu_delete_all($vocabulary->vid);
   $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $vocabulary->vid), 0);
   menu_cache_clear($menu_name);
+
+  // Delete all the variables for this vocab.
+  $variable_prefixes = array(
+    'taxonomy_menu_vocab_menu_',
+    'taxonomy_menu_vocab_parent_',
+    'taxonomy_menu_voc_item_',
+    'taxonomy_menu_display_num_',
+    'taxonomy_menu_hide_empty_terms_',
+    'taxonomy_menu_expanded_',
+    'taxonomy_menu_rebuild_',
+    'taxonomy_menu_path_',
+    'taxonomy_menu_menu_end_all_',
+    'taxonomy_menu_display_descendants_',
+    'taxonomy_menu_voc_name_',
+    'taxonomy_menu_sync_',
+  );
+  foreach ($variable_prefixes as $prefix) {
+    variable_del($prefix . $vocabulary->name);
+  }
 }
 
 /**
