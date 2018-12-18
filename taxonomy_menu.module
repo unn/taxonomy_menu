@@ -1067,10 +1067,8 @@ function _taxonomy_menu_create_options($vid) {
       $options[$field_name]['#type'] = 'checkbox';
     }
 
-    // Set the option feildset values.
-    $options['#type'] = 'fieldset';
-    $options['#title'] = t('Options');
-    $options['#collapsible'] = TRUE;
+    // Set the options.
+    $options['#type'] = 'container';
 
     // Remove the default value from the array so we don't pass it to the form.
     unset($options[$field_name]['default']);
