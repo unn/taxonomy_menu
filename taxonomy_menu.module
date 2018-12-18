@@ -530,6 +530,7 @@ function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
     $menu_name = variable_get(_taxonomy_menu_build_variable('vocab_menu', $term->vid), FALSE);
     $vocb_sync = variable_get(_taxonomy_menu_build_variable('sync', $term->vid), TRUE);
     $menu_num = variable_get(_taxonomy_menu_build_variable('display_num', $term->vid), TRUE);
+    $menu_num_inc_children = variable_get(_taxonomy_menu_build_variable('display_num_incl_children', $term->vid), TRUE);
     $hide_empty = variable_get(_taxonomy_menu_build_variable('hide_empty_terms', $term->vid), FALSE);
     if ($menu_name && $vocb_sync && ($menu_num || $hide_empty)) {
       // Build argument array to save menu_item.
@@ -550,7 +551,7 @@ function _taxonomy_menu_nodeapi_helper($op, $terms = array(), $node) {
       }
 
       taxonomy_menu_handler($op, $args, $node);
-      if (variable_get(_taxonomy_menu_build_variable('hide_empty_terms', $term->vid), FALSE)) {
+      if ($hide_empty || $menu_num && $menu_num_inc_children) {
         _taxonomy_menu_update_all_parents($term, $menu_name);
       }
     }
@@ -982,8 +983,8 @@ function _taxonomy_menu_item($item) {
 
     // If display number is selected and $num > 0 then change the title.
     if (variable_get(_taxonomy_menu_build_variable('display_num', $item['vid']), FALSE)) {
-      // If number > 0 and display descendants, then count all of the children.
-      if (variable_get(_taxonomy_menu_build_variable('display_descendants', $item['vid']), FALSE)) {
+      // If number > 0 and display include children num, then count all of the children.
+      if (variable_get(_taxonomy_menu_build_variable('display_num_incl_children', $item['vid']), TRUE)) {
         $num = taxonomy_menu_term_count_nodes($item['tid'], $item['vid']);
       }
       $item['name'] .= " ($num)";
@@ -1139,6 +1140,19 @@ function taxonomy_menu_taxonomy_menu_options() {
     'default' => FALSE,
   );
 
+  $options['display_num_incl_children'] = array(
+    '#title' => t('Include items belonging to child terms in number counts'),
+    '#description' => t('Items belonging to the child terms will be counted when performing item count calculations.'),
+    '#states' => array(
+      'visible' => array(
+        ':input[name="taxonomy_menu[options][display_num]"]' => array(
+          'checked' => TRUE,
+        ),
+      ),
+    ),
+    'default' => TRUE,
+  );
+
   $options['hide_empty_terms'] = array(
     '#title' => t('Do not add a menu link for taxonomy terms with no items.'),
     'default' => FALSE,
@@ -1212,7 +1226,15 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
           if ($t->tid > 0) {
             $term = taxonomy_term_load($t->tid);
             $display_num = '';
-            $num = _taxonomy_menu_term_count($t->tid);
+
+            $menu_num_inc_children = variable_get(_taxonomy_menu_build_variable('display_num_incl_children', $term->vid), TRUE);
+            $menu_display_descendants = variable_get(_taxonomy_menu_build_variable('display_descendants', $t->vid), FALSE);
+            if ($menu_num_inc_children || $menu_display_descendants) {
+              $num = taxonomy_menu_term_count_nodes($t->tid, $t->vid);
+            }
+            else {
+              $num = _taxonomy_menu_term_count($t->tid);
+            }
 
             // If hide menu is selected and the term count is 0 and the term
             // has no children then do not create the menu item.
@@ -1221,10 +1243,6 @@ function taxonomy_menu_translated_menu_link_alter(&$item, $map) {
             }
             // If display number is selected and $num > 0 then change the title.
             elseif (variable_get(_taxonomy_menu_build_variable('display_num', $t->vid), FALSE)) {
-              // If number > 0 and display descendants, then count all children.
-              if (variable_get(_taxonomy_menu_build_variable('display_descendants', $t->vid), FALSE)) {
-                $num = taxonomy_menu_term_count_nodes($t->tid, $t->vid);
-              }
               $display_num = " ($num)";
             }
 
