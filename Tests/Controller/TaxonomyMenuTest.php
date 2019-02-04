@@ -21,13 +21,6 @@ class TaxonomyMenuTest extends WebTestBase {
   }
 
   /**
-   * {@inheritdoc}
-   */
-  public function setUp() {
-    parent::setUp();
-  }
-
-  /**
    * Tests taxonomy_menu functionality.
    */
   public function testTaxonomyMenu() {
