@@ -157,12 +157,12 @@ class TaxonomyMenuForm extends EntityForm {
     $status = $taxonomy_menu->save();
 
     if ($status) {
-      drupal_set_message($this->t('Saved the %label Taxonomy Menu.', [
+      $this->messenger()->addMessage($this->t('Saved the %label Taxonomy Menu.', [
         '%label' => $taxonomy_menu->label(),
       ]));
     }
     else {
-      drupal_set_message($this->t('The %label Taxonomy Menu was not saved.', [
+      $this->messenger()->addMessage($this->t('The %label Taxonomy Menu was not saved.', [
         '%label' => $taxonomy_menu->label(),
       ]));
     }
