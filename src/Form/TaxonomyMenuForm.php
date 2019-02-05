@@ -5,6 +5,9 @@ namespace Drupal\taxonomy_menu\Form;
 use Drupal\Core\Entity\EntityForm;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\system\Entity\Menu;
+use Drupal\Core\Menu\MenuParentFormSelector;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Entity\EntityFieldManager;
 
 /**
  * Class TaxonomyMenuForm.
@@ -12,6 +15,43 @@ use Drupal\system\Entity\Menu;
  * @package Drupal\taxonomy_menu\Form
  */
 class TaxonomyMenuForm extends EntityForm {
+
+  /**
+   * The menu parent form selector.
+   *
+   * @var \Drupal\Core\Menu\MenuParentFormSelector
+   */
+  protected $menuParentSelector;
+  
+  /**
+   * The entity field manager.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManager
+   */
+  protected $entityFieldManager;
+  
+  /**
+   * Constructs a new TaxonomyMenuMenuLink.
+   *
+   * @param \Drupal\Core\Menu\MenuParentFormSelector $menu_parent_selector
+   *   The menu parent selector.
+   * @param \Drupal\Core\Entity\EntityFieldManager $entity_field_manager
+   *   The entity field manager.
+   */
+  public function __construct(MenuParentFormSelector $menu_parent_selector, EntityFieldManager $entity_field_manager) {
+    $this->menuParentSelector = $menu_parent_selector;
+    $this->entityFieldManager = $entity_field_manager;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('menu.parent_form_selector'),
+      $container->get('entity_field.manager')
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -41,7 +81,7 @@ class TaxonomyMenuForm extends EntityForm {
 
     // Vocabulary selection.
     $options = [];
-    $vocabulary_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_vocabulary');
+    $vocabulary_storage = $this->entityTypeManager->getStorage('taxonomy_vocabulary');
     foreach ($vocabulary_storage->loadMultiple() as $vocabulary) {
       $options[$vocabulary->id()] = $vocabulary->label();
     }
@@ -67,7 +107,7 @@ class TaxonomyMenuForm extends EntityForm {
     $selected_vocabulary = $taxonomy_menu->getVocabulary();
 
     if ($selected_vocabulary) {
-      $field_definitions = $this->entityManager->getFieldDefinitions('taxonomy_term', $selected_vocabulary);
+      $field_definitions = $this->entityFieldManager->getFieldDefinitions('taxonomy_term', $selected_vocabulary);
 
       // Build a field options array.
       $field_options = ['' => $this->t('none')];
@@ -90,7 +130,7 @@ class TaxonomyMenuForm extends EntityForm {
 
     // Menu selection.
     $options = [];
-    $menu_storage = \Drupal::entityTypeManager()->getStorage('menu');
+    $menu_storage = $this->entityTypeManager->getStorage('menu');
     foreach ($menu_storage->loadMultiple() as $menu) {
       $options[$menu->id()] = $menu->label();
     }
@@ -119,9 +159,8 @@ class TaxonomyMenuForm extends EntityForm {
     }
     asort($custom_menus);
 
-    $menu_parent_selector = \Drupal::service('menu.parent_form_selector');
     $available_menus = $custom_menus;
-    $menu_options = $menu_parent_selector->getParentSelectOptions(NULL, $available_menus);
+    $menu_options = $this->menuParentSelector->getParentSelectOptions(NULL, $available_menus);
 
     $form['menu_parent'] = [
       '#type' => 'select',
@@ -157,12 +196,12 @@ class TaxonomyMenuForm extends EntityForm {
     $status = $taxonomy_menu->save();
 
     if ($status) {
-      drupal_set_message($this->t('Saved the %label Taxonomy Menu.', [
+      $this->messenger()->addMessage($this->t('Saved the %label Taxonomy Menu.', [
         '%label' => $taxonomy_menu->label(),
       ]));
     }
     else {
-      drupal_set_message($this->t('The %label Taxonomy Menu was not saved.', [
+      $this->messenger()->addMessage($this->t('The %label Taxonomy Menu was not saved.', [
         '%label' => $taxonomy_menu->label(),
       ]));
     }

@@ -11,12 +11,14 @@ use Drupal\simpletest\WebTestBase;
  */
 class TaxonomyMenuOperations extends WebTestBase {
 
-  public static $modules = ['taxonomy_menu', 'system', 'menu_ui', 'taxonomy', 'dblog'];
+  public static $modules = [
+    'taxonomy_menu', 'system', 'menu_ui', 'taxonomy', 'dblog',
+  ];
 
   /**
    * Set up for all tests.
    */
-  function setUp() {
+  public function setUp() {
     parent::setUp();
 
     // Create user with permission to create policy.
@@ -36,9 +38,7 @@ class TaxonomyMenuOperations extends WebTestBase {
     $perms = [
       'administer site configuration',
       'administer taxonomy',
-      'administer menu'
-      //'delete terms in test',
-      //'edit terms in test'
+      'administer menu',
     ];
     $admin_user = $this->drupalCreateUser($perms);
     $this->drupalLogin($admin_user);
@@ -88,9 +88,7 @@ class TaxonomyMenuOperations extends WebTestBase {
   /**
    * Test creation of taxonomy menu functions.
    */
-  function testTaxMenuCreate() {
-
-
+  public function testTaxMenuCreate() {
     // Check menu for taxonomy-based menu items keyed 1, 2, and 3.
     $this->drupalGet('admin/structure/menu/manage/test-menu');
     $this->assertFieldByName(
@@ -121,8 +119,7 @@ class TaxonomyMenuOperations extends WebTestBase {
   /**
    * Test creation of taxonomy term.
    */
-  function testTaxTermCreate() {
-
+  public function testTaxTermCreate() {
     // Create a new term.
     $this->drupalGet('admin/structure/taxonomy/manage/test_tax_vocab/add');
     $edit = [
@@ -142,12 +139,10 @@ class TaxonomyMenuOperations extends WebTestBase {
   /**
    * Test deletion of taxonomy term.
    */
-  function testTaxTermDelete() {
-
+  public function testTaxTermDelete() {
     // Delete a term.
     $this->drupalGet('taxonomy/term/3/delete');
-    $edit = [
-    ];
+    $edit = [];
     $this->drupalPostForm(NULL, $edit, t('Delete'));
 
     // Check for it within the menu.
@@ -161,7 +156,7 @@ class TaxonomyMenuOperations extends WebTestBase {
   /**
    * Tests if of menu links from taxonony_menu is expanded.
    */
-  function testTaxMenuLinkExpanded() {
+  public function testTaxMenuLinkExpanded() {
     $this->drupalGet('admin/structure/menu/link/taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.1/edit');
 
     $this->assertFieldByName(
