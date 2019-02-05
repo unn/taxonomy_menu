@@ -117,7 +117,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
 
     // Get the description field name.
     $taxonomy_menu = $this->entityTypeManager->getStorage('taxonomy_menu')->load($this->pluginDefinition['metadata']['taxonomy_menu_id']);
-    $description_field_name = $taxonomy_menu->getDescriptionFieldName();
+    $description_field_name = !empty($taxonomy_menu) ? $taxonomy_menu->getDescriptionFieldName() : '';
 
     $language = \Drupal::languageManager()->getCurrentLanguage()->getId();
 
