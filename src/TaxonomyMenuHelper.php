@@ -63,7 +63,7 @@ class TaxonomyMenuHelper {
    */
   public function generateTaxonomyMenuEntries(TermInterface $term, $rebuild_all = TRUE) {
     // Load relevant taxonomy menus.
-    $tax_menus = $this->getTermMenusByVocabulary($term->getVocabularyId());
+    $tax_menus = $this->getTermMenusByVocabulary($term->bundle());
     foreach ($tax_menus as $menu) {
       foreach ($menu->getLinks([], TRUE) as $plugin_id => $plugin_def) {
         if (!$rebuild_all) {
@@ -95,7 +95,7 @@ class TaxonomyMenuHelper {
   public function updateTaxonomyMenuEntries(TermInterface $term, $rebuild_all = TRUE) {
 
     // Load relevant taxonomy menus.
-    $tax_menus = $this->getTermMenusByVocabulary($term->getVocabularyId());
+    $tax_menus = $this->getTermMenusByVocabulary($term->bundle());
     /* @var $menu \Drupal\taxonomy_menu\TaxonomyMenuInterface */
     foreach ($tax_menus as $menu) {
 
@@ -115,7 +115,7 @@ class TaxonomyMenuHelper {
         }
         else {
           // Remove specific menu link if vid term is different to this old vid.
-          if ($term->original->getVocabularyId() != $term->getVocabularyId()) {
+          if ($term->original->bundle() != $term->bundle()) {
             $this->removeTaxonomyMenuEntries($term->original);
           }
           $this->manager->addDefinition($plugin_id, $plugin_def);
@@ -134,7 +134,7 @@ class TaxonomyMenuHelper {
    */
   public function removeTaxonomyMenuEntries(TermInterface $term, $rebuild_all = TRUE) {
     // Load relevant taxonomy menus.
-    $tax_menus = $this->getTermMenusByVocabulary($term->getVocabularyId());
+    $tax_menus = $this->getTermMenusByVocabulary($term->bundle());
     /* @var $menu \Drupal\taxonomy_menu\TaxonomyMenuInterface */
     foreach ($tax_menus as $menu) {
       // Remove all links.
