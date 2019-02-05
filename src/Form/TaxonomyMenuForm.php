@@ -7,6 +7,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\system\Entity\Menu;
 use Drupal\Core\Menu\MenuParentFormSelector;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Entity\EntityFieldManager;
 
 /**
  * Class TaxonomyMenuForm.
@@ -21,15 +22,25 @@ class TaxonomyMenuForm extends EntityForm {
    * @var \Drupal\Core\Menu\MenuParentFormSelector
    */
   protected $menuParentSelector;
-
+  
+  /**
+   * The entity field manager.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManager
+   */
+  protected $entityFieldManager;
+  
   /**
    * Constructs a new TaxonomyMenuMenuLink.
    *
    * @param \Drupal\Core\Menu\MenuParentFormSelector $menu_parent_selector
    *   The menu parent selector.
+   * @param \Drupal\Core\Entity\EntityFieldManager $entity_field_manager
+   *   The entity field manager.
    */
-  public function __construct(MenuParentFormSelector $menu_parent_selector) {
+  public function __construct(MenuParentFormSelector $menu_parent_selector, EntityFieldManager $entity_field_manager) {
     $this->menuParentSelector = $menu_parent_selector;
+    $this->entityFieldManager = $entity_field_manager;
   }
 
   /**
@@ -37,7 +48,8 @@ class TaxonomyMenuForm extends EntityForm {
    */
   public static function create(ContainerInterface $container) {
     return new static(
-      $container->get('menu.parent_form_selector')
+      $container->get('menu.parent_form_selector'),
+      $container->get('entity_field.manager')
     );
   }
 
@@ -95,7 +107,7 @@ class TaxonomyMenuForm extends EntityForm {
     $selected_vocabulary = $taxonomy_menu->getVocabulary();
 
     if ($selected_vocabulary) {
-      $field_definitions = $this->entityManager->getFieldDefinitions('taxonomy_term', $selected_vocabulary);
+      $field_definitions = $this->entityFieldManager->getFieldDefinitions('taxonomy_term', $selected_vocabulary);
 
       // Build a field options array.
       $field_options = ['' => $this->t('none')];
