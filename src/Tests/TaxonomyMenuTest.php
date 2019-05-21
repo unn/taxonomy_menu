@@ -5,7 +5,13 @@ namespace Drupal\taxonomy_menu\Tests;
 use Drupal\simpletest\WebTestBase;
 
 /**
+ * Class TaxonomyMenuTest.
+ *
  * Provides automated tests for the taxonomy_menu module.
+ *
+ * @package Drupal\taxonomy_menu\Tests
+ *
+ * @group taxonomy_menu
  */
 class TaxonomyMenuTest extends WebTestBase {
 
