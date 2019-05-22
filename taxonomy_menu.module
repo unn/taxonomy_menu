@@ -715,7 +715,7 @@ function _taxonomy_menu_save($item) {
     $link['mlid'] = $item['mlid'];
     $insert = FALSE;
     $menu_link = menu_link_load($item['mlid']);
-    $is_hidden = $menu_link['hidden'];
+    $is_hidden = !empty($menu_link['hidden']) ? $menu_link['hidden'] : 0;
   }
   else {
     $is_hidden = 0;
