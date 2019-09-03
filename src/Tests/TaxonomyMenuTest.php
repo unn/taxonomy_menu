@@ -31,7 +31,7 @@ class TaxonomyMenuTest extends WebTestBase {
    */
   public function testTaxonomyMenu() {
     // Check that the basic functions of module taxonomy_menu.
-    $this->assertEqual(TRUE, TRUE, 'Test Unit Generated via App Console.');
+    $this->assertEquals(TRUE, TRUE, 'Test Unit Generated via App Console.');
   }
 
 }
