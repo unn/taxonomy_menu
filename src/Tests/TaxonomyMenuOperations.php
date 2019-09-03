@@ -10,7 +10,11 @@ use Drupal\simpletest\WebTestBase;
  * @group taxonomy_menu
  */
 class TaxonomyMenuOperations extends WebTestBase {
-
+  /**
+   * List of modules.
+   *
+   * {@inheritdoc}
+   */
   public static $modules = [
     'taxonomy_menu', 'system', 'menu_ui', 'taxonomy', 'dblog',
   ];

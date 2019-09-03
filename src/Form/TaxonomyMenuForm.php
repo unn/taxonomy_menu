@@ -22,14 +22,14 @@ class TaxonomyMenuForm extends EntityForm {
    * @var \Drupal\Core\Menu\MenuParentFormSelector
    */
   protected $menuParentSelector;
-  
+
   /**
    * The entity field manager.
    *
    * @var \Drupal\Core\Entity\EntityFieldManager
    */
   protected $entityFieldManager;
-  
+
   /**
    * Constructs a new TaxonomyMenuMenuLink.
    *
