@@ -149,11 +149,6 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
    */
   public function preSave(EntityStorageInterface $storage) {
     parent::preSave($storage);
-    if (!$this->isNew()) {
-      foreach (array_keys($this->getLinks([], TRUE)) as $link_key) {
-        $this->getMenuLinkManager()->removeDefinition($link_key, FALSE);
-      }
-    }
     $this->addDependency('config', 'system.menu.' . $this->getMenu());
     $this->addDependency('config', 'taxonomy.vocabulary.' . $this->getVocabulary());
   }
@@ -166,7 +161,12 @@ class TaxonomyMenu extends ConfigEntityBase implements TaxonomyMenuInterface {
     // definitions.
     $return = parent::save();
     foreach ($this->getLinks([], TRUE) as $link_key => $link_def) {
-      $this->getMenuLinkManager()->addDefinition($link_key, $link_def);
+      if ($this->isNew() || !$this->getMenuLinkManager()->hasDefinition($link_key)) {
+        $this->getMenuLinkManager()->addDefinition($link_key, $link_def);
+      }
+      else {
+        $this->getMenuLinkManager()->updateDefinition($link_key, $link_def);
+      }
     }
     return $return;
   }
