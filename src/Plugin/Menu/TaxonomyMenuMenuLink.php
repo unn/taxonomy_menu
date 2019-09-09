@@ -99,8 +99,7 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
     if (!empty($link) && !is_null($link->hasTranslation($language))) {
       $translation = $link->getTranslation($language);
       return $translation->label();
-    }
-    else {
+    } else if ($link) {
       return $link->label();
     }
 
