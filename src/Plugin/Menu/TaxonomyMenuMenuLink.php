@@ -161,4 +161,11 @@ class TaxonomyMenuMenuLink extends MenuLinkBase implements ContainerFactoryPlugi
   public function deleteLink() {
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function isResettable() {
+    $override = $this->staticOverride->loadOverride($this->getPluginId());
+    return $override !== NULL && !empty($override);
+  }
 }
