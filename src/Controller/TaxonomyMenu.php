@@ -26,7 +26,7 @@ class TaxonomyMenu extends ControllerBase {
 
     // Get taxonomy and create menu links from vocabularies.
     foreach ($taxonomy_menus as $taxonomy_menu) {
-      $links += $taxonomy_menu->generateTaxonomyLinks([]);
+      $links += $taxonomy_menu->getLinks([]);
     }
 
     return [
