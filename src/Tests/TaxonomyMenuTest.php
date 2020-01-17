@@ -2,7 +2,7 @@
 
 namespace Drupal\taxonomy_menu\Tests;
 
-use Drupal\simpletest\WebTestBase;
+use \Drupal\Tests\UnitTestCase;
 
 /**
  * Class TaxonomyMenuTest.
@@ -13,7 +13,7 @@ use Drupal\simpletest\WebTestBase;
  *
  * @group taxonomy_menu
  */
-class TaxonomyMenuTest extends WebTestBase {
+class TaxonomyMenuTest extends UnitTestCase {
 
   /**
    * {@inheritdoc}

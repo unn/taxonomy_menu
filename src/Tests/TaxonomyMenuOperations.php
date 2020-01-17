@@ -2,14 +2,14 @@
 
 namespace Drupal\taxonomy_menu\Tests;
 
-use Drupal\simpletest\WebTestBase;
+use \Drupal\Tests\BrowserTestBase;
 
 /**
  * Tests the operations of Taxonomy Menu.
  *
  * @group taxonomy_menu
  */
-class TaxonomyMenuOperations extends WebTestBase {
+class TaxonomyMenuOperations extends BrowserTestBase {
   /**
    * List of modules.
    *
@@ -18,6 +18,11 @@ class TaxonomyMenuOperations extends WebTestBase {
   public static $modules = [
     'taxonomy_menu', 'system', 'menu_ui', 'taxonomy', 'dblog',
   ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * Set up for all tests.
