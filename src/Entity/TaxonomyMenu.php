@@ -33,6 +33,17 @@ use Drupal\taxonomy_menu\TaxonomyMenuInterface;
  *     "edit-form" = "/admin/structure/taxonomy_menu/{taxonomy_menu}",
  *     "delete-form" = "/admin/structure/taxonomy_menu/{taxonomy_menu}/delete",
  *     "collection" = "/admin/structure/taxonomy_menu"
+ *   },
+ *   config_export = {
+ *     "id",
+ *     "label",
+ *     "vocabulary",
+ *     "depth",
+ *     "menu",
+ *     "expanded",
+ *     "menu_parent",
+ *     "description_field_name",
+ *     "use_term_weight_order"
  *   }
  * )
  */
