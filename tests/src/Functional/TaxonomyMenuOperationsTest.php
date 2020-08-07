@@ -120,11 +120,11 @@ class TaxonomyMenuOperationsTest extends BrowserTestBase {
     $this->drupalGet('admin/structure/menu/link/taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.2/edit');
     // We should expect to see taxonomy term 2 have a parent of taxonomy term 1'
     $this->assertSession()->fieldExists(
-      'menu_parent',
+      'menu_parent'
     );
     $this->assertSession()->fieldValueEquals(
       'menu_parent',
-      'test-menu:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.1',
+      'test-menu:taxonomy_menu.menu_link:taxonomy_menu.menu_link.test_tax_menu.1'
     );
 
   }
